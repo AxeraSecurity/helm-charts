@@ -1,0 +1,34 @@
+# =============================================================================
+# values-certify.yaml — values for the Red Hat chart-verifier / certification run
+# =============================================================================
+# With these settings ONLY Red Hat-certified images render, so chart-verifier's
+# mandatory `images-are-certified` check passes:
+#
+#   - 6 Axera service images ............. UBI-based, Red Hat container-certified
+#   - PostgreSQL (internal) .............. registry.redhat.io/rhel9/postgresql-16 (certified)
+#   - Kafka .............................. EXTERNAL (the dev-only internal Kafka image is not certified)
+#   - Kafka-UI ........................... disabled (optional admin tool, not certified)
+#   - AI / Ollama ........................ EXTERNAL (the Ollama image is not certified)
+#
+# Point Kafka (and AI, if used) at real test endpoints you stand up on the
+# certification cluster so that `chart-testing` (helm install + helm test) also
+# passes — every pod must become Ready.
+#
+# Run:
+#   chart-verifier verify <chart-url> -F values-certify.yaml \
+#     --kubeconfig <test-cluster-kubeconfig> -w
+# (drop --web-catalog-only if OWNERS providerDelivery is false)
+
+postgres:
+  external: false                 # internal Red Hat postgresql-16 (certified image)
+
+kafka:
+  external: true
+  bootstrapServers: "kafka-test:9092"   # ← your test Kafka on the cert cluster
+  securityProtocol: Plaintext
+  enableUI: false
+
+ai:
+  enabled: true
+  external: true
+  baseUrl: "http://ai-test:11434"       # ← your test AI endpoint, or set enabled:false

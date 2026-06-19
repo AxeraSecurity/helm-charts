@@ -17,21 +17,32 @@ spec:
       labels: { app: postgres-app }
     spec:
       serviceAccountName: axera-sa
+      {{- if .Values.global.createSCC }}
+      # axera-scc uses fsGroup: RunAsAny, so OpenShift won't auto-assign one — set it
+      # explicitly so the Red Hat postgresql image (arbitrary UID) can write the data
+      # PVC. Under the default restricted SCC (createSCC=false), fsGroup is MustRunAs
+      # and OpenShift assigns an in-range GID, so we omit it there.
+      securityContext:
+        fsGroup: 26
+      {{- end }}
       containers:
         - name: postgres
           image: {{ include "axera.image" (dict "img" .Values.images.postgres "ctx" .) }}
           ports:
             - { containerPort: 5432, name: postgres }
           env:
-            - name: POSTGRES_USER
-              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: POSTGRES_USER } }
-            - name: POSTGRES_PASSWORD
-              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: POSTGRES_PASSWORD } }
-            - name: POSTGRES_DB
+            # Red Hat sclorg postgresql image conventions. Apps + migrate jobs connect
+            # as the 'postgres' superuser (password = ADMIN_PASSWORD); the required
+            # non-superuser account owns the auto-created database.
+            - name: POSTGRESQL_DATABASE
               valueFrom: { secretKeyRef: { name: axera-db-secrets, key: APP_DB_NAME } }
-            - { name: PGDATA, value: /var/lib/postgresql/data/pgdata }
+            - { name: POSTGRESQL_USER, value: axera_app }
+            - name: POSTGRESQL_PASSWORD
+              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: POSTGRES_PASSWORD } }
+            - name: POSTGRESQL_ADMIN_PASSWORD
+              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: POSTGRES_PASSWORD } }
           volumeMounts:
-            - { name: data, mountPath: /var/lib/postgresql/data }
+            - { name: data, mountPath: /var/lib/pgsql/data }
           readinessProbe:
             exec: { command: ["pg_isready", "-U", "postgres"] }
             initialDelaySeconds: 10

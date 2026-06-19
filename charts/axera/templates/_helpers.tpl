@@ -31,10 +31,13 @@ helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version }}
 
 {{/* =========================================================================
      Image full path: <registry>/<repo>:<tag>
+     Each image may set its own `registry` (e.g. registry.redhat.io for the
+     Red Hat-certified Postgres); otherwise global.imageRegistry is used.
      Usage: {{ include "axera.image" (dict "img" .Values.images.api "ctx" .) }}
 ========================================================================= */}}
 {{- define "axera.image" -}}
-{{- printf "%s/%s:%s" .ctx.Values.global.imageRegistry .img.repo .img.tag -}}
+{{- $reg := .img.registry | default .ctx.Values.global.imageRegistry -}}
+{{- printf "%s/%s:%s" $reg .img.repo .img.tag -}}
 {{- end }}
 
 {{/* =========================================================================
