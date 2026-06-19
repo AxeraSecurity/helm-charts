@@ -1,0 +1,87 @@
+{{- if not .Values.kafka.external }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kafka
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: kafka
+    {{- include "axera.labels" . | nindent 4 }}
+spec:
+  serviceName: kafka
+  replicas: 1
+  selector:
+    matchLabels: { app: kafka }
+  template:
+    metadata:
+      labels: { app: kafka }
+    spec:
+      serviceAccountName: axera-sa
+      securityContext:
+        fsGroup: 0
+      initContainers:
+        - name: copy-config
+          image: {{ include "axera.image" (dict "img" .Values.images.kafka "ctx" .) }}
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              cp -RL /opt/kafka/config/. /mnt/config/
+          volumeMounts:
+            - { name: config, mountPath: /mnt/config }
+      containers:
+        - name: kafka
+          image: {{ include "axera.image" (dict "img" .Values.images.kafka "ctx" .) }}
+          ports:
+            - { containerPort: 9092, name: plaintext }
+            - { containerPort: 9093, name: controller }
+          env:
+            - { name: KAFKA_NODE_ID, value: "1" }
+            - { name: KAFKA_PROCESS_ROLES, value: "broker,controller" }
+            - { name: KAFKA_LISTENERS, value: "PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093" }
+            - name: KAFKA_ADVERTISED_LISTENERS
+              value: "PLAINTEXT://kafka.{{ .Values.global.namespace }}.svc.cluster.local:9092"
+            - { name: KAFKA_CONTROLLER_QUORUM_VOTERS, value: "1@localhost:9093" }
+            - { name: KAFKA_CONTROLLER_LISTENER_NAMES, value: "CONTROLLER" }
+            - { name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP, value: "PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT" }
+            - { name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR, value: "1" }
+            - { name: KAFKA_AUTO_CREATE_TOPICS_ENABLE, value: "true" }
+            - { name: KAFKA_LOG_RETENTION_HOURS, value: "168" }
+            - { name: CLUSTER_ID, value: "MkU3OEVBNTcwNTJENDM2Qk" }
+          volumeMounts:
+            - { name: config, mountPath: /opt/kafka/config }
+            - { name: data, mountPath: /var/lib/kafka/data }
+          readinessProbe:
+            tcpSocket: { port: 9092 }
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket: { port: 9092 }
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          resources: {{- toYaml .Values.resources.kafka | nindent 12 }}
+      volumes:
+        - name: config
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: {{ .Values.global.storageClass }}
+        resources:
+          requests:
+            storage: {{ .Values.kafka.storage }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+spec:
+  selector: { app: kafka }
+  ports:
+    - { name: plaintext, port: 9092, targetPort: 9092 }
+{{- end }}

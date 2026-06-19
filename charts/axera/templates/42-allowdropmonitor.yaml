@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: allowdropmonitor
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: allowdropmonitor
+    {{- include "axera.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: allowdropmonitor }
+  template:
+    metadata:
+      labels: { app: allowdropmonitor }
+    spec:
+      serviceAccountName: axera-sa
+      {{- $waited := include "axera.waitForDb" . }}
+      {{- if $waited }}
+      initContainers:
+        {{- $waited | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: allowdropmonitor
+          image: {{ include "axera.image" (dict "img" .Values.images.allowdropmonitor "ctx" .) }}
+          imagePullPolicy: Always
+          ports:
+            - { containerPort: 8080 }
+          envFrom:
+            - configMapRef: { name: axera-app-config }
+            - configMapRef: { name: allowdropmonitor-app-config }
+            - secretRef: { name: axera-app-secret }
+          env:
+            - { name: ASPNETCORE_ENVIRONMENT, value: Production }
+            - { name: ASPNETCORE_URLS, value: "http://+:8080" }
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: APP_DB_CONNSTR } }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: allowdropmonitor
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+spec:
+  selector: { app: allowdropmonitor }
+  ports:
+    - { name: http, port: 8080, targetPort: 8080 }

@@ -1,0 +1,115 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: api
+    {{- include "axera.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  # Single replica + a ReadWriteOnce dp-keys PVC: a RollingUpdate would spin up the new pod
+  # while the old one still holds the RWO volume → "Multi-Attach" deadlock (new pod stuck
+  # ContainerCreating). Recreate tears the old pod down first. (Multi-replica would need RWX
+  # storage or DB-backed DataProtection keys — a code change.)
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels: { app: api }
+  template:
+    metadata:
+      labels: { app: api }
+    spec:
+      serviceAccountName: axera-sa
+      {{- if .Values.global.createSCC }}
+      # axera-scc uses fsGroup: RunAsAny, so OpenShift does NOT auto-assign one — set it
+      # explicitly or the dp-keys PVC (mounted at /var/lib/axera) stays root-owned and the
+      # .NET process can't write the key ring. The volume is chowned to this GID (g+w) and the
+      # container gets it as a supplemental group. Override via global.dpKeysFsGroup if needed.
+      securityContext:
+        fsGroup: {{ .Values.global.dpKeysFsGroup | default 1001 }}
+      {{- else }}
+      # Default restricted/-v2 SCC: fsGroup is MustRunAs — OpenShift auto-assigns a GID from the
+      # namespace's allowed range, which already makes the PVC writable. We deliberately do NOT
+      # pin one here, because a fixed GID outside that range is rejected by SCC admission.
+      {{- end }}
+      {{- $waited := include "axera.waitForDb" . }}
+      {{- if $waited }}
+      initContainers:
+        {{- $waited | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: api
+          image: {{ include "axera.image" (dict "img" .Values.images.api "ctx" .) }}
+          imagePullPolicy: Always
+          ports:
+            - { containerPort: 8080 }
+          envFrom:
+            - configMapRef: { name: axera-app-config }
+            - secretRef: { name: axera-app-secret }
+          env:
+            - { name: ASPNETCORE_ENVIRONMENT, value: Production }
+            - { name: ASPNETCORE_URLS, value: "http://+:8080" }
+            - { name: Licensing__NodeCountStrategy, value: "{{ .Values.licensing.nodeCountStrategy | default "HostOnly" }}" }
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: APP_DB_CONNSTR } }
+            {{- if .Values.ai.enabled }}
+            # Behavioral-anomaly advisory job reads the Radar DB (egress flows).
+            # Injected whenever AI is on — the advisory toggle is flipped at runtime
+            # from the AI settings page (DB-backed), so the connection must be present
+            # even when advisory starts disabled. The API schedules the cron whenever
+            # this connection string exists and self-gates execution on the DB flag.
+            - name: ConnectionStrings__Radar
+              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: RADAR_DB_CONNSTR } }
+            {{- end }}
+          readinessProbe:
+            tcpSocket: { port: 8080 }
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket: { port: 8080 }
+            initialDelaySeconds: 45
+            periodSeconds: 20
+          volumeMounts:
+            # ASP.NET DataProtection key ring. Without a writable mount here the keys fall
+            # back to the image path /var/lib/axera, which the random OpenShift UID cannot
+            # write → "Access to the path '/var/lib/axera' is denied" and the key ring fails
+            # to load at startup (DataProtection-encrypted secret read/write breaks).
+            - { name: dp-keys, mountPath: /var/lib/axera }
+      volumes:
+        # Persistent DataProtection key ring — keys survive pod restarts, so encrypted
+        # tokens/secrets stay readable. PVC defined at the bottom of this file.
+        - name: dp-keys
+          persistentVolumeClaim: { claimName: axera-dp-keys }
+        # Ephemeral fallback (no storage class needed, but keys reset on every restart →
+        # encrypted values unreadable after a restart). Swap in if you don't want a PVC:
+        # - name: dp-keys
+        #   emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+spec:
+  selector: { app: api }
+  ports:
+    - { name: http, port: 8080, targetPort: 8080 }
+---
+# Persistent store for the ASP.NET DataProtection key ring (mounted at /var/lib/axera on the
+# api pod). Small RWO volume; keys survive restarts so DataProtection-encrypted secrets stay
+# readable. If you'd rather not provision storage, switch the dp-keys volume above to emptyDir
+# and delete this PVC.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: axera-dp-keys
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+spec:
+  accessModes: [ ReadWriteOnce ]
+  {{- if .Values.global.storageClass }}
+  storageClassName: {{ .Values.global.storageClass }}
+  {{- end }}
+  resources: { requests: { storage: 128Mi } }

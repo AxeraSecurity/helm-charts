@@ -1,0 +1,70 @@
+# =============================================================================
+# values-production.yaml — example production overrides
+# =============================================================================
+# Generic template for a production install with EXTERNAL, customer-managed
+# Postgres + Kafka (and optionally an external/GPU AI endpoint). Copy this file,
+# fill in the placeholders, and install with:
+#
+#   helm install axera axera/axera -n axera --create-namespace -f values-production.yaml
+#
+# Do NOT commit real credentials. Prefer --set / a sealed secret / an external
+# secret manager for the sensitive fields.
+
+global:
+  namespace: axera
+  # Set for deterministic Route hostnames, or leave "" to let OpenShift assign.
+  clusterDomain: ""            # e.g. apps.ocp.example.com
+  storageClass: ""             # e.g. your RWO StorageClass; "" = cluster default
+  imageRegistry: quay.io/axera
+
+# Enable only if the images are in a private registry.
+imagePullSecret:
+  enabled: false
+  # dockerconfigjson: "<base64 of docker config.json>"
+
+# --- External PostgreSQL ------------------------------------------------------
+postgres:
+  external: true
+  appDbConnString: "Host=<db-host>;Port=5432;Database=MicrosegmentationDB;Username=<user>;Password=<pass>"
+  radarConnString: "Host=<db-host>;Port=5432;Database=AxeraRadarDB;Username=<user>;Password=<pass>"
+  runMigrations: true          # set false if the schema is managed externally
+
+# --- External Kafka -----------------------------------------------------------
+kafka:
+  external: true
+  bootstrapServers: "<broker1>:9093,<broker2>:9093"
+  securityProtocol: SaslSsl    # Plaintext / Ssl / SaslPlaintext / SaslSsl
+  saslMechanism: ScramSha512
+  saslUsername: "<kafka-user>"
+  saslPassword: "<kafka-pass>"
+  # caCert: |
+  #   -----BEGIN CERTIFICATE-----
+  #   ...
+  #   -----END CERTIFICATE-----
+  topics:
+    - { topic: <your-flow-topic>, groupId: axera-radar }
+  processTopics:
+    - { topic: <your-cluster>-process, clusterName: <your-cluster>, groupId: axera-process }
+
+# --- AI (incident triage) -----------------------------------------------------
+# Use an external/GPU-backed endpoint for production-grade latency, or keep
+# external:false to run Ollama in-cluster (CPU inference is slow).
+ai:
+  enabled: true
+  external: false
+  # external: true
+  # baseUrl: "http://my-llm.ai-team.svc:11434"
+
+# --- Application secrets ------------------------------------------------------
+# Leave empty to auto-generate & persist, or pin known values here / via --set.
+app:
+  adminUsername: admin
+  adminEmail: admin@example.com
+  # adminPassword: ""          # auto-generated if empty
+  corsOrigins: []              # frontend Route URL is added automatically
+
+# Larger, GPU-backed Ollama if running in-cluster.
+resources:
+  ollama:
+    requests: { cpu: "2", memory: 8Gi }
+    limits:   { cpu: "8", memory: 16Gi }

@@ -1,0 +1,64 @@
+{{- if not .Values.postgres.external }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-radar
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: postgres-radar
+    {{- include "axera.labels" . | nindent 4 }}
+spec:
+  serviceName: postgres-radar
+  replicas: 1
+  selector:
+    matchLabels: { app: postgres-radar }
+  template:
+    metadata:
+      labels: { app: postgres-radar }
+    spec:
+      serviceAccountName: axera-sa
+      containers:
+        - name: postgres
+          image: {{ include "axera.image" (dict "img" .Values.images.postgres "ctx" .) }}
+          ports:
+            - { containerPort: 5432, name: postgres }
+          env:
+            - name: POSTGRES_USER
+              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: POSTGRES_USER } }
+            - name: POSTGRES_PASSWORD
+              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: POSTGRES_PASSWORD } }
+            - name: POSTGRES_DB
+              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: RADAR_DB_NAME } }
+            - { name: PGDATA, value: /var/lib/postgresql/data/pgdata }
+          volumeMounts:
+            - { name: data, mountPath: /var/lib/postgresql/data }
+          readinessProbe:
+            exec: { command: ["pg_isready", "-U", "postgres"] }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            exec: { command: ["pg_isready", "-U", "postgres"] }
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources: {{- toYaml .Values.resources.postgres | nindent 12 }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: {{ .Values.global.storageClass }}
+        resources:
+          requests:
+            storage: {{ .Values.postgres.storage }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-radar
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+spec:
+  selector: { app: postgres-radar }
+  ports:
+    - { name: postgres, port: 5432, targetPort: 5432 }
+{{- end }}

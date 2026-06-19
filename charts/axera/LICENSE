@@ -1,0 +1,20 @@
+Copyright (c) 2026 Axera Security. All rights reserved.
+
+This Helm chart ("the Chart") is provided to install and configure the Axera
+Microsegmentation & Network Detection and Response platform ("the Software")
+on Kubernetes / OpenShift.
+
+Permission is granted to use, copy, and redistribute the Chart for the sole
+purpose of deploying the Software. The Software components referenced by this
+Chart (container images and associated content) are commercial products of
+Axera Security and are licensed separately under the Axera end-user license
+agreement; nothing in this Chart grants any right to the Software itself.
+
+THE CHART IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY ARISING FROM, OUT OF OR IN CONNECTION WITH THE CHART OR THE USE OR
+OTHER DEALINGS IN THE CHART.
+
+For licensing of the Software, contact: support@axerasecurity.com

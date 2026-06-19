@@ -1,0 +1,21 @@
+{{- if .Values.postgres.runMigrations }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: axera-db-init
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+data:
+  init.sql: |-
+{{ .Files.Get "sql/app-init.sql" | indent 4 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: radar-db-init
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+data:
+  init.sql: |-
+{{ .Files.Get "sql/radar-init.sql" | indent 4 }}
+{{- end }}

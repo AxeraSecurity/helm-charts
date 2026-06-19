@@ -1,0 +1,45 @@
+
+Axera has been deployed to namespace "{{ .Values.global.namespace }}" (release "{{ .Release.Name }}").
+
+1. Watch the workloads come up:
+     oc get pods -n {{ .Values.global.namespace }} -w
+
+   First boot runs database migration Jobs{{ if not .Values.ai.external }} and (if AI is enabled) an Ollama model-pull Job{{ end }}; give it a few minutes.
+
+2. Open the console (frontend Route):
+{{- $fhost := include "axera.frontendHost" . }}
+{{- if $fhost }}
+     https://{{ $fhost }}
+{{- else }}
+     oc get route frontend -n {{ .Values.global.namespace }} -o jsonpath='{.spec.host}{"\n"}'
+   (OpenShift auto-assigned the hostname from its default domain.)
+{{- end }}
+
+3. Sign in with the bootstrap admin account:
+     Username: {{ .Values.app.adminUsername }}
+{{- if .Values.app.adminPassword }}
+     Password: (the value you set in app.adminPassword)
+{{- else }}
+     Password: (auto-generated) retrieve it with:
+       oc get secret axera-app-secret -n {{ .Values.global.namespace }} \
+         -o jsonpath='{.data.AdminCredentials__Password}' | base64 -d ; echo
+{{- end }}
+   Change this password after first login.
+
+4. Licensing: a {{ .Values.licensing.trial.days }}-day trial is seeded automatically. Upload a
+   production license under Admin → License before it expires.
+
+{{- if and (not .Values.postgres.external) (eq (.Values.postgres.password | default "") "") }}
+
+NOTE: internal Postgres is using an auto-generated password stored in the
+      "axera-db-secrets" Secret. It is preserved across `helm upgrade`.
+{{- end }}
+{{- if .Values.imagePullSecret.enabled }}
+{{- else }}
+
+NOTE: imagePullSecret is disabled. If the images under "{{ .Values.global.imageRegistry }}"
+      are in a private registry, set imagePullSecret.enabled=true and provide
+      imagePullSecret.dockerconfigjson, or pre-create a pull secret.
+{{- end }}
+
+Docs & support: https://axerasecurity.com/support

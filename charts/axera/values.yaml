@@ -1,0 +1,256 @@
+# =============================================================================
+# Axera — default values
+# =============================================================================
+# Out of the box these defaults deploy an all-internal ("one-box") stack:
+# Postgres x2 + Kafka + the Axera apps, with all secrets auto-generated.
+# For production, point at external Postgres / Kafka / AI — see values-production.yaml.
+#
+# Override at install time with:  -f my-values.yaml  or  --set key=value
+
+global:
+  # Target namespace. Must match the `helm install --namespace` value.
+  namespace: axera
+  # OpenShift apps/wildcard domain, used to derive Route hostnames as
+  #   <route>-<namespace>.<clusterDomain>
+  # Leave EMPTY to let OpenShift auto-assign Route hostnames from the cluster's
+  # default ingress domain (recommended for portability). Set it only if you
+  # need deterministic hostnames.
+  clusterDomain: ""
+  # PVC StorageClass for stateful workloads (Postgres, Kafka, Ollama, dp-keys).
+  # Empty → use the cluster's default StorageClass.
+  storageClass: ""
+  # Image registry prefix (no trailing slash). Full path = <registry>/<repo>:<tag>
+  imageRegistry: quay.io/axera
+  # Create the Namespace + SCC + RBAC. Disable if a cluster admin pre-creates them.
+  createNamespace: true
+  createSCC: true
+  # GID that owns the API DataProtection key-ring PVC (mounted at /var/lib/axera).
+  # Only used when createSCC=true (axera-scc uses fsGroup: RunAsAny).
+  dpKeysFsGroup: 1001
+
+# -----------------------------------------------------------------------------
+# Image pull secret — enable only if your registry is private.
+# -----------------------------------------------------------------------------
+imagePullSecret:
+  enabled: false
+  name: axera-pull-secret
+  # base64-encoded ~/.docker/config.json. Generate with:
+  #   echo -n '{"auths":{"quay.io":{"auth":"<base64 of user:token>"}}}' | base64
+  # Or leave empty and pre-create the pull secret in the cluster, then set
+  # enabled=false and reference it via the service account.
+  dockerconfigjson: ""
+
+# -----------------------------------------------------------------------------
+# Container images. Tags can be overridden per-environment.
+# -----------------------------------------------------------------------------
+images:
+  api:                  { repo: microsegmentation-api,                  tag: v6.1.3 }
+  proxy:                { repo: microsegmentation-proxy,                tag: v6.1.3 }
+  allowdropmonitor:     { repo: microsegmentation-allowdropmonitor,     tag: v6.1.3 }
+  radar:                { repo: microsegmentation-radar,                tag: v6.1.3 }
+  networkpolicywatcher: { repo: microsegmentation-networkpolicywatcher, tag: v6.1.3 }
+  frontend:             { repo: microsegmentation-frontend,             tag: v6.1.4 }
+  # db-migrate jobs (templates/26-db-migrate-jobs.yaml) reuse images.postgres
+  postgres:             { repo: postgres,                                tag: 16-alpine }
+  kafka:                { repo: kafka,                                   tag: 4.0.0 }
+  kafkaUi:              { repo: kafka-ui,                                tag: v0.7.2 }
+  # Mirror of docker.io/ollama/ollama. Pin to the tag present in your registry.
+  ollama:               { repo: microsegmentation-ollama,               tag: 0.24.0 }
+
+# =============================================================================
+# POSTGRESQL — internal vs external
+# =============================================================================
+postgres:
+  # true  → use external connection strings (skip internal Postgres).
+  # false → deploy two internal Postgres StatefulSets (app, radar).
+  external: false
+
+  # Used when external=false (internal Postgres deployment).
+  user: postgres
+  # Leave EMPTY → a strong password is generated on first install and reused
+  # (read back from the Secret) on upgrades. Set explicitly to pin it.
+  password: ""
+  storage: 20Gi
+  appDbName: MicrosegmentationDB
+  radarDbName: AxeraRadarDB
+
+  # Used when external=true (full .NET-style ConnectionStrings).
+  appDbConnString: ""
+  radarConnString: ""
+
+  # Run EF migrations as Jobs against both databases. SQL is bundled at
+  # sql/{app,radar}-init.sql. Idempotent — safe to re-run.
+  runMigrations: true
+
+# =============================================================================
+# KAFKA — internal vs external
+# =============================================================================
+kafka:
+  # true  → use an external Kafka cluster (skip internal Kafka + Kafka-UI).
+  # false → deploy a single-node KRaft Kafka inside the namespace.
+  external: false
+
+  # Used when external=false.
+  storage: 50Gi
+  enableUI: true   # auto-disabled when external=true
+
+  # Used when external=true (or for the radar Kafka client in any mode).
+  bootstrapServers: ""        # host1:9093,host2:9093,host3:9093
+  securityProtocol: Plaintext # Plaintext / Ssl / SaslPlaintext / SaslSsl
+  saslMechanism: ""           # Plain / ScramSha256 / ScramSha512 / OAuthBearer / Gssapi
+  saslUsername: ""
+  saslPassword: ""
+  # Custom CA certificate (PEM). Empty → librdkafka uses the system CA bundle.
+  caCert: ""
+
+  # Flow topics consumed by Radar. Replace/extend with your own cluster topics.
+  topics:
+    - { topic: external-flows, groupId: axera-radar }
+
+  # Per-cluster Tetragon process-event topics for Radar "Process Activity".
+  # Each cluster's shipper produces to its own "<cluster>-process" topic;
+  # clusterName is the authoritative identity stamped on every event.
+  # Empty → process ingestion disabled (the page still loads, with no data).
+  processTopics: []
+
+# =============================================================================
+# AI ASSISTANT (incident triage) — internal Ollama vs external endpoint
+# =============================================================================
+# Provider-agnostic in the backend. Strictly additive: if the model is
+# unreachable the incident UI keeps working without AI.
+ai:
+  # Master switch. false → API runs with Ai__Enabled=false, no model contacted.
+  enabled: true
+
+  # true  → point the API at a customer-provided endpoint (ai.baseUrl).
+  # false → deploy Ollama in-cluster.
+  external: false
+
+  # Used when external=true, e.g. http://my-llm.ai-team.svc:11434
+  baseUrl: ""
+
+  # Model tag the API requests and the pull-job loads. 3B is the sweet spot for
+  # CPU-only inference; use larger variants only with a GPU.
+  model: "llama3.2:3b"
+  # Extra models pulled alongside `model` (idempotent). Leave [] to pull nothing.
+  extraModels:
+    - "qwen2.5-coder:3b"
+    - "qwen2.5:3b"
+  temperature: "0.2"
+  timeoutSeconds: "120"
+
+  # Internal-Ollama only (external=false):
+  storage: 20Gi
+  pullModel: true
+
+  # Tier-2 behavioral-anomaly advisory job (LLM egress-posture review). The
+  # values below only seed the initial DB-backed settings row on first boot;
+  # the on/off toggle and tuning live in the AI settings page afterwards.
+  advisory:
+    enabled: false
+    cron: "0 */6 * * *"        # every 6h — CPU inference is slow
+    lookbackHours: 24
+    maxWorkloads: 30
+    maxDestinationsPerWorkload: 40
+    minConfidence: 70          # only raise incidents at/above this confidence
+
+# =============================================================================
+# Application-wide secrets and config
+# =============================================================================
+# All secret values below are AUTO-GENERATED on first install when left empty,
+# and re-read from the existing Secret on upgrades (stable across upgrades).
+# Set any of them explicitly to pin a known value. NEVER commit real secrets here.
+app:
+  accessTokenSecret: ""        # JWT signing key (64-char, generated if empty)
+  adminUsername: admin
+  adminEmail: admin@example.com
+  adminPassword: ""            # generated if empty — retrieve from the Secret (see NOTES)
+  encryptionKey: ""            # AES-256 key, base64 (generated if empty)
+  encryptionIV: ""             # AES IV, base64 (generated if empty)
+  internalToken: ""            # pod-to-pod /api/Internal shared secret (generated if empty)
+
+  # CORS origins added to all .NET services. The frontend Route URL is appended
+  # automatically when routes.frontend.enabled=true.
+  corsOrigins:
+    - "http://localhost:3000"
+
+  # AllowDropMonitor service (OVN ACL log collector) settings.
+  ovn:
+    podListUrl: "/api/v1/namespaces/{{namespace}}/pods"
+    namespace: openshift-ovn-kubernetes
+    container: ovn-acl-logging
+    logPodLabelSelector: "app=ovn-k8s-node"
+    reconnectSeconds: 5
+    aggIntervalMin: 1
+    recordRetentionHours: 24
+
+  # Radar archiver
+  archiverIntervalMinutes: 60
+
+# =============================================================================
+# Licensing — trial bootstrap + node count strategy
+# =============================================================================
+# When trial.enabled=true and no license exists at install time, a 15-day
+# trial is seeded. After expiry the validator HardLocks until a real license
+# is uploaded via /admin/license.
+#
+# nodeCountStrategy: HostOnly | MonitoredOnly | HostPlusMonitored
+licensing:
+  nodeCountStrategy: MonitoredOnly
+  trial:
+    enabled: true
+    days: 15
+    maxWorkerNodes: 999
+    customer: "Trial"
+
+# =============================================================================
+# Frontend (Next.js)
+# =============================================================================
+frontend:
+  basepath: ""
+
+# =============================================================================
+# OpenShift Routes — only the frontend is browser-facing
+# =============================================================================
+routes:
+  frontend:
+    enabled: true
+    # Empty → derived from global.clusterDomain, or auto-assigned by OpenShift
+    # when clusterDomain is also empty.
+    host: ""
+    # HAProxy per-request timeout. On-demand AI triage/correlation calls flow
+    # through here; CPU LLM inference can exceed the 30s default. Keep ≥ the
+    # API's Ai timeoutSeconds.
+    timeout: "180s"
+    tls:
+      termination: edge
+      insecureEdgeTerminationPolicy: Redirect
+  kafkaUi:
+    # Auto-disabled when kafka.external=true.
+    enabled: true
+    host: ""
+    tls:
+      termination: edge
+      insecureEdgeTerminationPolicy: Redirect
+
+# =============================================================================
+# NetworkPolicies (defensive — namespace-internal + ingress controller access)
+# =============================================================================
+networkPolicies:
+  enabled: true
+
+# =============================================================================
+# Resource requests/limits — modest defaults; tune per-environment.
+# =============================================================================
+resources:
+  postgres:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits:   { cpu: "2",  memory: 2Gi }
+  kafka:
+    requests: { cpu: 200m, memory: 512Mi }
+    limits:   { cpu: "2",  memory: 2Gi }
+  # CPU inference works for a PoC but is slow; give Ollama a GPU for production.
+  # 12Gi leaves room for the model blob + page cache (an 8Gi limit can OOM).
+  ollama:
+    requests: { cpu: 500m, memory: 6Gi }
+    limits:   { cpu: "4",  memory: 12Gi }

@@ -1,0 +1,174 @@
+{{- if .Values.postgres.runMigrations }}
+{{/*
+  Migration Jobs are regular resources (not Helm hooks) so they appear in
+  `helm get manifest` and `oc get jobs` immediately. Job names include
+  .Release.Revision so each upgrade creates a fresh Job (Job spec is immutable).
+  Old Jobs persist for ttlSecondsAfterFinished (24h) for log inspection.
+  Init container waits for Postgres readiness — no helm orchestration needed.
+*/}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: axera-db-migrate-{{ .Release.Revision | default 1 }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: db-migrate
+    target: app
+    {{- include "axera.labels" . | nindent 4 }}
+spec:
+  ttlSecondsAfterFinished: 86400
+  backoffLimit: 20
+  template:
+    metadata:
+      labels: { app: db-migrate, target: app }
+    spec:
+      serviceAccountName: axera-sa
+      restartPolicy: OnFailure
+      initContainers:
+        - name: wait-for-db
+          image: {{ include "axera.image" (dict "img" .Values.images.postgres "ctx" .) }}
+          env:
+            - name: PGPASSWORD
+              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: POSTGRES_PASSWORD } }
+          command:
+            - sh
+            - -c
+            - |
+              {{- if .Values.postgres.external }}
+              # External Postgres - parse host from connection string and use pg_isready
+              echo "[wait] external Postgres reachable check (best-effort)..."
+              {{- else }}
+              until pg_isready -h postgres-app -p 5432 -U postgres; do
+                echo "[wait] postgres-app not ready, sleeping 2s..."; sleep 2;
+              done
+              {{- end }}
+              echo "[wait] DB reachable, proceeding to migrations."
+      containers:
+        - name: migrate
+          image: {{ include "axera.image" (dict "img" .Values.images.postgres "ctx" .) }}
+          env:
+            - name: PGPASSWORD
+              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: POSTGRES_PASSWORD } }
+            - name: PGUSER
+              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: POSTGRES_USER } }
+            - name: PGDATABASE
+              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: APP_DB_NAME } }
+            {{- if .Values.postgres.external }}
+            - name: PG_CONNSTR
+              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: APP_DB_CONNSTR } }
+            {{- else }}
+            - { name: PGHOST, value: "postgres-app" }
+            {{- end }}
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              echo "[migrate] MicrosegmentationDB EF migrations çalıştırılıyor..."
+              {{- if .Values.postgres.external }}
+              # External Postgres: parse Npgsql-style connection string into PG* envs.
+              IFS=';'
+              for kv in $PG_CONNSTR; do
+                case "$kv" in
+                  Host=*)     export PGHOST="${kv#Host=}" ;;
+                  Port=*)     export PGPORT="${kv#Port=}" ;;
+                  Database=*) export PGDATABASE="${kv#Database=}" ;;
+                  Username=*) export PGUSER="${kv#Username=}" ;;
+                  Password=*) export PGPASSWORD="${kv#Password=}" ;;
+                esac
+              done
+              unset IFS
+              echo "[migrate] Connecting to ${PGUSER}@${PGHOST}:${PGPORT:-5432}/${PGDATABASE}"
+              {{- end }}
+              psql -v ON_ERROR_STOP=1 -f /sql/init.sql
+              echo "[migrate] Tamamlandı."
+          volumeMounts:
+            - { name: sql, mountPath: /sql, readOnly: true }
+      volumes:
+        - name: sql
+          configMap:
+            name: axera-db-init
+            items: [ { key: init.sql, path: init.sql } ]
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: radar-db-migrate-{{ .Release.Revision | default 1 }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: db-migrate
+    target: radar
+    {{- include "axera.labels" . | nindent 4 }}
+spec:
+  ttlSecondsAfterFinished: 86400
+  backoffLimit: 20
+  template:
+    metadata:
+      labels: { app: db-migrate, target: radar }
+    spec:
+      serviceAccountName: axera-sa
+      restartPolicy: OnFailure
+      initContainers:
+        - name: wait-for-db
+          image: {{ include "axera.image" (dict "img" .Values.images.postgres "ctx" .) }}
+          env:
+            - name: PGPASSWORD
+              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: POSTGRES_PASSWORD } }
+          command:
+            - sh
+            - -c
+            - |
+              {{- if .Values.postgres.external }}
+              echo "[wait] external Postgres (radar) reachable check (best-effort)..."
+              {{- else }}
+              until pg_isready -h postgres-radar -p 5432 -U postgres; do
+                echo "[wait] postgres-radar not ready, sleeping 2s..."; sleep 2;
+              done
+              {{- end }}
+              echo "[wait] DB reachable, proceeding to migrations."
+      containers:
+        - name: migrate
+          image: {{ include "axera.image" (dict "img" .Values.images.postgres "ctx" .) }}
+          env:
+            - name: PGPASSWORD
+              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: POSTGRES_PASSWORD } }
+            - name: PGUSER
+              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: POSTGRES_USER } }
+            - name: PGDATABASE
+              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: RADAR_DB_NAME } }
+            {{- if .Values.postgres.external }}
+            - name: PG_CONNSTR
+              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: RADAR_DB_CONNSTR } }
+            {{- else }}
+            - { name: PGHOST, value: "postgres-radar" }
+            {{- end }}
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              echo "[migrate] AxeraRadarDB EF migrations çalıştırılıyor..."
+              {{- if .Values.postgres.external }}
+              IFS=';'
+              for kv in $PG_CONNSTR; do
+                case "$kv" in
+                  Host=*)     export PGHOST="${kv#Host=}" ;;
+                  Port=*)     export PGPORT="${kv#Port=}" ;;
+                  Database=*) export PGDATABASE="${kv#Database=}" ;;
+                  Username=*) export PGUSER="${kv#Username=}" ;;
+                  Password=*) export PGPASSWORD="${kv#Password=}" ;;
+                esac
+              done
+              unset IFS
+              echo "[migrate] Connecting to ${PGUSER}@${PGHOST}:${PGPORT:-5432}/${PGDATABASE}"
+              {{- end }}
+              psql -v ON_ERROR_STOP=1 -f /sql/init.sql
+              echo "[migrate] Tamamlandı."
+          volumeMounts:
+            - { name: sql, mountPath: /sql, readOnly: true }
+      volumes:
+        - name: sql
+          configMap:
+            name: radar-db-init
+            items: [ { key: init.sql, path: init.sql } ]
+{{- end }}

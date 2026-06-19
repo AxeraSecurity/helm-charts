@@ -1,0 +1,39 @@
+{{- if include "axera.kafkaUiEnabled" . }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-ui
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: kafka-ui
+    {{- include "axera.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: kafka-ui }
+  template:
+    metadata:
+      labels: { app: kafka-ui }
+    spec:
+      serviceAccountName: axera-sa
+      containers:
+        - name: kafka-ui
+          image: {{ include "axera.image" (dict "img" .Values.images.kafkaUi "ctx" .) }}
+          ports:
+            - { containerPort: 8080 }
+          env:
+            - { name: KAFKA_CLUSTERS_0_NAME, value: "axera-kafka" }
+            - { name: KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS, value: "kafka:9092" }
+            - { name: FILTERING_GROOVY_ENABLED, value: "true" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-ui
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+spec:
+  selector: { app: kafka-ui }
+  ports:
+    - { name: http, port: 8080, targetPort: 8080 }
+{{- end }}

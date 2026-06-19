@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: frontend
+    {{- include "axera.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: frontend }
+  template:
+    metadata:
+      labels: { app: frontend }
+    spec:
+      serviceAccountName: axera-sa
+      containers:
+        - name: frontend
+          image: {{ include "axera.image" (dict "img" .Values.images.frontend "ctx" .) }}
+          imagePullPolicy: Always
+          ports:
+            - { containerPort: 3000 }
+          envFrom:
+            - configMapRef: { name: frontend-env }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+spec:
+  selector: { app: frontend }
+  ports:
+    - { name: http, port: 3000, targetPort: 3000 }

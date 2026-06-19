@@ -1,0 +1,128 @@
+{{- if and .Values.licensing.trial.enabled .Values.postgres.runMigrations }}
+{{/*
+  Trial license bootstrap. Runs once after migration jobs and seeds a
+  signature-less "Trial" license row when LicenseInfos is empty.
+  Idempotent: re-runs are a no-op once any license (trial or real) exists.
+
+  Backend validator (LicenseValidator.cs) detects an empty LicenseKey and
+  evaluates only on ExpirationDate — no signature/cluster check.
+*/}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: axera-trial-bootstrap-{{ .Release.Revision | default 1 }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: trial-bootstrap
+    {{- include "axera.labels" . | nindent 4 }}
+spec:
+  ttlSecondsAfterFinished: 86400
+  backoffLimit: 10
+  template:
+    metadata:
+      labels: { app: trial-bootstrap }
+    spec:
+      serviceAccountName: axera-sa
+      restartPolicy: OnFailure
+      initContainers:
+        - name: wait-for-license-table
+          image: {{ include "axera.image" (dict "img" .Values.images.postgres "ctx" .) }}
+          env:
+            - name: PGPASSWORD
+              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: POSTGRES_PASSWORD } }
+            - name: PGUSER
+              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: POSTGRES_USER } }
+            - name: PGDATABASE
+              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: APP_DB_NAME } }
+            {{- if .Values.postgres.external }}
+            - name: PG_CONNSTR
+              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: APP_DB_CONNSTR } }
+            {{- else }}
+            - { name: PGHOST, value: "postgres-app" }
+            {{- end }}
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              {{- if .Values.postgres.external }}
+              IFS=';'
+              for kv in $PG_CONNSTR; do
+                case "$kv" in
+                  Host=*)     export PGHOST="${kv#Host=}" ;;
+                  Port=*)     export PGPORT="${kv#Port=}" ;;
+                  Database=*) export PGDATABASE="${kv#Database=}" ;;
+                  Username=*) export PGUSER="${kv#Username=}" ;;
+                  Password=*) export PGPASSWORD="${kv#Password=}" ;;
+                esac
+              done
+              unset IFS
+              {{- end }}
+              # Wait until db-migrate-jobs have created the LicenseInfos table
+              until psql -tAXc 'SELECT 1 FROM "LicenseInfos" LIMIT 0' >/dev/null 2>&1; do
+                echo "[trial-init] LicenseInfos not ready yet, sleeping 3s..."
+                sleep 3
+              done
+              echo "[trial-init] LicenseInfos table available."
+      containers:
+        - name: bootstrap
+          image: {{ include "axera.image" (dict "img" .Values.images.postgres "ctx" .) }}
+          env:
+            - name: PGPASSWORD
+              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: POSTGRES_PASSWORD } }
+            - name: PGUSER
+              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: POSTGRES_USER } }
+            - name: PGDATABASE
+              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: APP_DB_NAME } }
+            {{- if .Values.postgres.external }}
+            - name: PG_CONNSTR
+              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: APP_DB_CONNSTR } }
+            {{- else }}
+            - { name: PGHOST, value: "postgres-app" }
+            {{- end }}
+            - { name: TRIAL_DAYS,      value: "{{ .Values.licensing.trial.days }}" }
+            - { name: TRIAL_MAX_NODES, value: "{{ .Values.licensing.trial.maxWorkerNodes }}" }
+            - { name: TRIAL_CUSTOMER,  value: "{{ .Values.licensing.trial.customer }}" }
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              {{- if .Values.postgres.external }}
+              IFS=';'
+              for kv in $PG_CONNSTR; do
+                case "$kv" in
+                  Host=*)     export PGHOST="${kv#Host=}" ;;
+                  Port=*)     export PGPORT="${kv#Port=}" ;;
+                  Database=*) export PGDATABASE="${kv#Database=}" ;;
+                  Username=*) export PGUSER="${kv#Username=}" ;;
+                  Password=*) export PGPASSWORD="${kv#Password=}" ;;
+                esac
+              done
+              unset IFS
+              {{- end }}
+
+              COUNT=$(psql -tAXc 'SELECT COUNT(*) FROM "LicenseInfos";')
+              if [ "$COUNT" -gt 0 ]; then
+                echo "[trial] LicenseInfos already has $COUNT row(s) — skipping bootstrap."
+                exit 0
+              fi
+
+              echo "[trial] Seeding ${TRIAL_DAYS}-day trial license for '${TRIAL_CUSTOMER}'..."
+              psql -v ON_ERROR_STOP=1 <<SQL
+              INSERT INTO "LicenseInfos" (
+                "Id", "LicenseKey", "ExpirationDate", "IsActive",
+                "CreatedAt", "ActivatedAt",
+                "Customer", "MaxWorkerNodes", "ClusterUid",
+                "IssuedBy", "IssuedAt", "LastValidatedAt",
+                "ValidationStatus", "LastObservedNodeCount"
+              ) VALUES (
+                gen_random_uuid(), '', now() + interval '${TRIAL_DAYS} days', true,
+                now(), now(),
+                '${TRIAL_CUSTOMER}', ${TRIAL_MAX_NODES}, NULL,
+                'system-bootstrap', now(), now(),
+                'Trial', NULL
+              );
+              SQL
+              echo "[trial] Trial license seeded (${TRIAL_DAYS} days, max ${TRIAL_MAX_NODES} nodes)."
+{{- end }}

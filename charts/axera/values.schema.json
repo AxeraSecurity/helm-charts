@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "Axera Helm chart values",
+  "description": "Configuration schema for the Axera microsegmentation & NDR chart.",
+  "type": "object",
+  "properties": {
+    "global": {
+      "type": "object",
+      "properties": {
+        "namespace": { "type": "string", "minLength": 1 },
+        "clusterDomain": { "type": "string" },
+        "storageClass": { "type": "string" },
+        "imageRegistry": { "type": "string", "minLength": 1 },
+        "createNamespace": { "type": "boolean" },
+        "createSCC": { "type": "boolean" },
+        "dpKeysFsGroup": { "type": "integer" }
+      }
+    },
+    "imagePullSecret": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "name": { "type": "string" },
+        "dockerconfigjson": { "type": "string" }
+      }
+    },
+    "images": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "repo": { "type": "string" },
+          "tag": { "type": ["string", "number"] },
+          "registry": { "type": "string" }
+        },
+        "required": ["repo", "tag"]
+      }
+    },
+    "postgres": {
+      "type": "object",
+      "properties": {
+        "external": { "type": "boolean" },
+        "user": { "type": "string" },
+        "password": { "type": "string" },
+        "storage": { "type": "string" },
+        "appDbName": { "type": "string" },
+        "radarDbName": { "type": "string" },
+        "appDbConnString": { "type": "string" },
+        "radarConnString": { "type": "string" },
+        "runMigrations": { "type": "boolean" }
+      }
+    },
+    "kafka": {
+      "type": "object",
+      "properties": {
+        "external": { "type": "boolean" },
+        "storage": { "type": "string" },
+        "enableUI": { "type": "boolean" },
+        "bootstrapServers": { "type": "string" },
+        "securityProtocol": { "type": "string" },
+        "saslMechanism": { "type": "string" },
+        "saslUsername": { "type": "string" },
+        "saslPassword": { "type": "string" },
+        "caCert": { "type": "string" },
+        "topics": { "type": "array", "items": { "type": "object" } },
+        "processTopics": { "type": "array", "items": { "type": "object" } }
+      }
+    },
+    "ai": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "external": { "type": "boolean" },
+        "baseUrl": { "type": "string" },
+        "model": { "type": "string" },
+        "extraModels": { "type": "array", "items": { "type": "string" } },
+        "temperature": { "type": "string" },
+        "timeoutSeconds": { "type": "string" },
+        "storage": { "type": "string" },
+        "pullModel": { "type": "boolean" },
+        "advisory": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "cron": { "type": "string" },
+            "lookbackHours": { "type": "integer" },
+            "maxWorkloads": { "type": "integer" },
+            "maxDestinationsPerWorkload": { "type": "integer" },
+            "minConfidence": { "type": "integer" }
+          }
+        }
+      }
+    },
+    "app": {
+      "type": "object",
+      "properties": {
+        "accessTokenSecret": { "type": "string" },
+        "adminUsername": { "type": "string" },
+        "adminEmail": { "type": "string" },
+        "adminPassword": { "type": "string" },
+        "encryptionKey": { "type": "string" },
+        "encryptionIV": { "type": "string" },
+        "internalToken": { "type": "string" },
+        "corsOrigins": { "type": "array", "items": { "type": "string" } },
+        "ovn": { "type": "object" },
+        "archiverIntervalMinutes": { "type": "integer" }
+      }
+    },
+    "licensing": {
+      "type": "object",
+      "properties": {
+        "nodeCountStrategy": {
+          "type": "string",
+          "enum": ["HostOnly", "MonitoredOnly", "HostPlusMonitored"]
+        },
+        "trial": { "type": "object" }
+      }
+    },
+    "frontend": {
+      "type": "object",
+      "properties": { "basepath": { "type": "string" } }
+    },
+    "routes": {
+      "type": "object",
+      "properties": {
+        "frontend": { "type": "object" },
+        "kafkaUi": { "type": "object" }
+      }
+    },
+    "networkPolicies": {
+      "type": "object",
+      "properties": { "enabled": { "type": "boolean" } }
+    },
+    "resources": { "type": "object" }
+  }
+}

@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: radar
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: radar
+    {{- include "axera.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: radar }
+  template:
+    metadata:
+      labels: { app: radar }
+    spec:
+      serviceAccountName: axera-sa
+      {{- $waited := include "axera.waitForRadarDb" . }}
+      {{- if $waited }}
+      initContainers:
+        {{- $waited | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: radar
+          image: {{ include "axera.image" (dict "img" .Values.images.radar "ctx" .) }}
+          imagePullPolicy: Always
+          ports:
+            - { containerPort: 8080 }
+          envFrom:
+            - configMapRef: { name: axera-app-config }
+            - configMapRef: { name: radar-app-config }
+            - secretRef: { name: axera-app-secret }
+            # Kafka client config (KafkaServer + SecurityProtocol + SASL/SSL)
+            - secretRef: { name: kafka-external-secret }
+          env:
+            - { name: ASPNETCORE_ENVIRONMENT, value: Production }
+            - { name: ASPNETCORE_URLS, value: "http://+:8080" }
+            # Radar appsettings: ConnectionStrings.DefaultConnection = AxeraRadarDB,
+            #                    ConnectionStrings.API = MicrosegmentationDB.
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: RADAR_DB_CONNSTR } }
+            - name: ConnectionStrings__API
+              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: APP_DB_CONNSTR } }
+          volumeMounts:
+            # Optional CA certificate (used only when kafka.caCert is set in values)
+            - { name: kafka-certs, mountPath: /etc/kafka-certs, readOnly: true }
+      volumes:
+        - name: kafka-certs
+          secret:
+            secretName: kafka-external-secret
+            items:
+              - { key: ca.crt, path: ca.crt }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: radar
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+spec:
+  selector: { app: radar }
+  ports:
+    - { name: http, port: 8080, targetPort: 8080 }

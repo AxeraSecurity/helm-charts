@@ -1,0 +1,42 @@
+{{- if .Values.routes.frontend.enabled }}
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: frontend
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+  {{- if .Values.routes.frontend.timeout }}
+  annotations:
+    # CPU LLM inference (AI triage/correlation) can run well past the 30s default.
+    haproxy.router.openshift.io/timeout: {{ .Values.routes.frontend.timeout | quote }}
+  {{- end }}
+spec:
+  {{- $fhost := include "axera.frontendHost" . }}
+  {{- if $fhost }}
+  host: {{ $fhost }}
+  {{- end }}
+  to: { kind: Service, name: frontend }
+  port: { targetPort: http }
+  tls:
+    termination: {{ .Values.routes.frontend.tls.termination }}
+    insecureEdgeTerminationPolicy: {{ .Values.routes.frontend.tls.insecureEdgeTerminationPolicy }}
+{{- end }}
+{{- if and .Values.routes.kafkaUi.enabled (include "axera.kafkaUiEnabled" .) }}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: kafka-ui
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+spec:
+  {{- $khost := include "axera.kafkaUiHost" . }}
+  {{- if $khost }}
+  host: {{ $khost }}
+  {{- end }}
+  to: { kind: Service, name: kafka-ui }
+  port: { targetPort: http }
+  tls:
+    termination: {{ .Values.routes.kafkaUi.tls.termination }}
+    insecureEdgeTerminationPolicy: {{ .Values.routes.kafkaUi.tls.insecureEdgeTerminationPolicy }}
+{{- end }}

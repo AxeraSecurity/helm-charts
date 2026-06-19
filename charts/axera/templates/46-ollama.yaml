@@ -1,0 +1,121 @@
+{{- if and .Values.ai.enabled (not .Values.ai.external) }}
+# =============================================================================
+# Ollama — in-cluster LLM backend for the AI incident-triage assistant.
+# Stateful: pulled models are cached on a PVC so restarts don't re-download.
+# Mounted at /models (OLLAMA_MODELS) rather than /root/.ollama so the OpenShift
+# restricted SCC's arbitrary UID (GID 0) can write to it via fsGroup.
+# =============================================================================
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ollama
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: ollama
+    {{- include "axera.labels" . | nindent 4 }}
+spec:
+  serviceName: ollama
+  replicas: 1
+  selector:
+    matchLabels: { app: ollama }
+  template:
+    metadata:
+      labels: { app: ollama }
+    spec:
+      serviceAccountName: axera-sa
+      securityContext:
+        fsGroup: 0
+      containers:
+        - name: ollama
+          image: {{ include "axera.image" (dict "img" .Values.images.ollama "ctx" .) }}
+          imagePullPolicy: Always
+          ports:
+            - { containerPort: 11434, name: http }
+          env:
+            - { name: OLLAMA_HOST, value: "0.0.0.0:11434" }
+            - { name: OLLAMA_MODELS, value: "/models" }
+            # Memory safety on a constrained box: keep only ONE model resident at a time
+            # (loading a new model evicts the prior) and serve one request at a time (smaller
+            # KV cache). Without this, multiple pulled models (e.g. an 8B + several 3B) stay
+            # resident, exhaust the limit, and new loads fail with HTTP 500 "requires more
+            # system memory". Raise both only if the box has the RAM for concurrent models.
+            - { name: OLLAMA_MAX_LOADED_MODELS, value: "1" }
+            - { name: OLLAMA_NUM_PARALLEL, value: "1" }
+          volumeMounts:
+            - { name: models, mountPath: /models }
+          readinessProbe:
+            tcpSocket: { port: 11434 }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket: { port: 11434 }
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources: {{- toYaml .Values.resources.ollama | nindent 12 }}
+  volumeClaimTemplates:
+    - metadata:
+        name: models
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: {{ .Values.global.storageClass }}
+        resources:
+          requests:
+            storage: {{ .Values.ai.storage }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+spec:
+  selector: { app: ollama }
+  ports:
+    - { name: http, port: 11434, targetPort: 11434 }
+{{- if .Values.ai.pullModel }}
+---
+# Post-install/upgrade Job that pulls the configured model into the PVC. Reuses
+# the Ollama image (no extra image to mirror) and talks to the Service over the
+# network, so the model lands on the StatefulSet's volume. Idempotent: Ollama
+# skips a model that's already present.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ollama-pull-model-{{ .Release.Revision | default 1 }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: ollama-pull-model
+    {{- include "axera.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  ttlSecondsAfterFinished: 86400
+  backoffLimit: 20
+  template:
+    metadata:
+      labels: { app: ollama-pull-model }
+    spec:
+      serviceAccountName: axera-sa
+      restartPolicy: OnFailure
+      containers:
+        - name: pull
+          image: {{ include "axera.image" (dict "img" .Values.images.ollama "ctx" .) }}
+          imagePullPolicy: Always
+          env:
+            - { name: OLLAMA_HOST, value: "http://ollama:11434" }
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              echo "[pull] waiting for ollama service..."
+              until ollama list >/dev/null 2>&1; do sleep 3; done
+              for m in {{ .Values.ai.model | quote }}{{- range .Values.ai.extraModels }} {{ . | quote }}{{- end }}; do
+                echo "[pull] pulling $m"
+                ollama pull "$m"
+              done
+              echo "[pull] done."
+{{- end }}
+{{- end }}

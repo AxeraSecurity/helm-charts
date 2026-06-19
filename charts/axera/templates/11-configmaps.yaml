@@ -1,0 +1,103 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: axera-app-config
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+data:
+  AllowedHosts: "*"
+  Logging__LogLevel__Default: "Information"
+  Logging__LogLevel__Microsoft.AspNetCore: "Warning"
+  # CORS — frontend Route URL prepended automatically when a host is known.
+  {{- $origins := .Values.app.corsOrigins | default list }}
+  {{- $fhost := include "axera.frontendHost" . }}
+  {{- if and .Values.routes.frontend.enabled $fhost }}
+  {{- $origins = prepend $origins (printf "https://%s" $fhost) }}
+  {{- end }}
+  {{- range $i, $o := $origins }}
+  AllowedCorsOrigins__{{ $i }}: {{ $o | quote }}
+  {{- end }}
+  # Cluster-internal service URLs (no Routes for backend services)
+  Services__API__Url: "http://api:8080"
+  Services__Proxy__Url: "http://proxy:8080"
+  Services__AllowDropMonitor__Url: "http://allowdropmonitor:8080"
+  Services__Radar__Url: "http://radar:8080"
+  Services__NetworkPolicyWatcher__Url: "http://networkpolicywatcher:8080"
+  # AI assistant (incident triage). BaseUrl resolves to the in-cluster Ollama
+  # service or a customer endpoint depending on ai.external.
+  {{- if .Values.ai.enabled }}
+  Ai__Enabled: "true"
+  Ai__Provider: "Ollama"
+  Ai__BaseUrl: {{ include "axera.aiBaseUrl" . | quote }}
+  Ai__Model: {{ .Values.ai.model | quote }}
+  Ai__TimeoutSeconds: {{ .Values.ai.timeoutSeconds | quote }}
+  Ai__Temperature: {{ .Values.ai.temperature | quote }}
+  # Behavioral-anomaly advisory job (Tier-2 LLM egress-posture review).
+  # These values seed the initial DB-backed Ai settings row and feed infra knobs.
+  # The on/off toggle and tuning params are managed at runtime from the AI settings
+  # page after first boot; the values below are only the deploy-time defaults.
+  # Cron is infra (drives the Hangfire schedule) and is always surfaced when AI is on.
+  Ai__Advisory__Enabled: {{ .Values.ai.advisory.enabled | quote }}
+  Ai__Advisory__Cron: {{ .Values.ai.advisory.cron | quote }}
+  Ai__Advisory__LookbackHours: {{ .Values.ai.advisory.lookbackHours | quote }}
+  Ai__Advisory__MaxWorkloads: {{ .Values.ai.advisory.maxWorkloads | quote }}
+  Ai__Advisory__MaxDestinationsPerWorkload: {{ .Values.ai.advisory.maxDestinationsPerWorkload | quote }}
+  Ai__Advisory__MinConfidence: {{ .Values.ai.advisory.minConfidence | quote }}
+  {{- else }}
+  Ai__Enabled: "false"
+  {{- end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: allowdropmonitor-app-config
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+data:
+  OVN__PodListUrl: {{ .Values.app.ovn.podListUrl | quote }}
+  OVN__Namespace: {{ .Values.app.ovn.namespace | quote }}
+  OVN__Container: {{ .Values.app.ovn.container | quote }}
+  OVN__LogPodLabelSelector: {{ .Values.app.ovn.logPodLabelSelector | quote }}
+  OVN__ReconnectSeconds: {{ .Values.app.ovn.reconnectSeconds | quote }}
+  OVN__AggIntervalMin: {{ .Values.app.ovn.aggIntervalMin | quote }}
+  OVN__RecordRetentionHours: {{ .Values.app.ovn.recordRetentionHours | quote }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: radar-app-config
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+data:
+  # KafkaServer comes from kafka-external-secret. Topics+GroupIds from values.kafka.topics.
+  {{- range $i, $t := .Values.kafka.topics }}
+  KafkaClusters__{{ $i }}__Topic: {{ $t.topic | quote }}
+  KafkaClusters__{{ $i }}__GroupId: {{ $t.groupId | quote }}
+  {{- end }}
+  # Per-cluster Tetragon process-event topics → Radar Process Activity consumers.
+  # ClusterName is the authoritative identity stamped onto every event from the topic.
+  # Empty list = Process Activity simply has no data (page still loads).
+  {{- range $i, $t := .Values.kafka.processTopics }}
+  ProcessKafkaClusters__{{ $i }}__Topic: {{ $t.topic | quote }}
+  ProcessKafkaClusters__{{ $i }}__ClusterName: {{ $t.clusterName | quote }}
+  ProcessKafkaClusters__{{ $i }}__GroupId: {{ $t.groupId | quote }}
+  {{- end }}
+  Archiver__IntervalMinutes: {{ .Values.app.archiverIntervalMinutes | quote }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-env
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+data:
+  BASEPATH: {{ .Values.frontend.basepath | quote }}
+  {{- $fhost := include "axera.frontendHost" . }}
+  NEXT_PUBLIC_APP_URL: {{ if $fhost }}{{ printf "https://%s" $fhost | quote }}{{ else }}""{{ end }}
+  # Same-origin proxy: relative paths via Next.js rewrites
+  NEXT_PUBLIC_API_URL: "/api"
+  NEXT_PUBLIC_BASE_URL: ""
+  NEXT_PUBLIC_DEFAULT_PROXY_URL: "/proxy"
+  NEXT_PUBLIC_METRICS_URL: "/metrics"
+  NEXT_PUBLIC_AXERA_RADAR_URL: "/radar"
+  NEXT_PUBLIC_NP_WATCHER_URL: "/npw"

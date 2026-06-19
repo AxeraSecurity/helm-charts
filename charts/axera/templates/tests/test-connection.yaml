@@ -1,0 +1,37 @@
+{{- /*
+  Helm test: verifies the API Service answers on its cluster-internal port.
+  Run after install/upgrade with:  helm test <release> -n <namespace>
+  Satisfies the chart-verifier "contains-test" requirement.
+*/ -}}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Release.Name }}-test-connection"
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: axera-test
+    {{- include "axera.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  serviceAccountName: axera-sa
+  restartPolicy: Never
+  containers:
+    - name: connection-test
+      image: registry.access.redhat.com/ubi9/ubi-minimal:latest
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          set -e
+          echo "Checking API service at http://api:8080 ..."
+          curl --silent --show-error --output /dev/null --max-time 15 \
+               --retry 5 --retry-delay 5 --retry-connrefused http://api:8080
+          echo "OK: api service is reachable."
+      securityContext:
+        allowPrivilegeEscalation: false
+        runAsNonRoot: true
+        capabilities:
+          drop: ["ALL"]
+        seccompProfile:
+          type: RuntimeDefault
