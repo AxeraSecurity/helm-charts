@@ -9,7 +9,7 @@ description: >-
   external Postgres + Kafka + AI endpoints.
 type: application
 # Chart version (SemVer) — bump on every chart change.
-version: 1.1.0
+version: 1.2.0
 # Underlying Axera platform version this chart deploys by default.
 appVersion: "7.0.0"
 # Minimum Kubernetes version. OpenShift 4.12+ ships Kubernetes 1.25+.
