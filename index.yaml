@@ -17,7 +17,7 @@ entries:
       + Kafka + AI endpoints.
     digest: a5b9846e2ea39a8443afacd830e3969a444111c428aca1ae9980e225c668b9cf
     home: https://axerasecurity.com
-    icon: https://axerasecurity.com/og.png
+    icon: https://axerasecurity.github.io/helm-charts/axera-logo.svg
     keywords:
     - microsegmentation
     - network-detection-and-response
@@ -54,7 +54,7 @@ entries:
       + Kafka + AI endpoints.
     digest: 032a1d5a04d83f39f836890e266883701830e740fd32f2b08283ae675101c139
     home: https://axerasecurity.com
-    icon: https://axerasecurity.com/og.png
+    icon: https://axerasecurity.github.io/helm-charts/axera-logo.svg
     keywords:
     - microsegmentation
     - network-detection-and-response
@@ -91,7 +91,7 @@ entries:
       + Kafka + AI endpoints.
     digest: dfdd3eb5c5fe9b8fe03a9322e5a56306743b8a0a5043ea9f81c450233c871f17
     home: https://axerasecurity.com
-    icon: https://axerasecurity.com/og.png
+    icon: https://axerasecurity.github.io/helm-charts/axera-logo.svg
     keywords:
     - microsegmentation
     - network-detection-and-response
