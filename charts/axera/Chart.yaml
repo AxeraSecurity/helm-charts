@@ -9,15 +9,15 @@ description: >-
   external Postgres + Kafka + AI endpoints.
 type: application
 # Chart version (SemVer) — bump on every chart change.
-version: 1.2.0
+version: 1.3.0
 # Underlying Axera platform version this chart deploys by default.
-appVersion: "7.0.0"
+appVersion: "8.1.0"
 # Minimum Kubernetes version. OpenShift 4.12+ ships Kubernetes 1.25+.
 kubeVersion: ">=1.25.0-0"
 home: https://axerasecurity.com
 sources:
   - https://github.com/AxeraSecurity
-icon: https://axerasecurity.com/og.png
+icon: https://axerasecurity.github.io/helm-charts/axera-logo.svg
 keywords:
   - microsegmentation
   - network-detection-and-response

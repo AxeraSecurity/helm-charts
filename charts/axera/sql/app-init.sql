@@ -2504,3 +2504,28 @@ BEGIN
     END IF;
 END $EF$;
 COMMIT;
+
+-- ProtectedNamespaceSettings: operator delta for the configurable protected-namespace guard (jsonb)
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260701170428_ProtectedNamespaceSettingsAdded') THEN
+    CREATE TABLE "ProtectedNamespaceSettings" (
+        "Id" uuid NOT NULL,
+        "Config" jsonb NOT NULL,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        "UpdatedBy" text,
+        CONSTRAINT "PK_ProtectedNamespaceSettings" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260701170428_ProtectedNamespaceSettingsAdded') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260701170428_ProtectedNamespaceSettingsAdded', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;

@@ -44,12 +44,12 @@ imagePullSecret:
 # Container images. Tags can be overridden per-environment.
 # -----------------------------------------------------------------------------
 images:
-  api:                  { repo: microsegmentation-api,                  tag: v7.0.0 }
-  proxy:                { repo: microsegmentation-proxy,                tag: v7.0.0 }
-  allowdropmonitor:     { repo: microsegmentation-allowdropmonitor,     tag: v7.0.0 }
-  radar:                { repo: microsegmentation-radar,                tag: v7.0.0 }
-  networkpolicywatcher: { repo: microsegmentation-networkpolicywatcher, tag: v7.0.0 }
-  frontend:             { repo: microsegmentation-frontend,             tag: v7.0.0 }
+  api:                  { repo: microsegmentation-api,                  tag: v8.1.0 }
+  proxy:                { repo: microsegmentation-proxy,                tag: v8.1.0 }
+  allowdropmonitor:     { repo: microsegmentation-allowdropmonitor,     tag: v8.1.0 }
+  radar:                { repo: microsegmentation-radar,                tag: v8.1.0 }
+  networkpolicywatcher: { repo: microsegmentation-networkpolicywatcher, tag: v8.1.0 }
+  frontend:             { repo: microsegmentation-frontend,             tag: v8.1.0 }
   # Red Hat-certified PostgreSQL (registry.redhat.io is covered by OpenShift's
   # cluster-wide pull secret). db-migrate jobs reuse this image for psql/pg_isready.
   postgres:             { registry: registry.redhat.io, repo: rhel9/postgresql-16, tag: latest }
