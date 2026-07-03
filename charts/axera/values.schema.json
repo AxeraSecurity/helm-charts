@@ -101,6 +101,7 @@
         "encryptionKey": { "type": "string" },
         "encryptionIV": { "type": "string" },
         "internalToken": { "type": "string" },
+        "dpKeysStore": { "type": "string", "enum": ["FileSystem", "Database"] },
         "corsOrigins": { "type": "array", "items": { "type": "string" } },
         "ovn": { "type": "object" },
         "archiverIntervalMinutes": { "type": "integer" }

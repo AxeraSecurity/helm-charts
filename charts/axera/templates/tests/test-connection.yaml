@@ -15,7 +15,12 @@ metadata:
     "helm.sh/hook": test
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
-  serviceAccountName: axera-sa
+  # Use the namespace default ServiceAccount (not axera-sa): the test only needs
+  # network reach to the api Service, no RBAC. On OpenShift the default SA maps to
+  # the restricted-v2 SCC, which injects a non-root UID from the namespace range so
+  # runAsNonRoot below is satisfied. Binding axera-sa (RunAsAny SCC) would leave the
+  # ubi-minimal image running as root and the kubelet would reject the pod.
+  automountServiceAccountToken: false
   restartPolicy: Never
   containers:
     - name: connection-test
