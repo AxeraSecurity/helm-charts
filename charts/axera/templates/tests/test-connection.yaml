@@ -14,6 +14,12 @@ metadata:
   annotations:
     "helm.sh/hook": test
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    # Pin the built-in restricted-v2 SCC (OCP 4.14+). Without this, a cluster that
+    # has a higher-priority permissive SCC (e.g. a leftover eBPF/flow-agent SCC with
+    # RunAsAny) can capture the default ServiceAccount and leave the ubi-minimal image
+    # running as root, which the kubelet rejects (runAsNonRoot). restricted-v2 uses
+    # MustRunAsRange and injects a valid non-root UID from the namespace range.
+    "openshift.io/required-scc": "restricted-v2"
 spec:
   # Use the namespace default ServiceAccount (not axera-sa): the test only needs
   # network reach to the api Service, no RBAC. On OpenShift the default SA maps to

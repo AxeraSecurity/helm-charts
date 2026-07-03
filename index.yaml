@@ -8,14 +8,14 @@ entries:
       charts.openshift.io/supportURL: https://axerasecurity.com/support
     apiVersion: v2
     appVersion: 8.3.0
-    created: "2026-07-03T22:30:29.443685+03:00"
+    created: "2026-07-03T23:18:35.920661+03:00"
     description: Axera — Kubernetes microsegmentation and network detection & response
       (NDR) for OpenShift. Maps every east-west and egress flow, turns observed traffic
       into least-privilege NetworkPolicy, and triages incidents with on-prem AI. Runs
       entirely in-cluster; CNI-agnostic; strictly additive (observes first, enforces
       nothing until you choose). Supports all-internal (one-box) or external Postgres
       + Kafka + AI endpoints.
-    digest: 7e9332e88c8dee390f7f635be97a462c93e31ed882837ef296cf396f585de942
+    digest: da7b0b9de4030267ef8f3dabc143476e74d5ba24a1d36a9fd799fafc31d16f45
     home: https://axerasecurity.com
     icon: https://axerasecurity.github.io/helm-charts/axera-logo.svg
     keywords:
@@ -45,7 +45,7 @@ entries:
       charts.openshift.io/supportURL: https://axerasecurity.com/support
     apiVersion: v2
     appVersion: 8.1.0
-    created: "2026-07-03T22:30:29.442605+03:00"
+    created: "2026-07-03T23:18:35.919662+03:00"
     description: Axera — Kubernetes microsegmentation and network detection & response
       (NDR) for OpenShift. Maps every east-west and egress flow, turns observed traffic
       into least-privilege NetworkPolicy, and triages incidents with on-prem AI. Runs
@@ -82,7 +82,7 @@ entries:
       charts.openshift.io/supportURL: https://axerasecurity.com/support
     apiVersion: v2
     appVersion: 7.0.0
-    created: "2026-07-03T22:30:29.441293+03:00"
+    created: "2026-07-03T23:18:35.91824+03:00"
     description: Axera — Kubernetes microsegmentation and network detection & response
       (NDR) for OpenShift. Maps every east-west and egress flow, turns observed traffic
       into least-privilege NetworkPolicy, and triages incidents with on-prem AI. Runs
@@ -119,7 +119,7 @@ entries:
       charts.openshift.io/supportURL: https://axerasecurity.com/support
     apiVersion: v2
     appVersion: 7.0.0
-    created: "2026-07-03T22:30:29.437557+03:00"
+    created: "2026-07-03T23:18:35.916843+03:00"
     description: Axera — Kubernetes microsegmentation and network detection & response
       (NDR) for OpenShift. Maps every east-west and egress flow, turns observed traffic
       into least-privilege NetworkPolicy, and triages incidents with on-prem AI. Runs
@@ -156,7 +156,7 @@ entries:
       charts.openshift.io/supportURL: https://axerasecurity.com/support
     apiVersion: v2
     appVersion: 6.1.3
-    created: "2026-07-03T22:30:29.436331+03:00"
+    created: "2026-07-03T23:18:35.915738+03:00"
     description: Axera — Kubernetes microsegmentation and network detection & response
       (NDR) for OpenShift. Maps every east-west and egress flow, turns observed traffic
       into least-privilege NetworkPolicy, and triages incidents with on-prem AI. Runs
@@ -186,4 +186,4 @@ entries:
     urls:
     - https://axerasecurity.github.io/helm-charts/axera-1.0.0.tgz
     version: 1.0.0
-generated: "2026-07-03T22:30:29.434195+03:00"
+generated: "2026-07-03T23:18:35.913473+03:00"
