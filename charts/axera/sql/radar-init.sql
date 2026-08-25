@@ -598,3 +598,229 @@ BEGIN
     END IF;
 END $EF$;
 COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260701082557_MeshProtoInFlowUniqueIndexes') THEN
+    DROP INDEX IF EXISTS "IX_FlowEntries_ClusterName_DstOwner_DstNs_SrcOwner_SrcNs_DstPo~";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260701082557_MeshProtoInFlowUniqueIndexes') THEN
+    DROP INDEX IF EXISTS "IX_ExternalFlowEntries_SrcClusterName_DstClusterName_DstIp_Dst~";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260701082557_MeshProtoInFlowUniqueIndexes') THEN
+    CREATE UNIQUE INDEX "IX_FlowEntries_ClusterName_DstOwner_DstNs_SrcOwner_SrcNs_DstPo~" ON "FlowEntries" ("ClusterName", "DstOwner", "DstNs", "SrcOwner", "SrcNs", "DstPort", "Proto");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260701082557_MeshProtoInFlowUniqueIndexes') THEN
+    CREATE UNIQUE INDEX "IX_ExternalFlowEntries_SrcClusterName_DstClusterName_DstIp_Dst~" ON "ExternalFlowEntries" ("SrcClusterName", "DstClusterName", "DstIp", "DstOwner", "DstNs", "SrcOwner", "SrcNs", "DstPort", "Proto");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260701082557_MeshProtoInFlowUniqueIndexes') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260701082557_MeshProtoInFlowUniqueIndexes', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+
+
+-- v9.0.0: Proto in ProcessFlowEntries unique index (idempotent)
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260710131942_ProtoInProcessFlowUniqueIndex') THEN
+    DROP INDEX "IX_ProcessFlowEntries_ClusterName_Namespace_Workload_Binary_Ds~";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260710131942_ProtoInProcessFlowUniqueIndex') THEN
+    CREATE UNIQUE INDEX "IX_ProcessFlowEntries_ClusterName_Namespace_Workload_Binary_Ds~" ON "ProcessFlowEntries" ("ClusterName", "Namespace", "Workload", "Binary", "DstNs", "DstOwner", "DstPort", "Proto");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260710131942_ProtoInProcessFlowUniqueIndex') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260710131942_ProtoInProcessFlowUniqueIndex', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+
+
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260713140140_AuthorizationPolicyRecordsAndVersioning') THEN
+    ALTER TABLE "ProcessPolicyRecords" ADD "ContentHash" text NOT NULL DEFAULT '';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260713140140_AuthorizationPolicyRecordsAndVersioning') THEN
+    ALTER TABLE "ProcessPolicyRecords" ADD "VersionNumber" integer NOT NULL DEFAULT 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260713140140_AuthorizationPolicyRecordsAndVersioning') THEN
+    CREATE TABLE "AuthorizationPolicyRecords" (
+        "Id" uuid NOT NULL,
+        "ClusterName" text NOT NULL,
+        "Namespace" text NOT NULL,
+        "Workload" text NOT NULL,
+        "Name" text NOT NULL,
+        "Stage" text NOT NULL,
+        "Action" text NOT NULL,
+        "Status" text NOT NULL,
+        "Selector" text NOT NULL,
+        "RulesJson" jsonb NOT NULL,
+        "Yaml" text NOT NULL,
+        "VersionNumber" integer NOT NULL,
+        "ContentHash" text NOT NULL,
+        "CreatedAt" timestamp with time zone NOT NULL,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        "CreatedBy" text,
+        "AppliedAt" timestamp with time zone,
+        "LastError" text,
+        CONSTRAINT "PK_AuthorizationPolicyRecords" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260713140140_AuthorizationPolicyRecordsAndVersioning') THEN
+    CREATE TABLE "PolicyVersions" (
+        "Id" uuid NOT NULL,
+        "Kind" text NOT NULL,
+        "ClusterName" text NOT NULL,
+        "Namespace" text NOT NULL,
+        "Workload" text NOT NULL,
+        "Variant" text NOT NULL,
+        "Name" text NOT NULL,
+        "VersionNumber" integer NOT NULL,
+        "Yaml" text NOT NULL,
+        "Status" text NOT NULL,
+        "ContentHash" text NOT NULL,
+        "CreatedAt" timestamp with time zone NOT NULL,
+        "CreatedBy" text,
+        CONSTRAINT "PK_PolicyVersions" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260713140140_AuthorizationPolicyRecordsAndVersioning') THEN
+    CREATE UNIQUE INDEX "IX_AuthorizationPolicyRecords_ClusterName_Namespace_Workload" ON "AuthorizationPolicyRecords" ("ClusterName", "Namespace", "Workload");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260713140140_AuthorizationPolicyRecordsAndVersioning') THEN
+    CREATE UNIQUE INDEX "IX_PolicyVersions_Kind_ClusterName_Namespace_Workload_Variant_~" ON "PolicyVersions" ("Kind", "ClusterName", "Namespace", "Workload", "Variant", "VersionNumber");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260713140140_AuthorizationPolicyRecordsAndVersioning') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260713140140_AuthorizationPolicyRecordsAndVersioning', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+
+
+-- v9.11.0: MeshFlowVerdicts (ambient mesh AuthZ allow/deny) — idempotent
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260714100251_MeshFlowVerdictsAdded') THEN
+    CREATE TABLE "MeshFlowVerdicts" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "SrcNs" text NOT NULL,
+        "SrcOwner" text NOT NULL,
+        "SrcIdentity" text NOT NULL,
+        "DstNs" text NOT NULL,
+        "DstOwner" text NOT NULL,
+        "DstService" text NOT NULL,
+        "DstPort" integer NOT NULL,
+        "Proto" integer NOT NULL,
+        "Plane" text NOT NULL,
+        "Verdict" text NOT NULL,
+        "Reason" text NOT NULL,
+        "Direction" text NOT NULL,
+        "Time" bigint NOT NULL,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_MeshFlowVerdicts" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260714100251_MeshFlowVerdictsAdded') THEN
+    CREATE UNIQUE INDEX "IX_MeshFlowVerdicts_ClusterName_SrcNs_SrcOwner_DstNs_DstOwner_~" ON "MeshFlowVerdicts" ("ClusterName", "SrcNs", "SrcOwner", "DstNs", "DstOwner", "DstService", "DstPort", "Plane", "Direction");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260714100251_MeshFlowVerdictsAdded') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260714100251_MeshFlowVerdictsAdded', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260810120029_AddFlowTelemetryPerfIndexes') THEN
+    CREATE INDEX "IX_FlowEntries_UpdatedAt" ON "FlowEntries" ("UpdatedAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260810120029_AddFlowTelemetryPerfIndexes') THEN
+    CREATE INDEX "IX_RedundantFlowEntries_ArchivedAt" ON "RedundantFlowEntries" ("ArchivedAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260810120029_AddFlowTelemetryPerfIndexes') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260810120029_AddFlowTelemetryPerfIndexes', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
