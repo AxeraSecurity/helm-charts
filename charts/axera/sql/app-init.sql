@@ -4028,4 +4028,14 @@ BEGIN
     END IF;
 END $EF$;
 
+-- 20260902090000_AddIamReportSchedules: scheduled governance report mails.
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260902090000_AddIamReportSchedules') THEN
+    ALTER TABLE "IamSettings" ADD COLUMN IF NOT EXISTS "ReportSchedulesJson" text NULL;
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260902090000_AddIamReportSchedules', '10.0.7');
+    END IF;
+END $EF$;
+
 COMMIT;
