@@ -255,6 +255,12 @@ networkPolicies:
 # Resource requests/limits — modest defaults; tune per-environment.
 # =============================================================================
 resources:
+  # The frontend is a Next.js SSR server: every page view is server work, so with
+  # no request it lands in BestEffort QoS and is the first thing the node throttles
+  # — which showed up as multi-second navigations on an otherwise idle cluster.
+  frontend:
+    requests: { cpu: 200m, memory: 384Mi }
+    limits:   { cpu: "2",  memory: 1Gi }
   postgres:
     requests: { cpu: 100m, memory: 256Mi }
     limits:   { cpu: "2",  memory: 2Gi }
