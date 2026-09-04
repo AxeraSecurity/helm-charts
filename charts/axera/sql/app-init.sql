@@ -4048,4 +4048,14 @@ BEGIN
     END IF;
 END $EF$;
 
+-- 20260904120000_AddIamAllowSelfApproval: opt-in self-approval for scope owners.
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260904120000_AddIamAllowSelfApproval') THEN
+    ALTER TABLE "IamSettings" ADD COLUMN IF NOT EXISTS "AllowSelfApproval" boolean NOT NULL DEFAULT false;
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260904120000_AddIamAllowSelfApproval', '10.0.7');
+    END IF;
+END $EF$;
+
 COMMIT;
