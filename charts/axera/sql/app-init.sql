@@ -4038,4 +4038,14 @@ BEGIN
     END IF;
 END $EF$;
 
+-- 20260904090000_AddIamResyncMinutes: discovery cadence in minutes.
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260904090000_AddIamResyncMinutes') THEN
+    ALTER TABLE "IamSettings" ADD COLUMN IF NOT EXISTS "FullResyncIntervalMinutes" integer NULL;
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260904090000_AddIamResyncMinutes', '10.0.7');
+    END IF;
+END $EF$;
+
 COMMIT;
