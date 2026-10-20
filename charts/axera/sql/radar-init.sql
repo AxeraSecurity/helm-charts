@@ -105,7 +105,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260227150122_InitialCreateV3') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260227150122_InitialCreateV3', '10.0.5');
+    VALUES ('20260227150122_InitialCreateV3', '10.0.7');
     END IF;
 END $EF$;
 COMMIT;
@@ -180,7 +180,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260309112053_EnrichedFlowsAdded') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260309112053_EnrichedFlowsAdded', '10.0.5');
+    VALUES ('20260309112053_EnrichedFlowsAdded', '10.0.7');
     END IF;
 END $EF$;
 COMMIT;
@@ -198,7 +198,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260326071635_EnrichedFlowTableDropped') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260326071635_EnrichedFlowTableDropped', '10.0.5');
+    VALUES ('20260326071635_EnrichedFlowTableDropped', '10.0.7');
     END IF;
 END $EF$;
 COMMIT;
@@ -239,7 +239,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260326084346_CollectionsAdded') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260326084346_CollectionsAdded', '10.0.5');
+    VALUES ('20260326084346_CollectionsAdded', '10.0.7');
     END IF;
 END $EF$;
 COMMIT;
@@ -257,7 +257,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260326095508_CollectionsLabelsAdded') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260326095508_CollectionsLabelsAdded', '10.0.5');
+    VALUES ('20260326095508_CollectionsLabelsAdded', '10.0.7');
     END IF;
 END $EF$;
 COMMIT;
@@ -296,7 +296,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260504091832_ExternalFlowAdded') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260504091832_ExternalFlowAdded', '10.0.5');
+    VALUES ('20260504091832_ExternalFlowAdded', '10.0.7');
     END IF;
 END $EF$;
 COMMIT;
@@ -379,18 +379,26 @@ BEGIN
 END $EF$;
 COMMIT;
 
--- 20260603140000_FlowEntryVolumeAdded
--- Additive NDR volume/protocol columns (Bytes, Packets, Proto) on FlowEntries,
--- carried on the same topology topic. Not part of the unique key, defaulted to
--- 0 - existing rows and the upsert behaviour are unchanged (backward compatible).
 START TRANSACTION;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260603140000_FlowEntryVolumeAdded') THEN
-    ALTER TABLE "FlowEntries" ADD COLUMN "Bytes" bigint NOT NULL DEFAULT 0;
-    ALTER TABLE "FlowEntries" ADD COLUMN "Packets" bigint NOT NULL DEFAULT 0;
-    ALTER TABLE "FlowEntries" ADD COLUMN "Proto" integer NOT NULL DEFAULT 0;
+    ALTER TABLE "FlowEntries" ADD "Bytes" bigint NOT NULL DEFAULT 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260603140000_FlowEntryVolumeAdded') THEN
+    ALTER TABLE "FlowEntries" ADD "Packets" bigint NOT NULL DEFAULT 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260603140000_FlowEntryVolumeAdded') THEN
+    ALTER TABLE "FlowEntries" ADD "Proto" integer NOT NULL DEFAULT 0;
     END IF;
 END $EF$;
 
@@ -403,17 +411,26 @@ BEGIN
 END $EF$;
 COMMIT;
 
--- 20260603150000_ExternalFlowEntryVolumeAdded
--- Same additive volume/protocol columns on ExternalFlowEntries, mirroring
--- FlowEntries. Defaulted to 0, not in the unique key - backward compatible.
 START TRANSACTION;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260603150000_ExternalFlowEntryVolumeAdded') THEN
-    ALTER TABLE "ExternalFlowEntries" ADD COLUMN "Bytes" bigint NOT NULL DEFAULT 0;
-    ALTER TABLE "ExternalFlowEntries" ADD COLUMN "Packets" bigint NOT NULL DEFAULT 0;
-    ALTER TABLE "ExternalFlowEntries" ADD COLUMN "Proto" integer NOT NULL DEFAULT 0;
+    ALTER TABLE "ExternalFlowEntries" ADD "Bytes" bigint NOT NULL DEFAULT 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260603150000_ExternalFlowEntryVolumeAdded') THEN
+    ALTER TABLE "ExternalFlowEntries" ADD "Packets" bigint NOT NULL DEFAULT 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260603150000_ExternalFlowEntryVolumeAdded') THEN
+    ALTER TABLE "ExternalFlowEntries" ADD "Proto" integer NOT NULL DEFAULT 0;
     END IF;
 END $EF$;
 
@@ -426,19 +443,32 @@ BEGIN
 END $EF$;
 COMMIT;
 
--- 20260603160000_FlowVolumeBucketRollup
--- Moves NDR volume from the topology edge tables to a proper time-series: drops
--- the last-write-wins Bytes/Packets from FlowEntries/ExternalFlowEntries (Proto
--- stays - stable per edge) and creates FlowVolumeBuckets, one pre-aggregated row
--- per (entity, window, external). Bounded cardinality, TTL-pruned.
 START TRANSACTION;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260603160000_FlowVolumeBucketRollup') THEN
     ALTER TABLE "FlowEntries" DROP COLUMN "Bytes";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260603160000_FlowVolumeBucketRollup') THEN
     ALTER TABLE "FlowEntries" DROP COLUMN "Packets";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260603160000_FlowVolumeBucketRollup') THEN
     ALTER TABLE "ExternalFlowEntries" DROP COLUMN "Bytes";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260603160000_FlowVolumeBucketRollup') THEN
     ALTER TABLE "ExternalFlowEntries" DROP COLUMN "Packets";
     END IF;
 END $EF$;
@@ -604,14 +634,14 @@ START TRANSACTION;
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260701082557_MeshProtoInFlowUniqueIndexes') THEN
-    DROP INDEX IF EXISTS "IX_FlowEntries_ClusterName_DstOwner_DstNs_SrcOwner_SrcNs_DstPo~";
+    DROP INDEX "IX_FlowEntries_ClusterName_DstOwner_DstNs_SrcOwner_SrcNs_DstPo~";
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260701082557_MeshProtoInFlowUniqueIndexes') THEN
-    DROP INDEX IF EXISTS "IX_ExternalFlowEntries_SrcClusterName_DstClusterName_DstIp_Dst~";
+    DROP INDEX "IX_ExternalFlowEntries_SrcClusterName_DstClusterName_DstIp_Dst~";
     END IF;
 END $EF$;
 
@@ -638,8 +668,6 @@ BEGIN
 END $EF$;
 COMMIT;
 
-
--- v9.0.0: Proto in ProcessFlowEntries unique index (idempotent)
 START TRANSACTION;
 
 DO $EF$
@@ -664,8 +692,6 @@ BEGIN
     END IF;
 END $EF$;
 COMMIT;
-
-
 
 START TRANSACTION;
 
@@ -755,8 +781,6 @@ BEGIN
 END $EF$;
 COMMIT;
 
-
--- v9.11.0: MeshFlowVerdicts (ambient mesh AuthZ allow/deny) — idempotent
 START TRANSACTION;
 
 DO $EF$
@@ -824,3 +848,2915 @@ BEGIN
     END IF;
 END $EF$;
 COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260812090000_InterClusterFlowsAdded') THEN
+    CREATE TABLE "InterClusterFlowEntries" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "DstClusterName" text NOT NULL,
+        "DstOwner" text NOT NULL,
+        "DstNs" text NOT NULL,
+        "DstIp" text NOT NULL,
+        "DstPort" integer NOT NULL,
+        "SrcGlobalIp" text NOT NULL,
+        "SrcClusterName" text NOT NULL,
+        "SrcNs" text NOT NULL,
+        "SrcOwner" text NOT NULL,
+        "SrcAllocation" text NOT NULL,
+        "SrcAllocationRef" text NOT NULL,
+        "SrcPodSelector" text NOT NULL,
+        "Proto" integer NOT NULL,
+        "TcpFlags" integer NOT NULL,
+        "Time" bigint NOT NULL,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_InterClusterFlowEntries" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260812090000_InterClusterFlowsAdded') THEN
+    CREATE UNIQUE INDEX "IX_InterClusterFlowEntries_Edge" ON "InterClusterFlowEntries" ("DstClusterName", "DstNs", "DstOwner", "DstPort", "Proto", "SrcClusterName", "SrcNs", "SrcOwner", "SrcGlobalIp");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260812090000_InterClusterFlowsAdded') THEN
+    CREATE INDEX "IX_InterClusterFlowEntries_UpdatedAt" ON "InterClusterFlowEntries" ("UpdatedAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260812090000_InterClusterFlowsAdded') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260812090000_InterClusterFlowsAdded', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260812140000_InterClusterClusterCidrAdded') THEN
+    ALTER TABLE "InterClusterFlowEntries" ADD "SrcClusterCidr" text NOT NULL DEFAULT '';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260812140000_InterClusterClusterCidrAdded') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260812140000_InterClusterClusterCidrAdded', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260812170000_InterClusterEdgeKeyNarrowed') THEN
+    DROP INDEX "IX_InterClusterFlowEntries_Edge";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260812170000_InterClusterEdgeKeyNarrowed') THEN
+    DELETE FROM "InterClusterFlowEntries" a
+                      USING "InterClusterFlowEntries" b
+                      WHERE a."ctid" <> b."ctid"
+                        AND a."DstClusterName" = b."DstClusterName"
+                        AND a."DstNs"          = b."DstNs"
+                        AND a."DstOwner"       = b."DstOwner"
+                        AND a."DstPort"        = b."DstPort"
+                        AND a."Proto"          = b."Proto"
+                        AND a."SrcGlobalIp"    = b."SrcGlobalIp"
+                        AND (a."UpdatedAt" < b."UpdatedAt"
+                             OR (a."UpdatedAt" = b."UpdatedAt" AND a."Id" < b."Id"));
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260812170000_InterClusterEdgeKeyNarrowed') THEN
+    CREATE UNIQUE INDEX "IX_InterClusterFlowEntries_Edge" ON "InterClusterFlowEntries" ("DstClusterName", "DstNs", "DstOwner", "DstPort", "Proto", "SrcGlobalIp");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260812170000_InterClusterEdgeKeyNarrowed') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260812170000_InterClusterEdgeKeyNarrowed', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260824100758_EgressScanIndexAdded') THEN
+    CREATE INDEX IF NOT EXISTS "IX_ExternalFlowEntries_SrcClusterName_UpdatedAt" ON "ExternalFlowEntries" ("SrcClusterName", "UpdatedAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260824100758_EgressScanIndexAdded') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260824100758_EgressScanIndexAdded', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260824101816_EgressPoolsAndSnapshotsAdded') THEN
+    CREATE TABLE IF NOT EXISTS "EgressIpPools" (
+        "Id" uuid NOT NULL,
+        "Name" text NOT NULL,
+        "Cluster" text NOT NULL,
+        "Cidr" text NOT NULL,
+        "Description" text,
+        "CreatedAt" timestamp with time zone NOT NULL,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_EgressIpPools" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260824101816_EgressPoolsAndSnapshotsAdded') THEN
+    CREATE TABLE IF NOT EXISTS "EgressIpSnapshots" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "Cluster" text NOT NULL,
+        "CrName" text NOT NULL,
+        "SpecIpsJson" text NOT NULL,
+        "AssignedJson" text NOT NULL,
+        "MatchedNsJson" text NOT NULL,
+        "CapturedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_EgressIpSnapshots" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260824101816_EgressPoolsAndSnapshotsAdded') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_EgressIpPools_Cluster_Name" ON "EgressIpPools" ("Cluster", "Name");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260824101816_EgressPoolsAndSnapshotsAdded') THEN
+    CREATE INDEX IF NOT EXISTS "IX_EgressIpSnapshots_Cluster_CrName_CapturedAt" ON "EgressIpSnapshots" ("Cluster", "CrName", "CapturedAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260824101816_EgressPoolsAndSnapshotsAdded') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260824101816_EgressPoolsAndSnapshotsAdded', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260825080928_DnsVisibilityAdded') THEN
+    CREATE TABLE IF NOT EXISTS "DnsFlowEntries" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "SrcNs" text NOT NULL,
+        "SrcOwner" text NOT NULL,
+        "QueryName" text NOT NULL,
+        "ResolverIp" text NOT NULL,
+        "ResponseCode" text NOT NULL,
+        "QueryCount" bigint NOT NULL,
+        "MaxLatencyMs" double precision NOT NULL,
+        "FirstSeen" timestamp with time zone NOT NULL,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_DnsFlowEntries" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260825080928_DnsVisibilityAdded') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_DnsFlowEntries_ClusterName_SrcNs_SrcOwner_QueryName_Resolve~" ON "DnsFlowEntries" ("ClusterName", "SrcNs", "SrcOwner", "QueryName", "ResolverIp", "ResponseCode");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260825080928_DnsVisibilityAdded') THEN
+    CREATE INDEX IF NOT EXISTS "IX_DnsFlowEntries_ClusterName_UpdatedAt" ON "DnsFlowEntries" ("ClusterName", "UpdatedAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260825080928_DnsVisibilityAdded') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260825080928_DnsVisibilityAdded', '10.0.7');
+    END IF;
+END $EF$;
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260827201323_ExternalFlowDestinationIndexAdded') THEN
+    CREATE INDEX "IX_ExternalFlowEntries_DstIp_DstPort" ON "ExternalFlowEntries" ("DstIp", "DstPort");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260827201323_ExternalFlowDestinationIndexAdded') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260827201323_ExternalFlowDestinationIndexAdded', '10.0.7');
+    END IF;
+END $EF$;
+
+COMMIT;
+
+-- Process Activity baseline learning: FirstSeenUtc (never refreshed on upsert; NULL = row
+-- predates the column, age unknown) + HitCount (summed on upsert; 0 = predates counting).
+-- Without these "first seen" was the oldest last-seen and "rare" was a share of destination
+-- rows, so the quietest single-host client in a pod was flagged as an anomaly. Idempotent.
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260904111448_ProcessBaselineLearning') THEN
+    ALTER TABLE "ProcessFlowEntries" ADD COLUMN IF NOT EXISTS "FirstSeenUtc" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260904111448_ProcessBaselineLearning') THEN
+    ALTER TABLE "ProcessFlowEntries" ADD COLUMN IF NOT EXISTS "HitCount" bigint NOT NULL DEFAULT 0;
+    -- One uniform stamp for every pre-existing edge (see the EF migration for why: left
+    -- NULL, an active workload could never leave its learning window).
+    UPDATE "ProcessFlowEntries" SET "FirstSeenUtc" = now() WHERE "FirstSeenUtc" IS NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260904111448_ProcessBaselineLearning') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260904111448_ProcessBaselineLearning', '10.0.7');
+    END IF;
+END $EF$;
+
+COMMIT;
+
+-- Process Activity exec baseline: binaries that EXECUTED in a workload (Tetragon process_exec),
+-- whether or not they ever connected. Feeds the same per-workload classifier as the connect
+-- edges, so "new for this workload" can be known before the first connection. Empty until
+-- the agent's export-allowlist adds PROCESS_EXEC. Idempotent.
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260904130817_ProcessExecBaseline') THEN
+    CREATE TABLE IF NOT EXISTS "ProcessExecEntries" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "Namespace" text NOT NULL,
+        "Workload" text NOT NULL,
+        "Binary" text NOT NULL,
+        "Args" text NOT NULL,
+        "PodName" text NOT NULL,
+        "ContainerName" text NOT NULL,
+        "NodeName" text NOT NULL,
+        "Pid" integer NOT NULL,
+        "Uid" bigint NOT NULL,
+        "FirstSeenUtc" timestamp with time zone NOT NULL,
+        "HitCount" bigint NOT NULL,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_ProcessExecEntries" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260904130817_ProcessExecBaseline') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_ProcessExecEntries_ClusterName_Namespace_Workload_Binary" ON "ProcessExecEntries" ("ClusterName", "Namespace", "Workload", "Binary");
+    CREATE INDEX IF NOT EXISTS "IX_ProcessExecEntries_ClusterName_Namespace_Workload" ON "ProcessExecEntries" ("ClusterName", "Namespace", "Workload");
+    CREATE INDEX IF NOT EXISTS "IX_ProcessExecEntries_UpdatedAt" ON "ProcessExecEntries" ("UpdatedAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260904130817_ProcessExecBaseline') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260904130817_ProcessExecBaseline', '10.0.7');
+    END IF;
+END $EF$;
+
+COMMIT;
+
+-- Process Activity: rows written without a first-seen (an older Radar binary during a rolling
+-- upgrade) must not stay NULL forever — a workload made only of such rows would never leave
+-- its learning window. Unguarded on purpose: idempotent (WHERE IS NULL), cheap on a bounded
+-- table, and it has to run on every apply, not just the one that recorded the migration.
+UPDATE "ProcessFlowEntries" SET "FirstSeenUtc" = now() WHERE "FirstSeenUtc" IS NULL;
+
+
+-- Mesh verdict store + process-flow port model. MeshFlowVerdicts: Verdict and SrcIdentity join
+-- the business key (a deny no longer overwrites the allow on the same tuple; plaintext and mTLS
+-- callers are distinct rows), HitCount (summed on upsert), FirstSeenUtc (never refreshed),
+-- StartedAt (close - duration), EnforcementPoint (ztunnel | ztunnel-passthrough), MatchedPolicy
+-- (the AuthorizationPolicy ztunnel blamed). ProcessFlowEntries: ServicePort (what Tetragon saw
+-- on a Service VIP) and PodPort (the resolved targetPort; NULL = undecidable, never guessed).
+-- Existing mesh rows are kept and backfilled with what is known (see the EF migration). Idempotent.
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260911083049_MeshVerdictStoreAndProcessFlowPorts') THEN
+    DROP INDEX IF EXISTS "IX_MeshFlowVerdicts_ClusterName_SrcNs_SrcOwner_DstNs_DstOwner_~";
+    ALTER TABLE "MeshFlowVerdicts" ADD COLUMN IF NOT EXISTS "EnforcementPoint" text NOT NULL DEFAULT 'ztunnel';
+    ALTER TABLE "MeshFlowVerdicts" ADD COLUMN IF NOT EXISTS "FirstSeenUtc" timestamp with time zone;
+    ALTER TABLE "MeshFlowVerdicts" ADD COLUMN IF NOT EXISTS "HitCount" bigint NOT NULL DEFAULT 0;
+    ALTER TABLE "MeshFlowVerdicts" ADD COLUMN IF NOT EXISTS "MatchedPolicy" text;
+    ALTER TABLE "MeshFlowVerdicts" ADD COLUMN IF NOT EXISTS "StartedAt" timestamp with time zone;
+    -- Backfill only what is known about pre-existing rows: they existed at least since their
+    -- last refresh, at least one connection produced them, and the policy name is recoverable
+    -- from the reason when ztunnel named it. Their EnforcementPoint default 'ztunnel' is a fact
+    -- (the old parser only accepted HBONE lines); StartedAt stays NULL (never captured).
+    UPDATE "MeshFlowVerdicts" SET "FirstSeenUtc" = "UpdatedAt" WHERE "FirstSeenUtc" IS NULL;
+    UPDATE "MeshFlowVerdicts" SET "HitCount" = 1 WHERE "HitCount" = 0;
+    UPDATE "MeshFlowVerdicts" SET "MatchedPolicy" = substring("Reason" from 'explicitly denied by: ([^[:space:]"]+)')
+        WHERE "MatchedPolicy" IS NULL AND "Reason" LIKE '%explicitly denied by: %';
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_MeshFlowVerdicts_BusinessKey" ON "MeshFlowVerdicts" ("ClusterName", "SrcNs", "SrcOwner", "SrcIdentity", "DstNs", "DstOwner", "DstService", "DstPort", "Plane", "Direction", "Verdict");
+    CREATE INDEX IF NOT EXISTS "IX_MeshFlowVerdicts_ClusterName_UpdatedAt" ON "MeshFlowVerdicts" ("ClusterName", "UpdatedAt");
+    ALTER TABLE "ProcessFlowEntries" ADD COLUMN IF NOT EXISTS "ServicePort" integer;
+    ALTER TABLE "ProcessFlowEntries" ADD COLUMN IF NOT EXISTS "PodPort" integer;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260911083049_MeshVerdictStoreAndProcessFlowPorts') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260911083049_MeshVerdictStoreAndProcessFlowPorts', '10.0.7');
+    END IF;
+END $EF$;
+
+COMMIT;
+
+
+-- AuthorizationPolicy inventory: provenance + drift on AuthorizationPolicyRecords. ManagedBy
+-- (who wrote it — every pre-existing row was written by the bundle deploy, the only writer of
+-- records until now), TicketKey / GitRef / ApprovedBy (change-control evidence that until now
+-- lived only in the audit log's Details JSON), DriftState / DriftReason / DriftCheckedAtUtc /
+-- LiveContentHash (flag-only drift: InSync | Modified | Missing | Unknown — pre-existing rows
+-- start Unknown because nothing has checked them; nothing ever restores an object). The unique
+-- key gains Name so builder-authored (manual) records — several per namespace, Workload "" —
+-- can coexist with the one-per-workload bundle records. Idempotent.
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260911131212_AuthzRecordProvenanceAndDrift') THEN
+    DROP INDEX IF EXISTS "IX_AuthorizationPolicyRecords_ClusterName_Namespace_Workload";
+    ALTER TABLE "AuthorizationPolicyRecords" ADD COLUMN IF NOT EXISTS "ApprovedBy" text;
+    ALTER TABLE "AuthorizationPolicyRecords" ADD COLUMN IF NOT EXISTS "DriftCheckedAtUtc" timestamp with time zone;
+    ALTER TABLE "AuthorizationPolicyRecords" ADD COLUMN IF NOT EXISTS "DriftReason" text;
+    ALTER TABLE "AuthorizationPolicyRecords" ADD COLUMN IF NOT EXISTS "DriftState" text NOT NULL DEFAULT 'Unknown';
+    ALTER TABLE "AuthorizationPolicyRecords" ADD COLUMN IF NOT EXISTS "GitRef" text;
+    ALTER TABLE "AuthorizationPolicyRecords" ADD COLUMN IF NOT EXISTS "LiveContentHash" text;
+    ALTER TABLE "AuthorizationPolicyRecords" ADD COLUMN IF NOT EXISTS "ManagedBy" text NOT NULL DEFAULT 'axera-bundle';
+    ALTER TABLE "AuthorizationPolicyRecords" ADD COLUMN IF NOT EXISTS "TicketKey" text;
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_AuthorizationPolicyRecords_ClusterName_Namespace_Workload_N~" ON "AuthorizationPolicyRecords" ("ClusterName", "Namespace", "Workload", "Name");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260911131212_AuthzRecordProvenanceAndDrift') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260911131212_AuthzRecordProvenanceAndDrift', '10.0.7');
+    END IF;
+END $EF$;
+
+COMMIT;
+
+
+-- Mesh verdict ledger: the retained, countable form of MeshFlowVerdicts. MeshVerdictDaily is one
+-- row per (cluster, UTC day, mesh edge, enforcement point, verdict, reason class) with a HitCount
+-- the rollup INCREMENTS by each flush's delta (never recomputed from the live row's running
+-- total), plus within-day FirstSeen/LastSeen, the last MatchedPolicy, Stage ('enforced' now,
+-- 'shadow' reserved) and a per-row ForwardedAt watermark for the "mesh-verdict" SIEM stream.
+-- MeshTelemetryCoverage is one row per (cluster, enforcement point, day) recording whether anybody
+-- was READING that lane's logs that day and the error class when not — so a zero in the ledger can
+-- be told apart from a day nobody was looking. The final INSERT carries the existing live rows
+-- forward: their hits are real but their days were never recorded, so each lump is attributed to
+-- the day the edge was last seen and flagged CarriedForward, which every count then reports
+-- separately. Without it the retention sweep (which refuses to prune a live row it cannot prove
+-- was folded) would retain every pre-upgrade row forever. Idempotent.
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260911211517_MeshVerdictLedgerAndCoverage') THEN
+    CREATE TABLE IF NOT EXISTS "MeshTelemetryCoverage" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "Day" timestamp with time zone NOT NULL,
+        "EnforcementPoint" text NOT NULL,
+        "Observed" boolean NOT NULL,
+        "SampleCount" integer NOT NULL,
+        "ObservedSampleCount" integer NOT NULL,
+        "LastErrorClass" text NOT NULL,
+        "NotObservedReason" text,
+        "DegradedReason" text,
+        "FirstSampleUtc" timestamp with time zone NOT NULL,
+        "LastSampleUtc" timestamp with time zone NOT NULL,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_MeshTelemetryCoverage" PRIMARY KEY ("Id")
+    );
+    CREATE TABLE IF NOT EXISTS "MeshVerdictDaily" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "Day" timestamp with time zone NOT NULL,
+        "SrcNs" text NOT NULL,
+        "SrcOwner" text NOT NULL,
+        "SrcIdentity" text NOT NULL,
+        "DstNs" text NOT NULL,
+        "DstOwner" text NOT NULL,
+        "DstPort" integer NOT NULL,
+        "EnforcementPoint" text NOT NULL,
+        "Verdict" text NOT NULL,
+        "ReasonClass" text NOT NULL,
+        "Stage" text NOT NULL DEFAULT 'enforced',
+        "HitCount" bigint NOT NULL DEFAULT 0,
+        "FirstSeenUtc" timestamp with time zone NOT NULL,
+        "LastSeenUtc" timestamp with time zone NOT NULL,
+        "MatchedPolicy" text,
+        "CarriedForward" boolean NOT NULL DEFAULT FALSE,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        "ForwardedAt" timestamp with time zone,
+        CONSTRAINT "PK_MeshVerdictDaily" PRIMARY KEY ("Id")
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_MeshTelemetryCoverage_ClusterDayPoint" ON "MeshTelemetryCoverage" ("ClusterName", "Day", "EnforcementPoint");
+    CREATE INDEX IF NOT EXISTS "IX_MeshTelemetryCoverage_Day" ON "MeshTelemetryCoverage" ("Day");
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_MeshVerdictDaily_BusinessKey" ON "MeshVerdictDaily" ("ClusterName", "Day", "SrcNs", "SrcOwner", "SrcIdentity", "DstNs", "DstOwner", "DstPort", "EnforcementPoint", "Verdict", "ReasonClass", "Stage");
+    CREATE INDEX IF NOT EXISTS "IX_MeshVerdictDaily_ClusterName_Day" ON "MeshVerdictDaily" ("ClusterName", "Day");
+    CREATE INDEX IF NOT EXISTS "IX_MeshVerdictDaily_Day" ON "MeshVerdictDaily" ("Day");
+    CREATE INDEX IF NOT EXISTS "IX_MeshVerdictDaily_ForwardedAt_UpdatedAt" ON "MeshVerdictDaily" ("UpdatedAt") WHERE "ForwardedAt" IS NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260911211517_MeshVerdictLedgerAndCoverage') THEN
+    INSERT INTO "MeshVerdictDaily" (
+        "ClusterName", "Day", "SrcNs", "SrcOwner", "SrcIdentity", "DstNs", "DstOwner",
+        "DstPort", "EnforcementPoint", "Verdict", "ReasonClass", "Stage", "HitCount",
+        "FirstSeenUtc", "LastSeenUtc", "MatchedPolicy", "CarriedForward", "UpdatedAt",
+        "ForwardedAt")
+    SELECT
+        v."ClusterName",
+        -- Explicit UTC: bare date_trunc on a timestamptz truncates in the SESSION timezone,
+        -- which would put a day's traffic in the wrong bucket on any non-UTC connection.
+        (date_trunc('day', v."UpdatedAt" AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'),
+        v."SrcNs", v."SrcOwner", v."SrcIdentity", v."DstNs", v."DstOwner",
+        v."DstPort", v."EnforcementPoint", v."Verdict",
+        CASE
+            WHEN v."Verdict" <> 'deny' THEN 'none'
+            WHEN v."MatchedPolicy" IS NOT NULL AND btrim(v."MatchedPolicy") <> '' THEN 'explicit-deny'
+            WHEN v."Reason" IS NULL OR btrim(v."Reason") = '' THEN 'unspecified'
+            WHEN lower(v."Reason") LIKE '%http status: 401%'
+              OR lower(v."Reason") LIKE '%unauthorized%' THEN 'unauthorized'
+            WHEN lower(v."Reason") LIKE '%policy rejection%'
+              OR lower(v."Reason") LIKE '%denied by policy%'
+              OR lower(v."Reason") LIKE '%rbac: access denied%'
+              OR lower(v."Reason") LIKE '%rbac_access_denied%' THEN 'no-allow-match'
+            ELSE 'other'
+        END,
+        'enforced',
+        SUM(v."HitCount"),
+        MIN(COALESCE(v."FirstSeenUtc", v."UpdatedAt")),
+        MAX(v."UpdatedAt"),
+        MAX(v."MatchedPolicy"),
+        TRUE,
+        MAX(v."UpdatedAt"),
+        NULL
+    FROM "MeshFlowVerdicts" v
+    GROUP BY
+        v."ClusterName",
+        (date_trunc('day', v."UpdatedAt" AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'),
+        v."SrcNs", v."SrcOwner", v."SrcIdentity", v."DstNs", v."DstOwner",
+        v."DstPort", v."EnforcementPoint", v."Verdict", 11
+    ON CONFLICT DO NOTHING;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260911211517_MeshVerdictLedgerAndCoverage') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260911211517_MeshVerdictLedgerAndCoverage', '10.0.7');
+    END IF;
+END $EF$;
+
+COMMIT;
+
+
+-- Envoy verdict lanes. MeshFlowVerdicts gains "Stage" (enforced | shadow) and widens its business
+-- key with "EnforcementPoint" and "Stage", so the sidecar and waypoint Envoy access-log lanes can
+-- write the same table as ztunnel without overwriting its evidence, and so a dry-run / AUDIT
+-- "would have been denied" observation can never be summed into an enforced deny. Widening a
+-- unique index is safe on existing data: every pre-existing row is 'enforced' (ztunnel has no
+-- shadow mode) on the enforcement point it already carried, and adding columns to a unique key
+-- can only split rows apart, never collide them. Idempotent.
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260911214301_MeshVerdictEnvoyLanes') THEN
+    ALTER TABLE "MeshFlowVerdicts" ADD COLUMN IF NOT EXISTS "Stage" text NOT NULL DEFAULT 'enforced';
+    DROP INDEX IF EXISTS "IX_MeshFlowVerdicts_BusinessKey";
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_MeshFlowVerdicts_BusinessKey" ON "MeshFlowVerdicts" ("ClusterName", "SrcNs", "SrcOwner", "SrcIdentity", "DstNs", "DstOwner", "DstService", "DstPort", "Plane", "Direction", "Verdict", "EnforcementPoint", "Stage");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260911214301_MeshVerdictEnvoyLanes') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260911214301_MeshVerdictEnvoyLanes', '10.0.7');
+    END IF;
+END $EF$;
+
+COMMIT;
+
+
+-- Regulated retention tier — the LONG HORIZON behind the 400-day mesh verdict ledger.
+-- Before a day bucket is pruned it is folded into a MONTH bucket carrying the SAME business key
+-- and the same coverage accounting (days observed, days not, and why), so a mesh DENY — the record
+-- of an unauthorised access attempt — survives at five years without ever gaining precision it
+-- does not have. "MonthlyFoldedAt" on the two daily tables is the twin, one level up, of the
+-- existing rule that refuses to prune a live row whose last observation is not yet in the daily
+-- ledger: a day bucket is deleted only once the stamp proves the month absorbed it.
+-- "MeshLedgerRetentionState" is what the ledger publishes about itself, so the Evidence pack's
+-- retention statement prints the enforcer's own numbers instead of an API-side default.
+-- Idempotent.
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914175852_MeshVerdictMonthlyHorizon') THEN
+    ALTER TABLE "MeshVerdictDaily" ADD COLUMN IF NOT EXISTS "MonthlyFoldedAt" timestamp with time zone;
+    ALTER TABLE "MeshTelemetryCoverage" ADD COLUMN IF NOT EXISTS "MonthlyFoldedAt" timestamp with time zone;
+
+    CREATE TABLE IF NOT EXISTS "MeshCoverageMonthly" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "Month" timestamp with time zone NOT NULL,
+        "EnforcementPoint" text NOT NULL,
+        "DaysInMonth" integer NOT NULL,
+        "DaysWithCoverageRow" integer NOT NULL DEFAULT 0,
+        "DaysObserved" integer NOT NULL DEFAULT 0,
+        "DaysNotObserved" integer NOT NULL DEFAULT 0,
+        "DaysPartiallyObserved" integer NOT NULL DEFAULT 0,
+        "DaysDegraded" integer NOT NULL DEFAULT 0,
+        "SampleCount" bigint NOT NULL DEFAULT 0,
+        "ObservedSampleCount" bigint NOT NULL DEFAULT 0,
+        "LastErrorClass" text NOT NULL,
+        "NotObservedReason" text,
+        "DegradedReason" text,
+        "FirstDayUtc" timestamp with time zone NOT NULL,
+        "LastDayUtc" timestamp with time zone NOT NULL,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_MeshCoverageMonthly" PRIMARY KEY ("Id")
+    );
+
+    CREATE TABLE IF NOT EXISTS "MeshLedgerRetentionState" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "Component" text NOT NULL,
+        "LiveRetentionDays" integer NOT NULL,
+        "DailyRetentionDays" integer NOT NULL,
+        "MonthlyRetentionMonths" integer NOT NULL,
+        "RollupEnabled" boolean NOT NULL,
+        "MonthlyFoldEnabled" boolean NOT NULL,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_MeshLedgerRetentionState" PRIMARY KEY ("Id")
+    );
+
+    CREATE TABLE IF NOT EXISTS "MeshVerdictMonthly" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "Month" timestamp with time zone NOT NULL,
+        "SrcNs" text NOT NULL,
+        "SrcOwner" text NOT NULL,
+        "SrcIdentity" text NOT NULL,
+        "DstNs" text NOT NULL,
+        "DstOwner" text NOT NULL,
+        "DstPort" integer NOT NULL,
+        "EnforcementPoint" text NOT NULL,
+        "Verdict" text NOT NULL,
+        "ReasonClass" text NOT NULL,
+        "Stage" text NOT NULL DEFAULT 'enforced',
+        "HitCount" bigint NOT NULL DEFAULT 0,
+        "DaysFolded" integer NOT NULL DEFAULT 0,
+        "CarriedForwardDays" integer NOT NULL DEFAULT 0,
+        "FirstSeenUtc" timestamp with time zone NOT NULL,
+        "LastSeenUtc" timestamp with time zone NOT NULL,
+        "MatchedPolicy" text,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_MeshVerdictMonthly" PRIMARY KEY ("Id")
+    );
+
+    CREATE INDEX IF NOT EXISTS "IX_MeshVerdictDaily_MonthlyFold_Pending" ON "MeshVerdictDaily" ("Day") WHERE "MonthlyFoldedAt" IS NULL;
+    CREATE INDEX IF NOT EXISTS "IX_MeshTelemetryCoverage_MonthlyFold_Pending" ON "MeshTelemetryCoverage" ("Day") WHERE "MonthlyFoldedAt" IS NULL;
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_MeshCoverageMonthly_ClusterMonthPoint" ON "MeshCoverageMonthly" ("ClusterName", "Month", "EnforcementPoint");
+    CREATE INDEX IF NOT EXISTS "IX_MeshCoverageMonthly_Month" ON "MeshCoverageMonthly" ("Month");
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_MeshLedgerRetentionState_Component" ON "MeshLedgerRetentionState" ("Component");
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_MeshVerdictMonthly_BusinessKey" ON "MeshVerdictMonthly" ("ClusterName", "Month", "SrcNs", "SrcOwner", "SrcIdentity", "DstNs", "DstOwner", "DstPort", "EnforcementPoint", "Verdict", "ReasonClass", "Stage");
+    CREATE INDEX IF NOT EXISTS "IX_MeshVerdictMonthly_ClusterName_Month" ON "MeshVerdictMonthly" ("ClusterName", "Month");
+    CREATE INDEX IF NOT EXISTS "IX_MeshVerdictMonthly_Month" ON "MeshVerdictMonthly" ("Month");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914175852_MeshVerdictMonthlyHorizon') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260914175852_MeshVerdictMonthlyHorizon', '10.0.7');
+    END IF;
+END $EF$;
+
+COMMIT;
+
+
+-- 20260914214327_MeshP2RadarLedger
+-- Three things, all additive and all nullable-or-new:
+--   * "Collections" gains "Owner" / "OwnerContact" — the namespace owner registry is built ON the
+--     grouping the Evidence pack already scopes by, rather than beside it. NULL is load-bearing: it
+--     means "nobody has declared an owner" and renders as that sentence, never as a blank field.
+--   * "AuthorizationPolicyRecords" gains "ExpiresAtUtc" / "BusinessReason" — the REQUEST RECORD of a
+--     time-limited mesh grant. Nothing acts on the date: Axera never removes a mesh object on a
+--     timer, so there is no job, no index and no due-date query behind these columns.
+--   * "CniAclDropDaily" — the CNI plane's own retained day bucket, keyed on exactly what the OVN ACL
+--     log carries. Deliberately NOT joinable to "MeshVerdictDaily": IP->pod resolution does not
+--     exist yet, and a wider key would be invented rather than observed.
+-- Idempotent.
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214327_MeshP2RadarLedger') THEN
+    ALTER TABLE "Collections" ADD COLUMN IF NOT EXISTS "Owner" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214327_MeshP2RadarLedger') THEN
+    ALTER TABLE "Collections" ADD COLUMN IF NOT EXISTS "OwnerContact" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214327_MeshP2RadarLedger') THEN
+    ALTER TABLE "AuthorizationPolicyRecords" ADD COLUMN IF NOT EXISTS "BusinessReason" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214327_MeshP2RadarLedger') THEN
+    ALTER TABLE "AuthorizationPolicyRecords" ADD COLUMN IF NOT EXISTS "ExpiresAtUtc" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214327_MeshP2RadarLedger') THEN
+    CREATE TABLE IF NOT EXISTS "CniAclDropDaily" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "Day" timestamp with time zone NOT NULL,
+        "PolicyNamespace" text NOT NULL,
+        "Direction" text NOT NULL,
+        "DstPort" integer NOT NULL,
+        "SrcIp" text NOT NULL,
+        "DstIp" text NOT NULL,
+        "ReasonClass" text NOT NULL,
+        "DropCount" bigint NOT NULL DEFAULT 0,
+        "FirstSeenUtc" timestamp with time zone NOT NULL,
+        "LastSeenUtc" timestamp with time zone NOT NULL,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        "LaneObserved" boolean NOT NULL DEFAULT FALSE,
+        "LaneFoldCount" integer NOT NULL,
+        "LaneObservedFoldCount" integer NOT NULL,
+        "LaneNotObservedReason" text,
+        CONSTRAINT "PK_CniAclDropDaily" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214327_MeshP2RadarLedger') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_CniAclDropDaily_BusinessKey" ON "CniAclDropDaily" ("ClusterName", "Day", "PolicyNamespace", "Direction", "DstPort", "SrcIp", "DstIp");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214327_MeshP2RadarLedger') THEN
+    CREATE INDEX IF NOT EXISTS "IX_CniAclDropDaily_ClusterName_Day" ON "CniAclDropDaily" ("ClusterName", "Day");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214327_MeshP2RadarLedger') THEN
+    CREATE INDEX IF NOT EXISTS "IX_CniAclDropDaily_Day" ON "CniAclDropDaily" ("Day");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214327_MeshP2RadarLedger') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260914214327_MeshP2RadarLedger', '10.0.7');
+    END IF;
+END $EF$;
+COMMIT;
+
+
+-- ─────────────────────────────────────────────────────────────────────────────────────────────
+-- Mesh ROUTING change feed + the verdict authority column (BE P2).
+--
+-- MeshRoutingChanges / MeshRoutingWatchState: what the routing watch recorded about a
+-- networking.istio.io object, and whether anybody was watching each kind. NOT MeshPolicyChanges —
+-- nothing assesses a routing row, and merging the two would make a dead assessment lane look alive.
+--
+-- MeshFlowVerdicts."DstAuthority": the HTTP host an Envoy record said the client dialled. NULL on
+-- every ztunnel row for ever (ztunnel is L4 and parses no HTTP header), so it is nullable with no
+-- default and no backfill: a value invented here would be a host nobody observed.
+--
+-- This file re-runs on every helm upgrade, so every statement is guarded: CREATE TABLE / CREATE
+-- INDEX IF NOT EXISTS, ADD COLUMN IF NOT EXISTS. There is no UPDATE in this block and there must
+-- never be one — see ShippedSchemaCoversMigrationsTests.Ledger_backfills_in_shipped_sql_are_null_guarded.
+-- ─────────────────────────────────────────────────────────────────────────────────────────────
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260919050216_MeshRoutingChangeFeed') THEN
+    CREATE TABLE IF NOT EXISTS "MeshRoutingChanges" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "Kind" text NOT NULL,
+        "Namespace" text NOT NULL,
+        "Name" text NOT NULL,
+        "Verb" text NOT NULL,
+        "Evidence" text NOT NULL,
+        "EvidenceDetail" text,
+        "ObservedAtUtc" timestamp with time zone NOT NULL,
+        "ChangedAtUtc" timestamp with time zone,
+        "ChangedAtSource" text NOT NULL DEFAULT 'unknown',
+        "SpecWriter" text,
+        "SpecWriterAtUtc" timestamp with time zone,
+        "Uid" text,
+        "ResourceVersion" text,
+        "Generation" bigint,
+        "Fingerprint" text NOT NULL,
+        "CurrentObject" jsonb,
+        "PreviousObject" jsonb,
+        "BodiesOmittedReason" text,
+        "RecordedAtUtc" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_MeshRoutingChanges" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260919050216_MeshRoutingChangeFeed') THEN
+    CREATE TABLE IF NOT EXISTS "MeshRoutingWatchState" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "Kind" text NOT NULL,
+        "State" text NOT NULL,
+        "Reason" text,
+        "SeededAtUtc" timestamp with time zone,
+        "LastSeenUtc" timestamp with time zone,
+        "LastChangeAtUtc" timestamp with time zone,
+        "UpdatedAtUtc" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_MeshRoutingWatchState" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260919050216_MeshRoutingChangeFeed') THEN
+    CREATE INDEX IF NOT EXISTS "IX_MeshRoutingChanges_Cluster_At" ON "MeshRoutingChanges" ("ClusterName", "ObservedAtUtc");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260919050216_MeshRoutingChangeFeed') THEN
+    CREATE INDEX IF NOT EXISTS "IX_MeshRoutingChanges_Cluster_Evidence_At" ON "MeshRoutingChanges" ("ClusterName", "Evidence", "ObservedAtUtc");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260919050216_MeshRoutingChangeFeed') THEN
+    CREATE INDEX IF NOT EXISTS "IX_MeshRoutingChanges_Object_At" ON "MeshRoutingChanges" ("ClusterName", "Kind", "Namespace", "Name", "ObservedAtUtc");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260919050216_MeshRoutingChangeFeed') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_MeshRoutingWatchState_Cluster_Kind" ON "MeshRoutingWatchState" ("ClusterName", "Kind");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260919050216_MeshRoutingChangeFeed') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260919050216_MeshRoutingChangeFeed', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260919051725_MeshVerdictDstAuthority') THEN
+    ALTER TABLE "MeshFlowVerdicts" ADD COLUMN IF NOT EXISTS "DstAuthority" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260919051725_MeshVerdictDstAuthority') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260919051725_MeshVerdictDstAuthority', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+
+-- ─────────────────────────────────────────────────────────────────────────────────────────────
+-- Flow verdict ledger (Radar/FlowVerdicts): allow / probable-drop analytics from Axera-Flow TCP
+-- flow records on EVERY monitored cluster, CNI-independent — the Analytics page no longer needs
+-- OVN ACL logging. Four increment-only tables, all new; no existing table is altered.
+--
+-- FlowVerdictClusterBuckets: 5-minute cluster series per class (the Monitoring grid's six words)
+-- + denied direction. FlowVerdictCoverage: one row per (cluster, 5-minute bucket) — did telemetry
+-- arrive, could it be attributed, how much went into no class; a bucket with NO row is UNKNOWN,
+-- not zero. FlowVerdictPairBuckets / FlowVerdictPolicyRuleBuckets: edge level and per governing
+-- policy rule, at hourly AND daily grain from one delta (policy-rule rows fan out per policy and
+-- are never summed into a cluster total).
+--
+-- Every counter carries DEFAULT 0 and is inserted explicitly by the rollup (ValueGeneratedNever),
+-- so the ON CONFLICT increment adds the delta rather than "col + 0" forever. No backfill: day one
+-- is day one, and the coverage rows say so.
+--
+-- This file re-runs on every helm upgrade, so every statement is guarded: CREATE TABLE / CREATE
+-- INDEX IF NOT EXISTS. There is no UPDATE in this block and there must never be one — see
+-- ShippedSchemaCoversMigrationsTests.Ledger_backfills_in_shipped_sql_are_null_guarded.
+-- ─────────────────────────────────────────────────────────────────────────────────────────────
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260925074309_FlowVerdictLedger') THEN
+    CREATE TABLE IF NOT EXISTS "FlowVerdictClusterBuckets" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "BucketStart" timestamp with time zone NOT NULL,
+        "Class" text NOT NULL,
+        "DeniedDirection" text NOT NULL,
+        "RecordCount" bigint NOT NULL DEFAULT 0,
+        "Packets" bigint NOT NULL DEFAULT 0,
+        "FirstSeenUtc" timestamp with time zone NOT NULL,
+        "LastSeenUtc" timestamp with time zone NOT NULL,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_FlowVerdictClusterBuckets" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260925074309_FlowVerdictLedger') THEN
+    CREATE TABLE IF NOT EXISTS "FlowVerdictCoverage" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "BucketStart" timestamp with time zone NOT NULL,
+        "FoldCount" integer NOT NULL DEFAULT 0,
+        "ObservedFoldCount" integer NOT NULL DEFAULT 0,
+        "AttributionFoldCount" integer NOT NULL DEFAULT 0,
+        "RecordsSeen" bigint NOT NULL DEFAULT 0,
+        "RecordsAckBearing" bigint NOT NULL DEFAULT 0,
+        "RecordsSynOnly" bigint NOT NULL DEFAULT 0,
+        "RecordsOtherFlags" bigint NOT NULL DEFAULT 0,
+        "RecordsNonTcp" bigint NOT NULL DEFAULT 0,
+        "RecordsRejectedByValidity" bigint NOT NULL DEFAULT 0,
+        "RecordsUnresolvedWorkload" bigint NOT NULL DEFAULT 0,
+        "RecordsUnclassifiedSyn" bigint NOT NULL DEFAULT 0,
+        "SynOnlySuppressedByAck" bigint NOT NULL DEFAULT 0,
+        "RecordsShed" bigint NOT NULL DEFAULT 0,
+        "LastRecordAtUtc" timestamp with time zone,
+        "NotObservedReason" text,
+        "AttributionNotObservedReason" text,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_FlowVerdictCoverage" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260925074309_FlowVerdictLedger') THEN
+    CREATE TABLE IF NOT EXISTS "FlowVerdictPairBuckets" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "Grain" text NOT NULL,
+        "BucketStart" timestamp with time zone NOT NULL,
+        "SrcNs" text NOT NULL,
+        "SrcOwner" text NOT NULL,
+        "DstNs" text NOT NULL,
+        "DstOwner" text NOT NULL,
+        "DstPort" integer NOT NULL,
+        "Proto" integer NOT NULL,
+        "Class" text NOT NULL,
+        "RecordCount" bigint NOT NULL DEFAULT 0,
+        "Packets" bigint NOT NULL DEFAULT 0,
+        "AffectingPolicies" text,
+        "PermittingRuleRef" text,
+        "FirstSeenUtc" timestamp with time zone NOT NULL,
+        "LastSeenUtc" timestamp with time zone NOT NULL,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_FlowVerdictPairBuckets" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260925074309_FlowVerdictLedger') THEN
+    CREATE TABLE IF NOT EXISTS "FlowVerdictPolicyRuleBuckets" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "Grain" text NOT NULL,
+        "BucketStart" timestamp with time zone NOT NULL,
+        "PolicyNs" text NOT NULL,
+        "PolicyName" text NOT NULL,
+        "Direction" text NOT NULL,
+        "RuleIndex" integer NOT NULL,
+        "Class" text NOT NULL,
+        "RecordCount" bigint NOT NULL DEFAULT 0,
+        "Packets" bigint NOT NULL DEFAULT 0,
+        "FirstSeenUtc" timestamp with time zone NOT NULL,
+        "LastSeenUtc" timestamp with time zone NOT NULL,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_FlowVerdictPolicyRuleBuckets" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260925074309_FlowVerdictLedger') THEN
+    CREATE INDEX IF NOT EXISTS "IX_FlowVerdictClusterBuckets_BucketStart" ON "FlowVerdictClusterBuckets" ("BucketStart");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260925074309_FlowVerdictLedger') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_FlowVerdictClusterBuckets_BusinessKey" ON "FlowVerdictClusterBuckets" ("ClusterName", "BucketStart", "Class", "DeniedDirection");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260925074309_FlowVerdictLedger') THEN
+    CREATE INDEX IF NOT EXISTS "IX_FlowVerdictCoverage_BucketStart" ON "FlowVerdictCoverage" ("BucketStart");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260925074309_FlowVerdictLedger') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_FlowVerdictCoverage_ClusterBucket" ON "FlowVerdictCoverage" ("ClusterName", "BucketStart");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260925074309_FlowVerdictLedger') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_FlowVerdictPairBuckets_BusinessKey" ON "FlowVerdictPairBuckets" ("ClusterName", "Grain", "BucketStart", "SrcNs", "SrcOwner", "DstNs", "DstOwner", "DstPort", "Proto", "Class");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260925074309_FlowVerdictLedger') THEN
+    CREATE INDEX IF NOT EXISTS "IX_FlowVerdictPairBuckets_Grain_BucketStart" ON "FlowVerdictPairBuckets" ("Grain", "BucketStart");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260925074309_FlowVerdictLedger') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_FlowVerdictPolicyRuleBuckets_BusinessKey" ON "FlowVerdictPolicyRuleBuckets" ("ClusterName", "Grain", "BucketStart", "PolicyNs", "PolicyName", "Direction", "RuleIndex", "Class");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260925074309_FlowVerdictLedger') THEN
+    CREATE INDEX IF NOT EXISTS "IX_FlowVerdictPolicyRuleBuckets_Grain_BucketStart" ON "FlowVerdictPolicyRuleBuckets" ("Grain", "BucketStart");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260925074309_FlowVerdictLedger') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260925074309_FlowVerdictLedger', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+
+-- ─────────────────────────────────────────────────────────────────────────────────────────────
+-- Flow verdict ledger: restart-cut buckets (K7 of the 2026-09-27 v12.1.0 functional test).
+-- A Radar restart lost most of the open 5-minute bucket (the aggregator is memory) while the
+-- window still said "every bucket was observed". FlowVerdictCoverage.ProcessBoundaryFolds counts
+-- the folds written across a process boundary — the first tick of a process, a cluster's first
+-- bucket in it, the shutdown drain of a bucket not yet closed — and the read side reports an
+-- observed bucket with a non-zero count as CUT, never complete. Increment-only like every other
+-- counter (ON CONFLICT add); DEFAULT 0 so the rows written before this column read as not cut.
+--
+-- This file re-runs on every helm upgrade, so the statement is guarded: ADD COLUMN IF NOT EXISTS.
+-- No UPDATE, no backfill: a bucket cut before this release cannot be reconstructed.
+-- ─────────────────────────────────────────────────────────────────────────────────────────────
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260928040021_FlowVerdictCoverageProcessBoundary') THEN
+    ALTER TABLE "FlowVerdictCoverage" ADD COLUMN IF NOT EXISTS "ProcessBoundaryFolds" integer NOT NULL DEFAULT 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260928040021_FlowVerdictCoverageProcessBoundary') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260928040021_FlowVerdictCoverageProcessBoundary', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+
+-- ─────────────────────────────────────────────────────────────────────────────────────────────
+-- Flow verdict ledger: the credit is part of a pair row (S2-014 of the 2026-09-28 v12.2.0
+-- functional test). A pair row kept ONE AffectingPolicies/PermittingRuleRef and the latest fold
+-- overwrote it, so a deploy at 09:15:49 relabelled the 09:00 hour's 458 allowed intruder->db
+-- records — and the day's 6 748, all folded while no policy existed — as governed by the set
+-- that denied intruder from then on. FlowVerdictPairBuckets.CreditKey ('?' = unknown, otherwise
+-- a SHA-256 of the two credit strings) joins the unique key, so records folded under another
+-- set are another row of the same hour or day.
+--
+-- This file re-runs on every helm upgrade, so every statement is guarded: DROP INDEX IF EXISTS,
+-- ADD COLUMN IF NOT EXISTS, CREATE UNIQUE INDEX IF NOT EXISTS. DEFAULT '' marks the rows written
+-- before this release; they keep the credit they were stored with (it cannot be re-derived).
+-- ─────────────────────────────────────────────────────────────────────────────────────────────
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260928143944_ObsAnalyticsFlowVerdictPairCredit') THEN
+    DROP INDEX IF EXISTS "IX_FlowVerdictPairBuckets_BusinessKey";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260928143944_ObsAnalyticsFlowVerdictPairCredit') THEN
+    ALTER TABLE "FlowVerdictPairBuckets" ADD COLUMN IF NOT EXISTS "CreditKey" text NOT NULL DEFAULT '';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260928143944_ObsAnalyticsFlowVerdictPairCredit') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_FlowVerdictPairBuckets_BusinessKey" ON "FlowVerdictPairBuckets" ("ClusterName", "Grain", "BucketStart", "SrcNs", "SrcOwner", "DstNs", "DstOwner", "DstPort", "Proto", "Class", "CreditKey");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260928143944_ObsAnalyticsFlowVerdictPairCredit') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260928143944_ObsAnalyticsFlowVerdictPairCredit', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+-- ─────────────────────────────────────────────────────────────────────────────────────────────
+-- Mesh > Traffic records: Axera-side records of the Istio VirtualServices and DestinationRules it
+-- deploys (server-side apply as field manager "axera"), deletes, adopts and rolls back.
+-- TrafficPolicyRecords holds one row per (cluster, namespace, kind, name) with the canonical body,
+-- its spec hash, the hash last applied, lifecycle status and drift; TrafficPolicyVersions keeps
+-- every body version (rollback reads it). New tables only: nothing existing is altered.
+--
+-- This file re-runs on every helm upgrade, so every statement is guarded: CREATE TABLE / CREATE
+-- UNIQUE INDEX IF NOT EXISTS. There is no UPDATE in this block.
+-- ─────────────────────────────────────────────────────────────────────────────────────────────
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260929084926_TrafficPolicyRecords') THEN
+    CREATE TABLE IF NOT EXISTS "TrafficPolicyRecords" (
+        "Id" uuid NOT NULL,
+        "ClusterName" text NOT NULL,
+        "Namespace" text NOT NULL,
+        "Kind" text NOT NULL,
+        "Name" text NOT NULL,
+        "Yaml" text NOT NULL,
+        "SpecHash" text NOT NULL,
+        "DeployedHash" text,
+        "Status" text NOT NULL,
+        "Drift" text NOT NULL,
+        "DriftCheckedAt" timestamp with time zone,
+        "DriftReason" text,
+        "ManagedBy" text NOT NULL,
+        "VersionNumber" integer NOT NULL,
+        "CreatedAt" timestamp with time zone NOT NULL,
+        "CreatedBy" text,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        "UpdatedBy" text,
+        "LastDeployedAt" timestamp with time zone,
+        "LastDeployedBy" text,
+        "LastError" text,
+        CONSTRAINT "PK_TrafficPolicyRecords" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260929084926_TrafficPolicyRecords') THEN
+    CREATE TABLE IF NOT EXISTS "TrafficPolicyVersions" (
+        "Id" uuid NOT NULL,
+        "RecordId" uuid NOT NULL,
+        "VersionNumber" integer NOT NULL,
+        "Yaml" text NOT NULL,
+        "SpecHash" text NOT NULL,
+        "CreatedAt" timestamp with time zone NOT NULL,
+        "CreatedBy" text,
+        "Note" text,
+        CONSTRAINT "PK_TrafficPolicyVersions" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260929084926_TrafficPolicyRecords') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_TrafficPolicyRecords_Identity" ON "TrafficPolicyRecords" ("ClusterName", "Namespace", "Kind", "Name");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260929084926_TrafficPolicyRecords') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_TrafficPolicyVersions_Record_Version" ON "TrafficPolicyVersions" ("RecordId", "VersionNumber");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260929084926_TrafficPolicyRecords') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260929084926_TrafficPolicyRecords', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+-- ─────────────────────────────────────────────────────────────────────────────────────────────
+-- 20261004085644_AxeraV1330RadarSchema (v13.3.0, the SCHEMA step of the 2026-10 functional test) - step A of two
+--
+-- DDL: AuthorizationPolicyRecords.VersionAppliedAtUtc + PolicyVersions.AppliedAtUtc (MSH-023) and
+-- AuthorizationPolicyRecords.VersionAppliedBy (BE-MESH-R6); ProcessPolicyRecords.AppliedContentHash (SEG-039) and PreviewYaml (SEG-066);
+-- Collections RequireTicket / RequireGitPush (SEG-076); new tables ProcessFlowHitBuckets (OBS-019) and
+-- DnsQueryBuckets (OBS-022); FlowVerdictPairBuckets keep-alive counters and FlowVerdictCoverage
+-- keep-alive / Service-addressed / cross-node-twin / unclassified-cause counters (OBS-003, OBS-056,
+-- OBS-057, OBS-067); LastAckSeenAt / LastSynOnlyAt on FlowEntries, ExternalFlowEntries and
+-- InterClusterFlowEntries (OBS-011).
+-- Data: version-1 hand-made AuthorizationPolicy applied-at (MSH-023); AppliedContentHash of applied
+-- records whose stored body can be what ran (SEG-039) - a live record holding a body it cannot have
+-- run (a kill body on an observe record, or a Save after its last apply) keeps it as PreviewYaml
+-- instead (BE-DATA-R2) - then never-applied bodies moved to PreviewYaml (SEG-066); delete rows of
+-- the routing change feed hold the last body as PreviousObject (MSH-093).
+--
+-- FlowVolumeBuckets is NOT touched here (BE-DATA-R1): its merge and unique key are the next block,
+-- a transaction of its own, so this one never holds the hot flow tables' locks during a full-table
+-- pass. Every step here is catalog-only or small; lock_timeout makes a lock it cannot get within 5 s
+-- fail the migrate Job (which retries) instead of queueing in front of live reads, and the hot flow
+-- tables are altered last so their locks are held only until the COMMIT.
+--
+-- This file re-runs on every helm upgrade, so every statement is guarded: ADD COLUMN / CREATE TABLE /
+-- CREATE INDEX IF NOT EXISTS, and every data step changes nothing on an already-healed database. The
+-- column added after this migration was first generated (VersionAppliedBy) is guarded by the column
+-- itself, so a database that ran an earlier build of this block still gets it. TrafficPolicyRecords
+-- DeleteOutcome / DeletedAt (BE-TRAFFIC-R7) are added by the 20261004150432 block below, never here.
+-- ─────────────────────────────────────────────────────────────────────────────────────────────
+START TRANSACTION;
+SET LOCAL lock_timeout = '5s';
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    ALTER TABLE "ProcessPolicyRecords" ADD COLUMN IF NOT EXISTS "AppliedContentHash" text NOT NULL DEFAULT '';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    ALTER TABLE "ProcessPolicyRecords" ADD COLUMN IF NOT EXISTS "PreviewYaml" text NOT NULL DEFAULT '';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    ALTER TABLE "PolicyVersions" ADD COLUMN IF NOT EXISTS "AppliedAtUtc" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    ALTER TABLE "Collections" ADD COLUMN IF NOT EXISTS "RequireGitPush" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    ALTER TABLE "Collections" ADD COLUMN IF NOT EXISTS "RequireTicket" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    ALTER TABLE "AuthorizationPolicyRecords" ADD COLUMN IF NOT EXISTS "VersionAppliedAtUtc" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM information_schema.columns
+                  WHERE table_schema = current_schema() AND table_name = 'AuthorizationPolicyRecords' AND column_name = 'VersionAppliedBy') THEN
+    ALTER TABLE "AuthorizationPolicyRecords" ADD COLUMN IF NOT EXISTS "VersionAppliedBy" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    CREATE TABLE IF NOT EXISTS "DnsQueryBuckets" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "SrcNs" text NOT NULL,
+        "SrcOwner" text NOT NULL,
+        "QueryName" text NOT NULL,
+        "ResolverIp" text NOT NULL,
+        "ResponseCode" text NOT NULL,
+        "Granularity" character(1) NOT NULL,
+        "BucketStart" timestamp with time zone NOT NULL,
+        "QueryCount" bigint NOT NULL DEFAULT 0,
+        "MaxLatencyMs" double precision NOT NULL,
+        CONSTRAINT "PK_DnsQueryBuckets" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    CREATE TABLE IF NOT EXISTS "ProcessFlowHitBuckets" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "Namespace" text NOT NULL,
+        "Workload" text NOT NULL,
+        "Binary" text NOT NULL,
+        "DstNs" text NOT NULL,
+        "DstOwner" text NOT NULL,
+        "DstPort" integer NOT NULL,
+        "Proto" integer NOT NULL,
+        "Granularity" character(1) NOT NULL,
+        "BucketStart" timestamp with time zone NOT NULL,
+        "HitCount" bigint NOT NULL DEFAULT 0,
+        CONSTRAINT "PK_ProcessFlowHitBuckets" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    CREATE INDEX IF NOT EXISTS "IX_DnsQueryBuckets_BucketStart" ON "DnsQueryBuckets" ("BucketStart");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    CREATE INDEX IF NOT EXISTS "IX_DnsQueryBuckets_Cluster_Grain_Start" ON "DnsQueryBuckets" ("ClusterName", "Granularity", "BucketStart");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_DnsQueryBuckets_Key" ON "DnsQueryBuckets" ("ClusterName", "SrcNs", "SrcOwner", "QueryName", "ResolverIp", "ResponseCode", "Granularity", "BucketStart");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    CREATE INDEX IF NOT EXISTS "IX_ProcessFlowHitBuckets_BucketStart" ON "ProcessFlowHitBuckets" ("BucketStart");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    CREATE INDEX IF NOT EXISTS "IX_ProcessFlowHitBuckets_Cluster_Ns_Grain_Start" ON "ProcessFlowHitBuckets" ("ClusterName", "Namespace", "Granularity", "BucketStart");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_ProcessFlowHitBuckets_Key" ON "ProcessFlowHitBuckets" ("ClusterName", "Namespace", "Workload", "Binary", "DstNs", "DstOwner", "DstPort", "Proto", "Granularity", "BucketStart");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    UPDATE "AuthorizationPolicyRecords" SET "VersionAppliedAtUtc" = "CreatedAt"
+    WHERE "VersionNumber" = 1 AND "Yaml" <> '' AND "ManagedBy" = 'axera-user' AND "VersionAppliedAtUtc" IS NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    UPDATE "ProcessPolicyRecords" SET "AppliedContentHash" = "ContentHash"
+    WHERE "AppliedContentHash" = ''
+      AND ("AppliedAt" IS NOT NULL OR "Status" IN ('Observing', 'Enforcing') OR "VersionNumber" > 1)
+      AND NOT (("Stage" = 'observe' AND "Yaml" ~* 'action:[[:space:]]*["'']?(sigkill|override)\y')
+           OR ("Status" IN ('Observing', 'Enforcing') AND "AppliedAt" IS NOT NULL AND "UpdatedAt" > "AppliedAt"));
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    UPDATE "ProcessPolicyRecords"
+    SET "PreviewYaml" = "Yaml", "Yaml" = '', "ContentHash" = ''
+    WHERE "AppliedContentHash" = '' AND "Yaml" <> ''
+      AND (("Stage" = 'observe' AND "Yaml" ~* 'action:[[:space:]]*["'']?(sigkill|override)\y')
+           OR ("Status" IN ('Observing', 'Enforcing') AND "AppliedAt" IS NOT NULL AND "UpdatedAt" > "AppliedAt"));
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    UPDATE "ProcessPolicyRecords" r
+    SET "PreviewYaml" = r."Yaml", "Yaml" = '', "ContentHash" = ''
+    WHERE r."Stage" = '' AND r."AppliedAt" IS NULL AND r."Status" IN ('Recommended', 'Dismissed') AND r."Yaml" <> ''
+      AND NOT EXISTS (SELECT 1 FROM "PolicyVersions" v
+                      WHERE v."Kind" = 'tetragon' AND v."ClusterName" = r."ClusterName" AND v."Namespace" = r."Namespace"
+                        AND v."Workload" = r."Workload" AND v."Variant" = r."Style");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    UPDATE "MeshRoutingChanges"
+    SET "PreviousObject" = COALESCE("PreviousObject", "CurrentObject"), "CurrentObject" = NULL,
+        "ChangedAtSource" = CASE WHEN "ChangedAtSource" = 'field-manager' THEN 'last-write-before-delete' ELSE "ChangedAtSource" END
+    WHERE "Verb" = 'delete' AND ("CurrentObject" IS NOT NULL OR "ChangedAtSource" = 'field-manager');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    ALTER TABLE "InterClusterFlowEntries" ADD COLUMN IF NOT EXISTS "LastAckSeenAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    ALTER TABLE "InterClusterFlowEntries" ADD COLUMN IF NOT EXISTS "LastSynOnlyAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    ALTER TABLE "FlowVerdictPairBuckets" ADD COLUMN IF NOT EXISTS "KeepAlivePackets" bigint NOT NULL DEFAULT 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    ALTER TABLE "FlowVerdictPairBuckets" ADD COLUMN IF NOT EXISTS "KeepAliveRecords" bigint NOT NULL DEFAULT 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    ALTER TABLE "FlowVerdictCoverage" ADD COLUMN IF NOT EXISTS "RecordsCrossNodeTwin" bigint NOT NULL DEFAULT 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    ALTER TABLE "FlowVerdictCoverage" ADD COLUMN IF NOT EXISTS "RecordsKeepAlive" bigint NOT NULL DEFAULT 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    ALTER TABLE "FlowVerdictCoverage" ADD COLUMN IF NOT EXISTS "RecordsServiceAddressed" bigint NOT NULL DEFAULT 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    ALTER TABLE "FlowVerdictCoverage" ADD COLUMN IF NOT EXISTS "RecordsUnclassifiedSynLookAhead" bigint NOT NULL DEFAULT 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    ALTER TABLE "FlowVerdictCoverage" ADD COLUMN IF NOT EXISTS "RecordsUnclassifiedSynUnresolved" bigint NOT NULL DEFAULT 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    ALTER TABLE "FlowEntries" ADD COLUMN IF NOT EXISTS "LastAckSeenAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    ALTER TABLE "FlowEntries" ADD COLUMN IF NOT EXISTS "LastSynOnlyAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    ALTER TABLE "ExternalFlowEntries" ADD COLUMN IF NOT EXISTS "LastAckSeenAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    ALTER TABLE "ExternalFlowEntries" ADD COLUMN IF NOT EXISTS "LastSynOnlyAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085644_AxeraV1330RadarSchema') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261004085644_AxeraV1330RadarSchema', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+-- ─────────────────────────────────────────────────────────────────────────────────────────────
+-- 20261004085645_AxeraV1330FlowVolumeKey (v13.3.0) - step B of two: FlowVolumeBuckets only (BE-DATA-R1)
+--
+-- OBS-016 FlowVolumeBuckets.Deduplicated; OBS-045 duplicate (entity, window, side) groups merged into
+-- the lowest Id; then the UNIQUE IX_FlowVolumeBuckets_Key on (..., IsExternal) the volume flush upserts
+-- into is built and the old non-unique (ClusterName, Namespace, Workload, WindowStart) index dropped.
+-- Only FlowVolumeBuckets is locked: SHARE ROW EXCLUSIVE keeps a still-running old Radar from appending
+-- a duplicate between the merge and the index (it waits; COMMIT releases it), and lock_timeout fails
+-- the Job (which retries) instead of queueing behind a long read. The column and the unique index are
+-- created in this one transaction, so a database never has one without the other.
+--
+-- The steps run as one guarded unit when the history row OR the unique key is missing. The second
+-- half is the rollback case: before running v13.2 against this database the operator drops the key
+-- and re-creates the old index (sql/rollback/v13.3.0-radar-rollback.sql, docs/release-notes/v13.3.0/
+-- BE-DATA.md) and keeps the history rows; upgrading again then re-runs this block, merging the split
+-- rows v13.2 wrote meanwhile before the key is rebuilt.
+-- ─────────────────────────────────────────────────────────────────────────────────────────────
+START TRANSACTION;
+SET LOCAL lock_timeout = '5s';
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085645_AxeraV1330FlowVolumeKey')
+       OR NOT EXISTS(SELECT 1 FROM pg_indexes WHERE schemaname = current_schema() AND indexname = 'IX_FlowVolumeBuckets_Key') THEN
+    LOCK TABLE "FlowVolumeBuckets" IN SHARE ROW EXCLUSIVE MODE;
+    ALTER TABLE "FlowVolumeBuckets" ADD COLUMN IF NOT EXISTS "Deduplicated" boolean NOT NULL DEFAULT FALSE;
+    WITH g AS (
+        SELECT MIN("Id") AS keep_id, "ClusterName", "Namespace", "Workload", "WindowStart", "IsExternal",
+               SUM("Bytes") AS bytes, SUM("Packets") AS packets, SUM("FlowCount") AS flows,
+               MAX("DistinctDst") AS dst, MAX("DistinctPorts") AS ports, BOOL_AND("Deduplicated") AS dedup
+        FROM "FlowVolumeBuckets"
+        GROUP BY "ClusterName", "Namespace", "Workload", "WindowStart", "IsExternal"
+        HAVING COUNT(*) > 1
+    ), merged AS (
+        UPDATE "FlowVolumeBuckets" f
+        SET "Bytes" = g.bytes, "Packets" = g.packets, "FlowCount" = g.flows,
+            "DistinctDst" = g.dst, "DistinctPorts" = g.ports, "Deduplicated" = g.dedup
+        FROM g WHERE f."Id" = g.keep_id
+        RETURNING f."Id"
+    )
+    DELETE FROM "FlowVolumeBuckets" f
+    USING g
+    WHERE f."ClusterName" = g."ClusterName" AND f."Namespace" = g."Namespace" AND f."Workload" = g."Workload"
+      AND f."WindowStart" = g."WindowStart" AND f."IsExternal" = g."IsExternal" AND f."Id" <> g.keep_id;
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_FlowVolumeBuckets_Key" ON "FlowVolumeBuckets" ("ClusterName", "Namespace", "Workload", "WindowStart", "IsExternal");
+    DROP INDEX IF EXISTS "IX_FlowVolumeBuckets_ClusterName_Namespace_Workload_WindowStart";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085645_AxeraV1330FlowVolumeKey') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261004085645_AxeraV1330FlowVolumeKey', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+-- ─────────────────────────────────────────────────────────────────────────────────────────────
+-- 20261004150432_TrafficPolicyDeleteOutcome (v13.3.0 closure, BE-TRAFFIC-R7)
+--
+-- DDL: TrafficPolicyRecords.DeleteOutcome ("deleted" | "absent" | "untouched") and DeletedAt — what
+-- the last delete of a Mesh › Traffic record did to the cluster, and when. The routing change feed
+-- credits a removal to Axera only for "deleted". Nullable, no data step: a record deleted before
+-- this column existed keeps NULL and is not credited.
+--
+-- This file re-runs on every helm upgrade, so every statement is guarded (ADD COLUMN IF NOT EXISTS).
+-- ─────────────────────────────────────────────────────────────────────────────────────────────
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004150432_TrafficPolicyDeleteOutcome') THEN
+    ALTER TABLE "TrafficPolicyRecords" ADD COLUMN IF NOT EXISTS "DeleteOutcome" character varying(16);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004150432_TrafficPolicyDeleteOutcome') THEN
+    ALTER TABLE "TrafficPolicyRecords" ADD COLUMN IF NOT EXISTS "DeletedAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004150432_TrafficPolicyDeleteOutcome') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261004150432_TrafficPolicyDeleteOutcome', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+-- ─────────────────────────────────────────────────────────────────────────────────────────────
+-- 20261010131015_IngressFlowLedger (north-south ingress lane)
+--
+-- DDL: three new tables for traffic ENTERING the cluster (FLP cluster_in_ingress → ingress-flows):
+-- IngressFlowEntries (one upserted edge per observed tuple ClusterName, DstKind, DstNs, DstOwner,
+-- DstPort, Proto, SrcKey, HopKind; source / entry / client-identity columns refresh on upsert),
+-- IngressVolumeBuckets (hourly bytes / packets / flow records per destination, source key and hop)
+-- and IngressNodeAccessCounters (daily node-access and kubelet-probe counts; no source address).
+-- New tables only: nothing existing is altered and there is no data step.
+--
+-- This file re-runs on every helm upgrade, so every statement is guarded: CREATE TABLE / CREATE
+-- [UNIQUE] INDEX IF NOT EXISTS.
+-- ─────────────────────────────────────────────────────────────────────────────────────────────
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010131015_IngressFlowLedger') THEN
+    CREATE TABLE IF NOT EXISTS "IngressFlowEntries" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "DstKind" text NOT NULL,
+        "DstNs" text NOT NULL,
+        "DstOwner" text NOT NULL,
+        "DstOwnerType" text,
+        "DstIp" text NOT NULL,
+        "DstPort" integer NOT NULL,
+        "Proto" integer NOT NULL,
+        "SrcKey" text NOT NULL,
+        "HopKind" text NOT NULL,
+        "SrcIp" text NOT NULL,
+        "SrcAggregated" boolean NOT NULL,
+        "SrcKind" text NOT NULL,
+        "SrcLabel" text,
+        "EntryKind" text NOT NULL,
+        "EntryRef" text,
+        "XlatSrcIp" text,
+        "XlatDstIp" text,
+        "XlatDstPort" integer,
+        "ClientIdentity" text NOT NULL,
+        "Evidence" text NOT NULL,
+        "ObservedNode" text,
+        "TcpFlags" integer NOT NULL,
+        "Time" bigint NOT NULL,
+        "FirstSeenAt" timestamp with time zone NOT NULL,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        "LastAckSeenAt" timestamp with time zone,
+        "LastSynOnlyAt" timestamp with time zone,
+        "LastDropAt" timestamp with time zone,
+        "DropCause" text,
+        CONSTRAINT "PK_IngressFlowEntries" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010131015_IngressFlowLedger') THEN
+    CREATE TABLE IF NOT EXISTS "IngressNodeAccessCounters" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "Day" timestamp with time zone NOT NULL,
+        "Node" text NOT NULL,
+        "Port" integer NOT NULL,
+        "Proto" integer NOT NULL,
+        "Kind" text NOT NULL,
+        "Observations" bigint NOT NULL,
+        "DistinctSourcesApprox" bigint NOT NULL,
+        "LastSeenAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_IngressNodeAccessCounters" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010131015_IngressFlowLedger') THEN
+    CREATE TABLE IF NOT EXISTS "IngressVolumeBuckets" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "BucketStart" timestamp with time zone NOT NULL,
+        "DstNs" text NOT NULL,
+        "DstOwner" text NOT NULL,
+        "DstPort" integer NOT NULL,
+        "SrcKey" text NOT NULL,
+        "HopKind" text NOT NULL,
+        "Bytes" bigint NOT NULL,
+        "Packets" bigint NOT NULL,
+        "Flows" bigint NOT NULL,
+        CONSTRAINT "PK_IngressVolumeBuckets" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010131015_IngressFlowLedger') THEN
+    CREATE INDEX IF NOT EXISTS "IX_IngressFlowEntries_Cluster_SrcKey" ON "IngressFlowEntries" ("ClusterName", "SrcKey");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010131015_IngressFlowLedger') THEN
+    CREATE INDEX IF NOT EXISTS "IX_IngressFlowEntries_Cluster_UpdatedAt" ON "IngressFlowEntries" ("ClusterName", "UpdatedAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010131015_IngressFlowLedger') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_IngressFlowEntries_Edge" ON "IngressFlowEntries" ("ClusterName", "DstKind", "DstNs", "DstOwner", "DstPort", "Proto", "SrcKey", "HopKind");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010131015_IngressFlowLedger') THEN
+    CREATE INDEX IF NOT EXISTS "IX_IngressFlowEntries_UpdatedAt" ON "IngressFlowEntries" ("UpdatedAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010131015_IngressFlowLedger') THEN
+    CREATE INDEX IF NOT EXISTS "IX_IngressNodeAccessCounters_Day" ON "IngressNodeAccessCounters" ("Day");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010131015_IngressFlowLedger') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_IngressNodeAccessCounters_Key" ON "IngressNodeAccessCounters" ("ClusterName", "Day", "Node", "Port", "Proto", "Kind");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010131015_IngressFlowLedger') THEN
+    CREATE INDEX IF NOT EXISTS "IX_IngressVolumeBuckets_BucketStart" ON "IngressVolumeBuckets" ("BucketStart");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010131015_IngressFlowLedger') THEN
+    CREATE INDEX IF NOT EXISTS "IX_IngressVolumeBuckets_Cluster_Start" ON "IngressVolumeBuckets" ("ClusterName", "BucketStart");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010131015_IngressFlowLedger') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_IngressVolumeBuckets_Key" ON "IngressVolumeBuckets" ("ClusterName", "BucketStart", "DstNs", "DstOwner", "DstPort", "SrcKey", "HopKind");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010131015_IngressFlowLedger') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261010131015_IngressFlowLedger', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+-- ─────────────────────────────────────────────────────────────────────────────────────────────
+-- 20261010153902_IngressRouterLogsTrust (north-south ingress, L7: router access logs and trust)
+--
+-- DDL: one nullable column and six new tables. IngressFlowEntries gains CorroboratedAt (the end of the
+-- newest router access-log bucket that corroborated a delivery edge; written by the corroboration job
+-- only). IngressRequestBuckets (router requests per 5 minutes, per Route, backend pod, router node,
+-- client and client identity) and IngressRequestDaily (its daily rollup, pod and router node dropped,
+-- exact client keys kept); IngressTrustProfiles and IngressTrustProfileHistory (the operator half of
+-- each IngressController's / Gateway's trust profile, every version kept); IngressAssertions (operator
+-- statements: NotAProxy, IsWaf, IsLoadBalancerSnat, IsHealthChecker); IngressSourceSightings (the
+-- new-external-source detector's memory). Nothing existing is rewritten and there is no data step.
+--
+-- This file re-runs on every helm upgrade, so every statement is guarded: ADD COLUMN IF NOT EXISTS,
+-- CREATE TABLE / CREATE [UNIQUE] INDEX IF NOT EXISTS.
+-- ─────────────────────────────────────────────────────────────────────────────────────────────
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010153902_IngressRouterLogsTrust') THEN
+    ALTER TABLE "IngressFlowEntries" ADD COLUMN IF NOT EXISTS "CorroboratedAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010153902_IngressRouterLogsTrust') THEN
+    CREATE TABLE IF NOT EXISTS "IngressAssertions" (
+        "Id" uuid NOT NULL,
+        "ClusterName" text NOT NULL,
+        "Scope" text NOT NULL,
+        "Ref" text NOT NULL,
+        "Assertion" text NOT NULL,
+        "Note" text,
+        "CreatedAt" timestamp with time zone NOT NULL,
+        "CreatedBy" text,
+        CONSTRAINT "PK_IngressAssertions" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010153902_IngressRouterLogsTrust') THEN
+    CREATE TABLE IF NOT EXISTS "IngressRequestBuckets" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "BucketStart" timestamp with time zone NOT NULL,
+        "IngressController" text NOT NULL,
+        "RouteNs" text NOT NULL,
+        "RouteName" text NOT NULL,
+        "RouteHost" text NOT NULL,
+        "DstNs" text NOT NULL,
+        "DstWorkload" text NOT NULL,
+        "DstPod" text NOT NULL,
+        "DstPort" integer NOT NULL,
+        "RouterNode" text NOT NULL,
+        "ClientKey" text NOT NULL,
+        "ClientIdentity" text NOT NULL,
+        "ClientKind" text NOT NULL,
+        "WirePeer" text,
+        "TlsMode" text NOT NULL,
+        "Tls" boolean NOT NULL,
+        "DstInferred" boolean NOT NULL,
+        "Evidence" text NOT NULL,
+        "Requests" bigint NOT NULL,
+        "Bytes" bigint NOT NULL,
+        "Status2xx" bigint NOT NULL,
+        "Status3xx" bigint NOT NULL,
+        "Status4xx" bigint NOT NULL,
+        "Status5xx" bigint NOT NULL,
+        "RejectedByAllowlist" bigint NOT NULL,
+        "FirstSeenAt" timestamp with time zone NOT NULL,
+        "LastSeenAt" timestamp with time zone NOT NULL,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_IngressRequestBuckets" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010153902_IngressRouterLogsTrust') THEN
+    CREATE TABLE IF NOT EXISTS "IngressRequestDaily" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "Day" timestamp with time zone NOT NULL,
+        "IngressController" text NOT NULL,
+        "RouteNs" text NOT NULL,
+        "RouteName" text NOT NULL,
+        "RouteHost" text NOT NULL,
+        "DstNs" text NOT NULL,
+        "DstWorkload" text NOT NULL,
+        "DstPort" integer NOT NULL,
+        "ClientKey" text NOT NULL,
+        "ClientIdentity" text NOT NULL,
+        "ClientKind" text NOT NULL,
+        "WirePeer" text,
+        "TlsMode" text NOT NULL,
+        "Tls" boolean NOT NULL,
+        "DstInferred" boolean NOT NULL,
+        "Corroborated" boolean NOT NULL,
+        "Requests" bigint NOT NULL,
+        "Bytes" bigint NOT NULL,
+        "Status2xx" bigint NOT NULL,
+        "Status3xx" bigint NOT NULL,
+        "Status4xx" bigint NOT NULL,
+        "Status5xx" bigint NOT NULL,
+        "RejectedByAllowlist" bigint NOT NULL,
+        "FirstSeenAt" timestamp with time zone NOT NULL,
+        "LastSeenAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_IngressRequestDaily" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010153902_IngressRouterLogsTrust') THEN
+    CREATE TABLE IF NOT EXISTS "IngressSourceSightings" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "DstNs" text NOT NULL,
+        "DstOwner" text NOT NULL,
+        "SrcKey" text NOT NULL,
+        "SrcKind" text NOT NULL,
+        "DstPort" integer NOT NULL,
+        "EntryRef" text,
+        "FirstSeenAt" timestamp with time zone NOT NULL,
+        "LastSeenAt" timestamp with time zone NOT NULL,
+        "RecordedAt" timestamp with time zone NOT NULL,
+        "FirstContactState" text,
+        "FirstContactAt" timestamp with time zone,
+        CONSTRAINT "PK_IngressSourceSightings" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010153902_IngressRouterLogsTrust') THEN
+    CREATE TABLE IF NOT EXISTS "IngressTrustProfileHistory" (
+        "Id" uuid NOT NULL,
+        "ProfileId" uuid NOT NULL,
+        "Version" integer NOT NULL,
+        "OperatorCidrsJson" text NOT NULL,
+        "ProxyProtocolOverride" boolean,
+        "NumTrustedProxies" integer,
+        "CreatedAt" timestamp with time zone NOT NULL,
+        "CreatedBy" text,
+        CONSTRAINT "PK_IngressTrustProfileHistory" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010153902_IngressRouterLogsTrust') THEN
+    CREATE TABLE IF NOT EXISTS "IngressTrustProfiles" (
+        "Id" uuid NOT NULL,
+        "ClusterName" text NOT NULL,
+        "Scope" text NOT NULL,
+        "Ref" text NOT NULL,
+        "OperatorCidrsJson" text NOT NULL,
+        "ProxyProtocolOverride" boolean,
+        "NumTrustedProxies" integer,
+        "Version" integer NOT NULL,
+        "CreatedAt" timestamp with time zone NOT NULL,
+        "UpdatedAt" timestamp with time zone,
+        "UpdatedBy" text,
+        CONSTRAINT "PK_IngressTrustProfiles" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010153902_IngressRouterLogsTrust') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_IngressAssertions_Statement" ON "IngressAssertions" ("ClusterName", "Scope", "Ref", "Assertion");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010153902_IngressRouterLogsTrust') THEN
+    CREATE INDEX IF NOT EXISTS "IX_IngressRequestBuckets_BucketStart" ON "IngressRequestBuckets" ("BucketStart");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010153902_IngressRouterLogsTrust') THEN
+    CREATE INDEX IF NOT EXISTS "IX_IngressRequestBuckets_Cluster_Start" ON "IngressRequestBuckets" ("ClusterName", "BucketStart");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010153902_IngressRouterLogsTrust') THEN
+    CREATE INDEX IF NOT EXISTS "IX_IngressRequestBuckets_Cluster_Updated" ON "IngressRequestBuckets" ("ClusterName", "UpdatedAt", "Id");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010153902_IngressRouterLogsTrust') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_IngressRequestBuckets_Key" ON "IngressRequestBuckets" ("ClusterName", "BucketStart", "IngressController", "RouteNs", "RouteName", "RouteHost", "DstNs", "DstWorkload", "DstPod", "DstPort", "RouterNode", "ClientKey", "ClientIdentity");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010153902_IngressRouterLogsTrust') THEN
+    CREATE INDEX IF NOT EXISTS "IX_IngressRequestBuckets_Route_Client" ON "IngressRequestBuckets" ("ClusterName", "IngressController", "RouteNs", "RouteName", "ClientKey");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010153902_IngressRouterLogsTrust') THEN
+    CREATE INDEX IF NOT EXISTS "IX_IngressRequestDaily_Cluster_Day" ON "IngressRequestDaily" ("ClusterName", "Day");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010153902_IngressRouterLogsTrust') THEN
+    CREATE INDEX IF NOT EXISTS "IX_IngressRequestDaily_Day" ON "IngressRequestDaily" ("Day");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010153902_IngressRouterLogsTrust') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_IngressRequestDaily_Key" ON "IngressRequestDaily" ("ClusterName", "Day", "IngressController", "RouteNs", "RouteName", "RouteHost", "DstNs", "DstWorkload", "DstPort", "ClientKey", "ClientIdentity");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010153902_IngressRouterLogsTrust') THEN
+    CREATE INDEX IF NOT EXISTS "IX_IngressSourceSightings_Cluster_Contact" ON "IngressSourceSightings" ("ClusterName", "FirstContactAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010153902_IngressRouterLogsTrust') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_IngressSourceSightings_Key" ON "IngressSourceSightings" ("ClusterName", "DstNs", "DstOwner", "SrcKey");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010153902_IngressRouterLogsTrust') THEN
+    CREATE INDEX IF NOT EXISTS "IX_IngressSourceSightings_LastSeenAt" ON "IngressSourceSightings" ("LastSeenAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010153902_IngressRouterLogsTrust') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_IngressTrustProfileHistory_Version" ON "IngressTrustProfileHistory" ("ProfileId", "Version");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010153902_IngressRouterLogsTrust') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_IngressTrustProfiles_Entry" ON "IngressTrustProfiles" ("ClusterName", "Scope", "Ref");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010153902_IngressRouterLogsTrust') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261010153902_IngressRouterLogsTrust', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+-- ─────────────────────────────────────────────────────────────────────────────────────────────
+-- 20261010170921_IngressRuleRecords (north-south ingress: inbound allow-list rules)
+--
+-- DDL: two new tables. IngressRuleRecords (one inbound allow-list rule per cluster and name: its
+-- target, source ranges, ports, hosts, status and what was applied or exported) and IngressRuleVersions
+-- (every version of a rule's intent, deleted with the rule). Nothing existing is rewritten and there is
+-- no data step. The ingress gateway lane writes the existing IngressRequestBuckets and adds no schema.
+--
+-- This file re-runs on every helm upgrade, so every statement is guarded: CREATE TABLE / CREATE
+-- [UNIQUE] INDEX IF NOT EXISTS.
+-- ─────────────────────────────────────────────────────────────────────────────────────────────
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010170921_IngressRuleRecords') THEN
+    CREATE TABLE IF NOT EXISTS "IngressRuleRecords" (
+        "Id" uuid NOT NULL,
+        "ClusterName" text NOT NULL,
+        "Name" text NOT NULL,
+        "TargetKind" text NOT NULL,
+        "TargetNamespace" text NOT NULL,
+        "TargetName" text NOT NULL,
+        "SourceCidrsJson" text NOT NULL,
+        "PortsJson" text NOT NULL,
+        "HostsJson" text NOT NULL,
+        "Status" text NOT NULL,
+        "AppliedMechanism" text,
+        "AppliedVersion" integer,
+        "AppliedObjectRef" text,
+        "AppliedAt" timestamp with time zone,
+        "AppliedBy" text,
+        "VersionNumber" integer NOT NULL,
+        "CreatedAt" timestamp with time zone NOT NULL,
+        "CreatedBy" text,
+        "ContentChangedAt" timestamp with time zone NOT NULL,
+        "UpdatedAt" timestamp with time zone,
+        "UpdatedBy" text,
+        CONSTRAINT "PK_IngressRuleRecords" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010170921_IngressRuleRecords') THEN
+    CREATE TABLE IF NOT EXISTS "IngressRuleVersions" (
+        "Id" uuid NOT NULL,
+        "RuleId" uuid NOT NULL,
+        "VersionNumber" integer NOT NULL,
+        "IntentJson" text NOT NULL,
+        "CreatedAt" timestamp with time zone NOT NULL,
+        "CreatedBy" text,
+        "Note" text,
+        CONSTRAINT "PK_IngressRuleVersions" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_IngressRuleVersions_IngressRuleRecords_RuleId" FOREIGN KEY ("RuleId") REFERENCES "IngressRuleRecords" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010170921_IngressRuleRecords') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_IngressRuleRecords_Name" ON "IngressRuleRecords" ("ClusterName", "Name");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010170921_IngressRuleRecords') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_IngressRuleVersions_Version" ON "IngressRuleVersions" ("RuleId", "VersionNumber");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010170921_IngressRuleRecords') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261010170921_IngressRuleRecords', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+-- ─────────────────────────────────────────────────────────────────────────────────────────────
+-- 20261010213810_IngressCapRegistryAndProbeIndexes (north-south ingress: cap bookkeeping, probe indexes)
+--
+-- DDL: one new table, IngressRequestExactClients (the exact client keys each Route or gateway route
+-- holds, one row per route, pool and key: the per-route cap counted them over the 7-day
+-- IngressRequestBuckets on every router-log POST), and two partial indexes on IngressFlowEntries:
+-- IX_IngressFlowEntries_ExactPublic (the L4 public-source cap's per-destination count) and
+-- IX_IngressFlowEntries_Cluster_Translated (health's translation probe). Data step: the table is
+-- backfilled from the exact keys the buckets already hold; ON CONFLICT DO NOTHING makes a re-run a no-op.
+--
+-- This file re-runs on every helm upgrade, so every statement is guarded: CREATE TABLE / CREATE
+-- [UNIQUE] INDEX IF NOT EXISTS, and the backfill skips keys already registered.
+-- ─────────────────────────────────────────────────────────────────────────────────────────────
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010213810_IngressCapRegistryAndProbeIndexes') THEN
+    CREATE TABLE IF NOT EXISTS "IngressRequestExactClients" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "IngressController" text NOT NULL,
+        "RouteNs" text NOT NULL,
+        "RouteName" text NOT NULL,
+        "Claimed" boolean NOT NULL,
+        "ClientKey" text NOT NULL,
+        "LastSeenAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_IngressRequestExactClients" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010213810_IngressCapRegistryAndProbeIndexes') THEN
+    CREATE INDEX IF NOT EXISTS "IX_IngressFlowEntries_Cluster_Translated" ON "IngressFlowEntries" ("ClusterName") WHERE "XlatDstIp" IS NOT NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010213810_IngressCapRegistryAndProbeIndexes') THEN
+    CREATE INDEX IF NOT EXISTS "IX_IngressFlowEntries_ExactPublic" ON "IngressFlowEntries" ("ClusterName", "DstKind", "DstNs", "DstOwner", "SrcKey") WHERE "SrcKind" = 'Public' AND NOT "SrcAggregated";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010213810_IngressCapRegistryAndProbeIndexes') THEN
+    CREATE INDEX IF NOT EXISTS "IX_IngressRequestExactClients_Cluster_Client" ON "IngressRequestExactClients" ("ClusterName", "ClientKey");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010213810_IngressCapRegistryAndProbeIndexes') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_IngressRequestExactClients_Key" ON "IngressRequestExactClients" ("ClusterName", "IngressController", "RouteNs", "RouteName", "Claimed", "ClientKey");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010213810_IngressCapRegistryAndProbeIndexes') THEN
+    CREATE INDEX IF NOT EXISTS "IX_IngressRequestExactClients_LastSeenAt" ON "IngressRequestExactClients" ("LastSeenAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010213810_IngressCapRegistryAndProbeIndexes') THEN
+    INSERT INTO "IngressRequestExactClients" ("ClusterName", "IngressController", "RouteNs", "RouteName", "Claimed", "ClientKey", "LastSeenAt")
+    SELECT "ClusterName", "IngressController", "RouteNs", "RouteName", "ClientIdentity" = 'UntrustedXff', "ClientKey", max("LastSeenAt")
+    FROM "IngressRequestBuckets"
+    WHERE ("ClientKind" = 'Public' OR "ClientIdentity" = 'UntrustedXff') AND "ClientKey" NOT LIKE '%/%'
+    GROUP BY "ClusterName", "IngressController", "RouteNs", "RouteName", "ClientIdentity" = 'UntrustedXff', "ClientKey"
+    ON CONFLICT DO NOTHING;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261010213810_IngressCapRegistryAndProbeIndexes') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261010213810_IngressCapRegistryAndProbeIndexes', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015023635_ProcessImageIdentity') THEN
+    ALTER TABLE "ProcessFlowEntries" ADD "ImageId" text NOT NULL DEFAULT '';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015023635_ProcessImageIdentity') THEN
+    ALTER TABLE "ProcessFlowEntries" ADD "WorkloadKind" text NOT NULL DEFAULT '';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015023635_ProcessImageIdentity') THEN
+    ALTER TABLE "ProcessExecEntries" ADD "ImageId" text NOT NULL DEFAULT '';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015023635_ProcessImageIdentity') THEN
+    ALTER TABLE "ProcessExecEntries" ADD "WorkloadKind" text NOT NULL DEFAULT '';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015023635_ProcessImageIdentity') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261015023635_ProcessImageIdentity', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015033802_RuntimeImageSightingsAndLaneLiveness') THEN
+    CREATE TABLE "LaneLivenessDaily" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "Stream" text NOT NULL,
+        "Day" timestamp with time zone NOT NULL,
+        "FirstEventAt" timestamp with time zone NOT NULL,
+        "LastEventAt" timestamp with time zone NOT NULL,
+        "Events" bigint NOT NULL,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_LaneLivenessDaily" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015033802_RuntimeImageSightingsAndLaneLiveness') THEN
+    CREATE TABLE "RuntimeImageSightings" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "Namespace" text NOT NULL,
+        "Workload" text NOT NULL,
+        "WorkloadKind" text NOT NULL,
+        "Container" text NOT NULL,
+        "ImageDigest" text NOT NULL,
+        "Binary" text NOT NULL,
+        "Session" text NOT NULL,
+        "ImageRef" text NOT NULL,
+        "ImageName" text NOT NULL,
+        "LastPodName" text NOT NULL,
+        "LastNodeName" text NOT NULL,
+        "LastArgs" character varying(1024) NOT NULL,
+        "FirstSeenUtc" timestamp with time zone NOT NULL,
+        "LastSeenUtc" timestamp with time zone NOT NULL,
+        "LastExecAt" timestamp with time zone,
+        "LastConnectAt" timestamp with time zone,
+        "ContainerInit" boolean NOT NULL,
+        "HitCount" bigint NOT NULL,
+        "ExecCount" bigint NOT NULL,
+        "ConnectCount" bigint NOT NULL,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_RuntimeImageSightings" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015033802_RuntimeImageSightingsAndLaneLiveness') THEN
+    CREATE UNIQUE INDEX "IX_LaneLivenessDaily_Key" ON "LaneLivenessDaily" ("ClusterName", "Stream", "Day");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015033802_RuntimeImageSightingsAndLaneLiveness') THEN
+    CREATE INDEX "IX_RuntimeImageSightings_Cluster_Digest" ON "RuntimeImageSightings" ("ClusterName", "ImageDigest");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015033802_RuntimeImageSightingsAndLaneLiveness') THEN
+    CREATE UNIQUE INDEX "IX_RuntimeImageSightings_Key" ON "RuntimeImageSightings" ("ClusterName", "Namespace", "Workload", "WorkloadKind", "Container", "ImageDigest", "Binary", "Session");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015033802_RuntimeImageSightingsAndLaneLiveness') THEN
+    CREATE INDEX "IX_RuntimeImageSightings_LastSeen" ON "RuntimeImageSightings" ("LastSeenUtc");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015033802_RuntimeImageSightingsAndLaneLiveness') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261015033802_RuntimeImageSightingsAndLaneLiveness', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015040745_RunningWorkloadImages') THEN
+    CREATE TABLE "RunningWorkloadImages" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "Namespace" text NOT NULL,
+        "Workload" text NOT NULL,
+        "WorkloadKind" text NOT NULL,
+        "Container" text NOT NULL,
+        "ImageDigest" text NOT NULL,
+        "ContainerRole" text NOT NULL,
+        "ImageRef" text NOT NULL,
+        "ImageName" text NOT NULL,
+        "FlowWorkload" text NOT NULL,
+        "PodCount" integer NOT NULL,
+        "SamplePod" text NOT NULL,
+        "FirstSeenUtc" timestamp with time zone NOT NULL,
+        "LastSeenUtc" timestamp with time zone NOT NULL,
+        "EarliestStartedAt" timestamp with time zone,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_RunningWorkloadImages" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015040745_RunningWorkloadImages') THEN
+    CREATE INDEX "IX_RunningWorkloadImages_Cluster_Digest" ON "RunningWorkloadImages" ("ClusterName", "ImageDigest");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015040745_RunningWorkloadImages') THEN
+    CREATE INDEX "IX_RunningWorkloadImages_Cluster_Ns_FlowWorkload" ON "RunningWorkloadImages" ("ClusterName", "Namespace", "FlowWorkload");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015040745_RunningWorkloadImages') THEN
+    CREATE UNIQUE INDEX "IX_RunningWorkloadImages_Key" ON "RunningWorkloadImages" ("ClusterName", "Namespace", "Workload", "WorkloadKind", "Container", "ImageDigest");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015040745_RunningWorkloadImages') THEN
+    CREATE INDEX "IX_RunningWorkloadImages_LastSeen" ON "RunningWorkloadImages" ("LastSeenUtc");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015040745_RunningWorkloadImages') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261015040745_RunningWorkloadImages', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015044352_WorkloadExposureSnapshots') THEN
+    CREATE TABLE "WorkloadExposureClusterStates" (
+        "ClusterName" text NOT NULL,
+        "ComputedAt" timestamp with time zone NOT NULL,
+        "EntryIndexAvailable" boolean NOT NULL,
+        "RowsRead" integer NOT NULL,
+        "Truncated" boolean NOT NULL,
+        "WindowDays" integer NOT NULL,
+        "Error" text,
+        CONSTRAINT "PK_WorkloadExposureClusterStates" PRIMARY KEY ("ClusterName")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015044352_WorkloadExposureSnapshots') THEN
+    CREATE TABLE "WorkloadExposureSnapshots" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "Namespace" text NOT NULL,
+        "Workload" text NOT NULL,
+        "WorkloadKind" text NOT NULL,
+        "Level" text NOT NULL,
+        "PublicSources" integer NOT NULL,
+        "Sources" integer NOT NULL,
+        "EntryRefs" text NOT NULL,
+        "Ports" text NOT NULL,
+        "LastObservedAt" timestamp with time zone,
+        "ComputedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_WorkloadExposureSnapshots" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015044352_WorkloadExposureSnapshots') THEN
+    CREATE UNIQUE INDEX "IX_WorkloadExposureSnapshots_Key" ON "WorkloadExposureSnapshots" ("ClusterName", "Namespace", "Workload", "WorkloadKind");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015044352_WorkloadExposureSnapshots') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261015044352_WorkloadExposureSnapshots', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015060521_StoryReadIndexes') THEN
+    CREATE INDEX "IX_MeshFlowVerdicts_Cluster_Dst" ON "MeshFlowVerdicts" ("ClusterName", "DstNs", "DstOwner");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015060521_StoryReadIndexes') THEN
+    CREATE INDEX "IX_IngressRequestDaily_Cluster_Dst_Day" ON "IngressRequestDaily" ("ClusterName", "DstNs", "DstWorkload", "Day");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015060521_StoryReadIndexes') THEN
+    CREATE INDEX "IX_IngressRequestBuckets_Cluster_Dst_Bucket" ON "IngressRequestBuckets" ("ClusterName", "DstNs", "DstWorkload", "BucketStart");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015060521_StoryReadIndexes') THEN
+    CREATE INDEX "IX_FlowVerdictPairBuckets_Dst_Grain_Bucket" ON "FlowVerdictPairBuckets" ("ClusterName", "DstNs", "DstOwner", "Grain", "BucketStart");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015060521_StoryReadIndexes') THEN
+    CREATE INDEX "IX_FlowVerdictPairBuckets_Src_Grain_Bucket" ON "FlowVerdictPairBuckets" ("ClusterName", "SrcNs", "SrcOwner", "Grain", "BucketStart");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015060521_StoryReadIndexes') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261015060521_StoryReadIndexes', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016091257_LaneLivenessSightingsDropped') THEN
+    ALTER TABLE "LaneLivenessDaily" ADD "SightingsDropped" bigint NOT NULL DEFAULT 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016091257_LaneLivenessSightingsDropped') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261016091257_LaneLivenessSightingsDropped', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+-- ─────────────────────────────────────────────────────────────────────────────────────────────
+-- 20261016100000_IngressEnablement (Settings › Integrations › Ingress & Load Balancers)
+--
+-- DDL: four new tables. IngressFrontProfiles (what stands in front of each IngressController or
+-- Gateway: the front devices, their modes and their addresses by role; one row per entry point) and
+-- IngressFrontProfileHistory (every version of it); IngressCollectorSettings (per cluster: the ingress
+-- router-log ingest token, encrypted and indexed by its SHA-256 digest, and the optional fan-out of the
+-- router lines to the customer's own syslog / SIEM); IngressSetupApplyRecords (every router
+-- access-logging patch Axera applied to an IngressController or rolled back, with the spec.logging
+-- before and after). Nothing existing is rewritten and there is no data step.
+--
+-- This file re-runs on every helm upgrade, so every statement is guarded: CREATE TABLE / CREATE
+-- [UNIQUE] INDEX IF NOT EXISTS.
+-- ─────────────────────────────────────────────────────────────────────────────────────────────
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016100000_IngressEnablement') THEN
+    CREATE TABLE IF NOT EXISTS "IngressCollectorSettings" (
+        "ClusterName" text NOT NULL,
+        "IngestEnabled" boolean NOT NULL,
+        "IngestTokenEncrypted" text,
+        "IngestTokenDigest" text,
+        "AdoptedFromMesh" boolean NOT NULL,
+        "TokenCreatedAt" timestamp with time zone,
+        "TokenCreatedBy" text,
+        "TokenRotatedAt" timestamp with time zone,
+        "TokenRotatedBy" text,
+        "TokenRevealedAt" timestamp with time zone,
+        "TokenRevealedBy" text,
+        "CollectorFanoutJson" text,
+        "Version" integer NOT NULL,
+        "UpdatedAt" timestamp with time zone,
+        "UpdatedBy" text,
+        CONSTRAINT "PK_IngressCollectorSettings" PRIMARY KEY ("ClusterName")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016100000_IngressEnablement') THEN
+    CREATE TABLE IF NOT EXISTS "IngressFrontProfileHistory" (
+        "Id" uuid NOT NULL,
+        "ProfileId" uuid NOT NULL,
+        "Version" integer NOT NULL,
+        "DocumentJson" text NOT NULL,
+        "CompiledJson" text NOT NULL,
+        "CreatedAt" timestamp with time zone NOT NULL,
+        "CreatedBy" text,
+        CONSTRAINT "PK_IngressFrontProfileHistory" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016100000_IngressEnablement') THEN
+    CREATE TABLE IF NOT EXISTS "IngressFrontProfiles" (
+        "Id" uuid NOT NULL,
+        "ClusterName" text NOT NULL,
+        "Scope" text NOT NULL,
+        "Ref" text NOT NULL,
+        "DocumentJson" text NOT NULL,
+        "CompiledJson" text NOT NULL,
+        "Version" integer NOT NULL,
+        "CreatedAt" timestamp with time zone NOT NULL,
+        "UpdatedAt" timestamp with time zone,
+        "UpdatedBy" text,
+        CONSTRAINT "PK_IngressFrontProfiles" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016100000_IngressEnablement') THEN
+    CREATE TABLE IF NOT EXISTS "IngressSetupApplyRecords" (
+        "Id" uuid NOT NULL,
+        "ClusterName" text NOT NULL,
+        "IngressController" text NOT NULL,
+        "Kind" text NOT NULL,
+        "BeforeLoggingJson" text,
+        "AfterLoggingJson" text NOT NULL,
+        "ResourceVersionBefore" text NOT NULL,
+        "ResourceVersionAfter" text,
+        "Status" text NOT NULL,
+        "Error" text,
+        "RollbackOfId" uuid,
+        "AppliedAt" timestamp with time zone NOT NULL,
+        "AppliedBy" text,
+        "RolledBackAt" timestamp with time zone,
+        "RolledBackBy" text,
+        CONSTRAINT "PK_IngressSetupApplyRecords" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016100000_IngressEnablement') THEN
+    CREATE INDEX IF NOT EXISTS "IX_IngressCollectorSettings_TokenDigest" ON "IngressCollectorSettings" ("IngestTokenDigest");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016100000_IngressEnablement') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_IngressFrontProfileHistory_Version" ON "IngressFrontProfileHistory" ("ProfileId", "Version");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016100000_IngressEnablement') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "IX_IngressFrontProfiles_Entry" ON "IngressFrontProfiles" ("ClusterName", "Scope", "Ref");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016100000_IngressEnablement') THEN
+    CREATE INDEX IF NOT EXISTS "IX_IngressSetupApplyRecords_Cluster_AppliedAt" ON "IngressSetupApplyRecords" ("ClusterName", "AppliedAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016100000_IngressEnablement') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261016100000_IngressEnablement', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017155445_RuntimeLoadedArtifacts') THEN
+    CREATE TABLE "RuntimeLoadedArtifacts" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "Namespace" text NOT NULL,
+        "Workload" text NOT NULL,
+        "WorkloadKind" text NOT NULL,
+        "Container" text NOT NULL,
+        "ImageDigest" text NOT NULL,
+        "Path" character varying(1024) NOT NULL,
+        "Session" character varying(32) NOT NULL,
+        "LoadKind" character varying(32) NOT NULL,
+        "ArtifactClass" character varying(32) NOT NULL,
+        "Variant" character varying(32) NOT NULL,
+        "ImageRef" text NOT NULL,
+        "LastBinary" character varying(1024) NOT NULL,
+        "LastPodName" text NOT NULL,
+        "LastNodeName" text NOT NULL,
+        "BuildId" character varying(128),
+        "ContainerInit" boolean NOT NULL,
+        "FirstSeenUtc" timestamp with time zone NOT NULL,
+        "LastSeenUtc" timestamp with time zone NOT NULL,
+        "HitCount" bigint NOT NULL,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_RuntimeLoadedArtifacts" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017155445_RuntimeLoadedArtifacts') THEN
+    CREATE INDEX "IX_RuntimeLoadedArtifacts_Cluster_Digest" ON "RuntimeLoadedArtifacts" ("ClusterName", "ImageDigest");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017155445_RuntimeLoadedArtifacts') THEN
+    CREATE UNIQUE INDEX "IX_RuntimeLoadedArtifacts_Key" ON "RuntimeLoadedArtifacts" ("ClusterName", "Namespace", "Workload", "WorkloadKind", "Container", "ImageDigest", "Path", "Session", "LoadKind");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017155445_RuntimeLoadedArtifacts') THEN
+    CREATE INDEX "IX_RuntimeLoadedArtifacts_LastSeen" ON "RuntimeLoadedArtifacts" ("LastSeenUtc");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017155445_RuntimeLoadedArtifacts') THEN
+    CREATE INDEX "IX_RuntimeLoadedArtifacts_Workload" ON "RuntimeLoadedArtifacts" ("ClusterName", "Namespace", "Workload");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017155445_RuntimeLoadedArtifacts') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261017155445_RuntimeLoadedArtifacts', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017165103_NodeKernelFacts') THEN
+    CREATE TABLE "NodeKernelFacts" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "NodeName" text NOT NULL,
+        "KernelVersion" character varying(256) NOT NULL,
+        "KernelBase" character varying(256) NOT NULL,
+        "OsImage" character varying(256) NOT NULL,
+        "Architecture" character varying(256) NOT NULL,
+        "ContainerRuntime" character varying(256) NOT NULL,
+        "LoaderKernelCapable" boolean,
+        "Ready" boolean NOT NULL,
+        "FirstSeenUtc" timestamp with time zone NOT NULL,
+        "LastSeenUtc" timestamp with time zone NOT NULL,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_NodeKernelFacts" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017165103_NodeKernelFacts') THEN
+    CREATE UNIQUE INDEX "IX_NodeKernelFacts_Key" ON "NodeKernelFacts" ("ClusterName", "NodeName");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017165103_NodeKernelFacts') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261017165103_NodeKernelFacts', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017211552_LoadedArtifactContainerStart') THEN
+    ALTER TABLE "RuntimeLoadedArtifacts" ADD "ContainerStartedUtc" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017211552_LoadedArtifactContainerStart') THEN
+    CREATE INDEX "IX_RuntimeLoadedArtifacts_Cluster_LastSeen" ON "RuntimeLoadedArtifacts" ("ClusterName", "LastSeenUtc" DESC, "Id");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017211552_LoadedArtifactContainerStart') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261017211552_LoadedArtifactContainerStart', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261018143140_RuntimeContainerStarts') THEN
+    CREATE TABLE "RuntimeContainerStarts" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" text NOT NULL,
+        "Namespace" text NOT NULL,
+        "Workload" text NOT NULL,
+        "WorkloadKind" text NOT NULL,
+        "Container" text NOT NULL,
+        "ImageDigest" text NOT NULL,
+        "PodName" text NOT NULL,
+        "NodeName" text NOT NULL,
+        "StartedUtc" timestamp with time zone,
+        "LastSeenUtc" timestamp with time zone,
+        "ProvedStartedUtc" timestamp with time zone,
+        "ProvedAt" timestamp with time zone,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_RuntimeContainerStarts" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261018143140_RuntimeContainerStarts') THEN
+    CREATE INDEX "IX_RuntimeContainerStarts_Cluster_Digest" ON "RuntimeContainerStarts" ("ClusterName", "ImageDigest");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261018143140_RuntimeContainerStarts') THEN
+    CREATE UNIQUE INDEX "IX_RuntimeContainerStarts_Key" ON "RuntimeContainerStarts" ("ClusterName", "Namespace", "Workload", "WorkloadKind", "Container", "ImageDigest", "PodName");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261018143140_RuntimeContainerStarts') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261018143140_RuntimeContainerStarts', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261018193920_FlowEntriesFirstSeenAt') THEN
+    ALTER TABLE "RedundantFlowEntries" ADD "FirstSeenAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261018193920_FlowEntriesFirstSeenAt') THEN
+    ALTER TABLE "FlowEntries" ADD "FirstSeenAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261018193920_FlowEntriesFirstSeenAt') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261018193920_FlowEntriesFirstSeenAt', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+

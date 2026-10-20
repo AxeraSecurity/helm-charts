@@ -522,7 +522,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260221180953_InitialCreateV2') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260221180953_InitialCreateV2', '10.0.5');
+    VALUES ('20260221180953_InitialCreateV2', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
@@ -575,7 +575,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260224092411_NamespaceAddedForRecords') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260224092411_NamespaceAddedForRecords', '10.0.5');
+    VALUES ('20260224092411_NamespaceAddedForRecords', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
@@ -593,7 +593,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260317125815_ExclusionListAdded') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260317125815_ExclusionListAdded', '10.0.5');
+    VALUES ('20260317125815_ExclusionListAdded', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
@@ -604,7 +604,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260317135613_ExclusionListUpdated') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260317135613_ExclusionListUpdated', '10.0.5');
+    VALUES ('20260317135613_ExclusionListUpdated', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
@@ -622,7 +622,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260318070959_ExclusionListUpdated2') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260318070959_ExclusionListUpdated2', '10.0.5');
+    VALUES ('20260318070959_ExclusionListUpdated2', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
@@ -655,7 +655,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260327111300_GlobalWhitelistPoliciesAdded') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260327111300_GlobalWhitelistPoliciesAdded', '10.0.5');
+    VALUES ('20260327111300_GlobalWhitelistPoliciesAdded', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
@@ -673,7 +673,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260327123046_GlobalWhitelistJsonRemoved') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260327123046_GlobalWhitelistJsonRemoved', '10.0.5');
+    VALUES ('20260327123046_GlobalWhitelistJsonRemoved', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
@@ -755,7 +755,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260331083546_LDAPIntegrationAdded') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260331083546_LDAPIntegrationAdded', '10.0.5');
+    VALUES ('20260331083546_LDAPIntegrationAdded', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
@@ -787,7 +787,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260401134343_LDAPRoleMappingRelationAdded') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260401134343_LDAPRoleMappingRelationAdded', '10.0.5');
+    VALUES ('20260401134343_LDAPRoleMappingRelationAdded', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
@@ -798,7 +798,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260401142254_LDAPRoleMappingRelationUpdated') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260401142254_LDAPRoleMappingRelationUpdated', '10.0.5');
+    VALUES ('20260401142254_LDAPRoleMappingRelationUpdated', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
@@ -816,7 +816,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260408104731_GitSharedVariableAdded') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260408104731_GitSharedVariableAdded', '10.0.5');
+    VALUES ('20260408104731_GitSharedVariableAdded', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
@@ -841,7 +841,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260413112347_NPWatcherSettingsAdded') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260413112347_NPWatcherSettingsAdded', '10.0.5');
+    VALUES ('20260413112347_NPWatcherSettingsAdded', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
@@ -852,10 +852,11 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260413112818_NPWatcherSettingsAdded2') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260413112818_NPWatcherSettingsAdded2', '10.0.5');
+    VALUES ('20260413112818_NPWatcherSettingsAdded2', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
+
 START TRANSACTION;
 
 DO $EF$
@@ -918,7 +919,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260508075252_LicenseInfoExtended') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260508075252_LicenseInfoExtended', '10.0.5');
+    VALUES ('20260508075252_LicenseInfoExtended', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
@@ -963,7 +964,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260508113341_PolicyHitAnalytics') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260508113341_PolicyHitAnalytics', '10.0.5');
+    VALUES ('20260508113341_PolicyHitAnalytics', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
@@ -995,7 +996,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260508121319_AnalyticsScopeOptIn') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260508121319_AnalyticsScopeOptIn', '10.0.5');
+    VALUES ('20260508121319_AnalyticsScopeOptIn', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
@@ -1034,7 +1035,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260511120000_MonitoredClusterNodeTelemetry') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260511120000_MonitoredClusterNodeTelemetry', '10.0.5');
+    VALUES ('20260511120000_MonitoredClusterNodeTelemetry', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
@@ -1047,10 +1048,10 @@ BEGIN
     CREATE TABLE "AnalyticsAuditEntries" (
         "Id" uuid NOT NULL,
         "At" timestamp with time zone NOT NULL,
-        "Actor" text NULL,
+        "Actor" text,
         "Action" text NOT NULL,
         "Summary" text NOT NULL,
-        "Details" text NULL,
+        "Details" text,
         CONSTRAINT "PK_AnalyticsAuditEntries" PRIMARY KEY ("Id")
     );
     END IF;
@@ -1067,7 +1068,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260512000000_AnalyticsAuditLog') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260512000000_AnalyticsAuditLog', '10.0.5');
+    VALUES ('20260512000000_AnalyticsAuditLog', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
@@ -1098,7 +1099,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260512100000_PolicyHitDaily') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260512100000_PolicyHitDaily', '10.0.5');
+    VALUES ('20260512100000_PolicyHitDaily', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
@@ -1141,9 +1142,9 @@ BEGIN
         "Threshold" double precision NOT NULL,
         "WindowMinutes" integer NOT NULL,
         "Enabled" boolean NOT NULL,
-        "LastEvaluatedAt" timestamp with time zone NULL,
-        "LastTriggeredAt" timestamp with time zone NULL,
-        "LastValue" double precision NULL,
+        "LastEvaluatedAt" timestamp with time zone,
+        "LastTriggeredAt" timestamp with time zone,
+        "LastValue" double precision,
         "CreatedAt" timestamp with time zone NOT NULL,
         "UpdatedAt" timestamp with time zone NOT NULL,
         CONSTRAINT "PK_AnalyticsAlertRules" PRIMARY KEY ("Id")
@@ -1162,7 +1163,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260512200000_AnalyticsOverhaul') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260512200000_AnalyticsOverhaul', '10.0.5');
+    VALUES ('20260512200000_AnalyticsOverhaul', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
@@ -1172,35 +1173,35 @@ START TRANSACTION;
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260512300000_AnalyticsAlertWebhook') THEN
-    ALTER TABLE "AnalyticsAlertRules" ADD "WebhookUrl" text NULL;
+    ALTER TABLE "AnalyticsAlertRules" ADD "WebhookUrl" text;
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260512300000_AnalyticsAlertWebhook') THEN
-    ALTER TABLE "AnalyticsAlertRules" ADD "WebhookKind" text NULL;
+    ALTER TABLE "AnalyticsAlertRules" ADD "WebhookKind" text;
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260512300000_AnalyticsAlertWebhook') THEN
-    ALTER TABLE "AnalyticsAlertRules" ADD "LastDeliveryAt" timestamp with time zone NULL;
+    ALTER TABLE "AnalyticsAlertRules" ADD "LastDeliveryAt" timestamp with time zone;
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260512300000_AnalyticsAlertWebhook') THEN
-    ALTER TABLE "AnalyticsAlertRules" ADD "LastDeliveryOk" boolean NULL;
+    ALTER TABLE "AnalyticsAlertRules" ADD "LastDeliveryOk" boolean;
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260512300000_AnalyticsAlertWebhook') THEN
-    ALTER TABLE "AnalyticsAlertRules" ADD "LastDeliveryError" text NULL;
+    ALTER TABLE "AnalyticsAlertRules" ADD "LastDeliveryError" text;
     END IF;
 END $EF$;
 
@@ -1208,7 +1209,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260512300000_AnalyticsAlertWebhook') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260512300000_AnalyticsAlertWebhook', '10.0.5');
+    VALUES ('20260512300000_AnalyticsAlertWebhook', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
@@ -1225,42 +1226,42 @@ END $EF$;
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260513080000_AnalyticsPolishWaveTwo') THEN
-    ALTER TABLE "AnalyticsAlertRules" ADD "SuppressUntil" timestamp with time zone NULL;
+    ALTER TABLE "AnalyticsAlertRules" ADD "SuppressUntil" timestamp with time zone;
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260513080000_AnalyticsPolishWaveTwo') THEN
-    ALTER TABLE "AnalyticsSavedViews" ADD "DigestRecipients" text NULL;
+    ALTER TABLE "AnalyticsSavedViews" ADD "DigestRecipients" text;
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260513080000_AnalyticsPolishWaveTwo') THEN
-    ALTER TABLE "AnalyticsSavedViews" ADD "DigestCron" text NULL;
+    ALTER TABLE "AnalyticsSavedViews" ADD "DigestCron" text;
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260513080000_AnalyticsPolishWaveTwo') THEN
-    ALTER TABLE "AnalyticsSavedViews" ADD "LastDigestSentAt" timestamp with time zone NULL;
+    ALTER TABLE "AnalyticsSavedViews" ADD "LastDigestSentAt" timestamp with time zone;
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260513080000_AnalyticsPolishWaveTwo') THEN
-    ALTER TABLE "AnalyticsSavedViews" ADD "LastDigestOk" boolean NULL;
+    ALTER TABLE "AnalyticsSavedViews" ADD "LastDigestOk" boolean;
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260513080000_AnalyticsPolishWaveTwo') THEN
-    ALTER TABLE "AnalyticsSavedViews" ADD "LastDigestError" text NULL;
+    ALTER TABLE "AnalyticsSavedViews" ADD "LastDigestError" text;
     END IF;
 END $EF$;
 
@@ -1268,7 +1269,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260513080000_AnalyticsPolishWaveTwo') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260513080000_AnalyticsPolishWaveTwo', '10.0.5');
+    VALUES ('20260513080000_AnalyticsPolishWaveTwo', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
@@ -1286,7 +1287,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260513090000_AnalyticsAlertSeverity') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260513090000_AnalyticsAlertSeverity', '10.0.5');
+    VALUES ('20260513090000_AnalyticsAlertSeverity', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
@@ -1329,10 +1330,7 @@ BEGIN
         "ApplicationRole" text NOT NULL,
         "OpenShiftIntegrationId" uuid NOT NULL,
         CONSTRAINT "PK_OcpGroupMappings" PRIMARY KEY ("Id"),
-        CONSTRAINT "FK_OcpGroupMappings_OpenShiftIntegrations_OpenShiftIntegrationId"
-            FOREIGN KEY ("OpenShiftIntegrationId")
-            REFERENCES "OpenShiftIntegrations" ("Id")
-            ON DELETE CASCADE
+        CONSTRAINT "FK_OcpGroupMappings_OpenShiftIntegrations_OpenShiftIntegrationId" FOREIGN KEY ("OpenShiftIntegrationId") REFERENCES "OpenShiftIntegrations" ("Id") ON DELETE CASCADE
     );
     END IF;
 END $EF$;
@@ -1348,7 +1346,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260514000000_OpenShiftSso') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260514000000_OpenShiftSso', '10.0.5');
+    VALUES ('20260514000000_OpenShiftSso', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
@@ -1361,7 +1359,7 @@ BEGIN
     CREATE TABLE "CustomRoles" (
         "Id" uuid NOT NULL,
         "Name" text NOT NULL,
-        "Description" text NULL,
+        "Description" text,
         "IsBuiltIn" boolean NOT NULL DEFAULT FALSE,
         "CreatedAt" timestamp with time zone NOT NULL,
         "UpdatedAt" timestamp with time zone NOT NULL,
@@ -1386,10 +1384,7 @@ BEGIN
         "Resource" text NOT NULL,
         "Scope" text NOT NULL,
         CONSTRAINT "PK_CustomRolePermissions" PRIMARY KEY ("Id"),
-        CONSTRAINT "FK_CustomRolePermissions_CustomRoles_CustomRoleId"
-            FOREIGN KEY ("CustomRoleId")
-            REFERENCES "CustomRoles" ("Id")
-            ON DELETE CASCADE
+        CONSTRAINT "FK_CustomRolePermissions_CustomRoles_CustomRoleId" FOREIGN KEY ("CustomRoleId") REFERENCES "CustomRoles" ("Id") ON DELETE CASCADE
     );
     END IF;
 END $EF$;
@@ -1397,112 +1392,653 @@ END $EF$;
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
-    CREATE UNIQUE INDEX "IX_CustomRolePermissions_CustomRoleId_Resource_Scope"
-        ON "CustomRolePermissions" ("CustomRoleId", "Resource", "Scope");
+    CREATE UNIQUE INDEX "IX_CustomRolePermissions_CustomRoleId_Resource_Scope" ON "CustomRolePermissions" ("CustomRoleId", "Resource", "Scope");
     END IF;
 END $EF$;
 
--- ---- Seed built-in roles ----
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
     INSERT INTO "CustomRoles" ("Id", "Name", "Description", "IsBuiltIn", "CreatedAt", "UpdatedAt")
-    VALUES
-        ('00000001-0000-0000-0000-000000000001', 'Admin', 'Full administrative control across all resources.', TRUE, TIMESTAMPTZ '2026-05-15 00:00:00Z', TIMESTAMPTZ '2026-05-15 00:00:00Z'),
-        ('00000002-0000-0000-0000-000000000002', 'NetworkOperator', 'Manages network policies, integrations, and operational settings; cannot touch user/role administration.', TRUE, TIMESTAMPTZ '2026-05-15 00:00:00Z', TIMESTAMPTZ '2026-05-15 00:00:00Z'),
-        ('00000003-0000-0000-0000-000000000003', 'Auditor', 'Read-only visibility across operational data and analytics.', TRUE, TIMESTAMPTZ '2026-05-15 00:00:00Z', TIMESTAMPTZ '2026-05-15 00:00:00Z'),
-        ('00000004-0000-0000-0000-000000000004', 'AccessUser', 'Personal dashboard access only; no admin or operational permissions.', TRUE, TIMESTAMPTZ '2026-05-15 00:00:00Z', TIMESTAMPTZ '2026-05-15 00:00:00Z');
+    VALUES ('00000001-0000-0000-0000-000000000001', 'Admin', 'Full administrative control across all resources.', TRUE, TIMESTAMPTZ '2026-05-15T00:00:00Z', TIMESTAMPTZ '2026-05-15T00:00:00Z');
+    INSERT INTO "CustomRoles" ("Id", "Name", "Description", "IsBuiltIn", "CreatedAt", "UpdatedAt")
+    VALUES ('00000002-0000-0000-0000-000000000002', 'NetworkOperator', 'Manages network policies, integrations, and operational settings; cannot touch user/role administration.', TRUE, TIMESTAMPTZ '2026-05-15T00:00:00Z', TIMESTAMPTZ '2026-05-15T00:00:00Z');
+    INSERT INTO "CustomRoles" ("Id", "Name", "Description", "IsBuiltIn", "CreatedAt", "UpdatedAt")
+    VALUES ('00000003-0000-0000-0000-000000000003', 'Auditor', 'Read-only visibility across operational data and analytics.', TRUE, TIMESTAMPTZ '2026-05-15T00:00:00Z', TIMESTAMPTZ '2026-05-15T00:00:00Z');
+    INSERT INTO "CustomRoles" ("Id", "Name", "Description", "IsBuiltIn", "CreatedAt", "UpdatedAt")
+    VALUES ('00000004-0000-0000-0000-000000000004', 'AccessUser', 'Personal dashboard access only; no admin or operational permissions.', TRUE, TIMESTAMPTZ '2026-05-15T00:00:00Z', TIMESTAMPTZ '2026-05-15T00:00:00Z');
     END IF;
 END $EF$;
 
--- ---- Seed permissions (mirror of Persistence/Migrations/20260515000000_CustomRoleBuilder.cs Grants) ----
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
-    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope") VALUES
-        -- Admin
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'NetworkPolicy', 'Read'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'NetworkPolicy', 'Write'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'NetworkPolicy', 'Delete'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'GlobalWhitelistPolicy', 'Read'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'GlobalWhitelistPolicy', 'Write'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'GlobalWhitelistPolicy', 'Delete'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'GitProviderSettings', 'Manage'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'TicketingProviderSettings', 'Manage'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'LdapConnection', 'Manage'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'OpenShiftIntegration', 'Manage'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'License', 'Read'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'License', 'Write'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'SetupThirdParty', 'Read'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'SetupThirdParty', 'Write'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'SetupThirdParty', 'Delete'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'UserManagement', 'Manage'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'UserSettings', 'Read'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'UserSettings', 'Write'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'KubernetesPush', 'Write'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'NetworkPolicyFlow', 'Write'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'Jira', 'Read'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'Jira', 'Write'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'Proxy', 'Read'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'RadarFlow', 'Read'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'RadarCollection', 'Read'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'RadarCollection', 'Write'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'RadarCollection', 'Delete'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'AllowDropMonitor', 'Read'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'Settings', 'Read'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'Settings', 'Write'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'WatcherSettings', 'Read'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'WatcherSettings', 'Write'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'Analytics', 'Read'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'Analytics', 'Write'),
-        (gen_random_uuid(), '00000001-0000-0000-0000-000000000001', 'Analytics', 'Delete'),
-        -- NetworkOperator
-        (gen_random_uuid(), '00000002-0000-0000-0000-000000000002', 'NetworkPolicy', 'Read'),
-        (gen_random_uuid(), '00000002-0000-0000-0000-000000000002', 'NetworkPolicy', 'Write'),
-        (gen_random_uuid(), '00000002-0000-0000-0000-000000000002', 'NetworkPolicy', 'Delete'),
-        (gen_random_uuid(), '00000002-0000-0000-0000-000000000002', 'GlobalWhitelistPolicy', 'Read'),
-        (gen_random_uuid(), '00000002-0000-0000-0000-000000000002', 'GlobalWhitelistPolicy', 'Write'),
-        (gen_random_uuid(), '00000002-0000-0000-0000-000000000002', 'GlobalWhitelistPolicy', 'Delete'),
-        (gen_random_uuid(), '00000002-0000-0000-0000-000000000002', 'GitProviderSettings', 'Manage'),
-        (gen_random_uuid(), '00000002-0000-0000-0000-000000000002', 'TicketingProviderSettings', 'Manage'),
-        (gen_random_uuid(), '00000002-0000-0000-0000-000000000002', 'SetupThirdParty', 'Read'),
-        (gen_random_uuid(), '00000002-0000-0000-0000-000000000002', 'UserSettings', 'Read'),
-        (gen_random_uuid(), '00000002-0000-0000-0000-000000000002', 'UserSettings', 'Write'),
-        (gen_random_uuid(), '00000002-0000-0000-0000-000000000002', 'KubernetesPush', 'Write'),
-        (gen_random_uuid(), '00000002-0000-0000-0000-000000000002', 'NetworkPolicyFlow', 'Write'),
-        (gen_random_uuid(), '00000002-0000-0000-0000-000000000002', 'Jira', 'Read'),
-        (gen_random_uuid(), '00000002-0000-0000-0000-000000000002', 'Jira', 'Write'),
-        (gen_random_uuid(), '00000002-0000-0000-0000-000000000002', 'Proxy', 'Read'),
-        (gen_random_uuid(), '00000002-0000-0000-0000-000000000002', 'RadarFlow', 'Read'),
-        (gen_random_uuid(), '00000002-0000-0000-0000-000000000002', 'RadarCollection', 'Read'),
-        (gen_random_uuid(), '00000002-0000-0000-0000-000000000002', 'RadarCollection', 'Write'),
-        (gen_random_uuid(), '00000002-0000-0000-0000-000000000002', 'RadarCollection', 'Delete'),
-        (gen_random_uuid(), '00000002-0000-0000-0000-000000000002', 'AllowDropMonitor', 'Read'),
-        (gen_random_uuid(), '00000002-0000-0000-0000-000000000002', 'Settings', 'Read'),
-        (gen_random_uuid(), '00000002-0000-0000-0000-000000000002', 'WatcherSettings', 'Read'),
-        (gen_random_uuid(), '00000002-0000-0000-0000-000000000002', 'Analytics', 'Read'),
-        (gen_random_uuid(), '00000002-0000-0000-0000-000000000002', 'Analytics', 'Write'),
-        (gen_random_uuid(), '00000002-0000-0000-0000-000000000002', 'Analytics', 'Delete'),
-        -- Auditor
-        (gen_random_uuid(), '00000003-0000-0000-0000-000000000003', 'SetupThirdParty', 'Read'),
-        (gen_random_uuid(), '00000003-0000-0000-0000-000000000003', 'UserSettings', 'Read'),
-        (gen_random_uuid(), '00000003-0000-0000-0000-000000000003', 'UserSettings', 'Write'),
-        (gen_random_uuid(), '00000003-0000-0000-0000-000000000003', 'Jira', 'Read'),
-        (gen_random_uuid(), '00000003-0000-0000-0000-000000000003', 'Proxy', 'Read'),
-        (gen_random_uuid(), '00000003-0000-0000-0000-000000000003', 'RadarFlow', 'Read'),
-        (gen_random_uuid(), '00000003-0000-0000-0000-000000000003', 'RadarCollection', 'Read'),
-        (gen_random_uuid(), '00000003-0000-0000-0000-000000000003', 'AllowDropMonitor', 'Read'),
-        (gen_random_uuid(), '00000003-0000-0000-0000-000000000003', 'WatcherSettings', 'Read'),
-        (gen_random_uuid(), '00000003-0000-0000-0000-000000000003', 'Analytics', 'Read'),
-        -- AccessUser
-        (gen_random_uuid(), '00000004-0000-0000-0000-000000000004', 'SetupThirdParty', 'Read'),
-        (gen_random_uuid(), '00000004-0000-0000-0000-000000000004', 'UserSettings', 'Read'),
-        (gen_random_uuid(), '00000004-0000-0000-0000-000000000004', 'UserSettings', 'Write'),
-        (gen_random_uuid(), '00000004-0000-0000-0000-000000000004', 'Proxy', 'Read'),
-        (gen_random_uuid(), '00000004-0000-0000-0000-000000000004', 'RadarFlow', 'Read'),
-        (gen_random_uuid(), '00000004-0000-0000-0000-000000000004', 'RadarCollection', 'Read'),
-        (gen_random_uuid(), '00000004-0000-0000-0000-000000000004', 'AllowDropMonitor', 'Read'),
-        (gen_random_uuid(), '00000004-0000-0000-0000-000000000004', 'WatcherSettings', 'Read');
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('e838e308-8394-4d56-960a-2dfa4c988c49', '00000001-0000-0000-0000-000000000001', 'NetworkPolicy', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('09719ffd-6fa0-456e-8a9d-b6a58750fd40', '00000001-0000-0000-0000-000000000001', 'NetworkPolicy', 'Write');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('ee148e18-e261-4850-beab-183bf85628c9', '00000001-0000-0000-0000-000000000001', 'NetworkPolicy', 'Delete');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('e46019fe-3185-4937-bdf4-c2981c5b24da', '00000001-0000-0000-0000-000000000001', 'GlobalWhitelistPolicy', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('1fb27bde-870f-4cef-b611-5629306c8088', '00000001-0000-0000-0000-000000000001', 'GlobalWhitelistPolicy', 'Write');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('1fa94b0b-2d12-4c24-97b8-5540c0451a67', '00000001-0000-0000-0000-000000000001', 'GlobalWhitelistPolicy', 'Delete');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('f2d0c72a-285c-49cf-8782-e6bf89783e66', '00000001-0000-0000-0000-000000000001', 'GitProviderSettings', 'Manage');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('d67ece09-ee31-4991-b875-4d25ae6f48dd', '00000001-0000-0000-0000-000000000001', 'TicketingProviderSettings', 'Manage');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('b4b894ab-e9b7-4fd9-ae52-be1363ed1e3d', '00000001-0000-0000-0000-000000000001', 'LdapConnection', 'Manage');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('7c122bdb-7dd6-4eeb-aa1c-0e73e57c3d79', '00000001-0000-0000-0000-000000000001', 'OpenShiftIntegration', 'Manage');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('d9e2d0c8-072d-46c4-9f34-dbc7963998fe', '00000001-0000-0000-0000-000000000001', 'License', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('9ce2d2d2-6317-48e9-81c2-5fd5e915a1ac', '00000001-0000-0000-0000-000000000001', 'License', 'Write');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('9dec98e5-8f4a-4535-b55c-0d830bad4c06', '00000001-0000-0000-0000-000000000001', 'SetupThirdParty', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('4380de93-bc31-4918-acf6-e11636b522a4', '00000001-0000-0000-0000-000000000001', 'SetupThirdParty', 'Write');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('8912a774-061b-4c24-9229-0f0b632b7b8b', '00000001-0000-0000-0000-000000000001', 'SetupThirdParty', 'Delete');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('6e302fb0-b755-4fdd-8cec-af42ad0f0638', '00000001-0000-0000-0000-000000000001', 'UserManagement', 'Manage');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('b7f1be25-4c8d-4c98-ac26-17955468b139', '00000001-0000-0000-0000-000000000001', 'UserSettings', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('cffbc40d-ae2a-498d-b471-c8de27f3ee53', '00000001-0000-0000-0000-000000000001', 'UserSettings', 'Write');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('301424cb-b0e6-44d8-a103-32c0572effeb', '00000001-0000-0000-0000-000000000001', 'KubernetesPush', 'Write');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('b4307ccd-15f0-44b9-a618-3be0463277e9', '00000001-0000-0000-0000-000000000001', 'NetworkPolicyFlow', 'Write');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('e35c7b2c-93df-4ac8-8992-ca65a8659cbb', '00000001-0000-0000-0000-000000000001', 'Jira', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('851f80f3-eea2-4060-8779-2df630a8c13c', '00000001-0000-0000-0000-000000000001', 'Jira', 'Write');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('6aa270a3-ec3a-499b-a27e-c650c92a6dd9', '00000001-0000-0000-0000-000000000001', 'Proxy', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('437e7bf9-cec6-45d1-99c3-88b5149513c5', '00000001-0000-0000-0000-000000000001', 'RadarFlow', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('47e77a0e-a55c-4a0c-a7cb-dff793be8ce9', '00000001-0000-0000-0000-000000000001', 'RadarCollection', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('11339854-fba4-4834-ba81-23b28d28745d', '00000001-0000-0000-0000-000000000001', 'RadarCollection', 'Write');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('4936a139-0d55-4816-84d7-e508df09f75d', '00000001-0000-0000-0000-000000000001', 'RadarCollection', 'Delete');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('46d22803-0a04-4d72-bebf-5dbfa63ed03c', '00000001-0000-0000-0000-000000000001', 'AllowDropMonitor', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('f80f3196-1c5e-405a-82bd-431757d297a2', '00000001-0000-0000-0000-000000000001', 'Settings', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('26f86a09-1c00-4e0c-8322-ef600f559c2a', '00000001-0000-0000-0000-000000000001', 'Settings', 'Write');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('2151ccc9-a604-4856-a5be-23d25f68614c', '00000001-0000-0000-0000-000000000001', 'WatcherSettings', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('80e8e540-54b0-46e5-bfa0-b10554cc6642', '00000001-0000-0000-0000-000000000001', 'WatcherSettings', 'Write');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('1405ccd3-8b70-41ca-bef6-9d652733e602', '00000001-0000-0000-0000-000000000001', 'Analytics', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('5c2b2a58-6301-42a3-957f-76b738024e4b', '00000001-0000-0000-0000-000000000001', 'Analytics', 'Write');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('a16b6957-0196-4663-a743-2fcda4511b8e', '00000001-0000-0000-0000-000000000001', 'Analytics', 'Delete');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('d5caed37-a22b-4e23-806e-82312d7b7347', '00000002-0000-0000-0000-000000000002', 'NetworkPolicy', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('c5008c00-1473-4e66-abff-685436c4ad26', '00000002-0000-0000-0000-000000000002', 'NetworkPolicy', 'Write');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('1697d4fb-6dca-4802-b788-17fac35a970b', '00000002-0000-0000-0000-000000000002', 'NetworkPolicy', 'Delete');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('aeb58329-a633-4e75-a585-be9054b00989', '00000002-0000-0000-0000-000000000002', 'GlobalWhitelistPolicy', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('74cac46f-88e8-4fa9-af55-084dff64793f', '00000002-0000-0000-0000-000000000002', 'GlobalWhitelistPolicy', 'Write');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('c3b3f83e-72d6-48c5-99c8-be4163e761d9', '00000002-0000-0000-0000-000000000002', 'GlobalWhitelistPolicy', 'Delete');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('daa941e3-374b-40c0-9ef7-1c51a9b4887d', '00000002-0000-0000-0000-000000000002', 'GitProviderSettings', 'Manage');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('a1f9030c-96c6-4780-853e-0ae946474c68', '00000002-0000-0000-0000-000000000002', 'TicketingProviderSettings', 'Manage');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('25fc12ba-ca3d-43e4-9c7d-ab4637271a63', '00000002-0000-0000-0000-000000000002', 'SetupThirdParty', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('a23d88ac-c0d3-4657-bcf7-56ad91182751', '00000002-0000-0000-0000-000000000002', 'UserSettings', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('b5d7c23b-29df-438f-977a-0a8ed0766c33', '00000002-0000-0000-0000-000000000002', 'UserSettings', 'Write');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('17afab16-649f-48d0-a88e-51120df79f21', '00000002-0000-0000-0000-000000000002', 'KubernetesPush', 'Write');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('7f89c03a-e9f9-49c9-a7d9-c2028a95f0d2', '00000002-0000-0000-0000-000000000002', 'NetworkPolicyFlow', 'Write');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('ceda077e-bd69-4c37-b1d7-ce34f6e2b1ae', '00000002-0000-0000-0000-000000000002', 'Jira', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('7de03c47-a092-4614-be6b-356045483895', '00000002-0000-0000-0000-000000000002', 'Jira', 'Write');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('98823c5e-b692-41d6-8f39-b6b4099ea35b', '00000002-0000-0000-0000-000000000002', 'Proxy', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('935f6444-f100-42ef-92ca-5e1a63fbb6b7', '00000002-0000-0000-0000-000000000002', 'RadarFlow', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('0fb10000-8a72-47c4-9fd6-809650aca2d3', '00000002-0000-0000-0000-000000000002', 'RadarCollection', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('3d67e580-a94a-4a59-bd12-6fb8f5fe7930', '00000002-0000-0000-0000-000000000002', 'RadarCollection', 'Write');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('990b091e-bb84-45dc-82c6-057915c0a247', '00000002-0000-0000-0000-000000000002', 'RadarCollection', 'Delete');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('90bd6d86-ada2-4a47-8dc7-7e2344c9bca6', '00000002-0000-0000-0000-000000000002', 'AllowDropMonitor', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('43d54756-9ca4-4815-a573-b73188bb546b', '00000002-0000-0000-0000-000000000002', 'Settings', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('b3b0f03c-5e2c-49e5-970b-a80584af7e59', '00000002-0000-0000-0000-000000000002', 'WatcherSettings', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('12d1a24c-5578-4ab5-91d7-56ad8fffc80a', '00000002-0000-0000-0000-000000000002', 'Analytics', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('f2684e5f-3b0a-48a0-87f1-0afeb74367b9', '00000002-0000-0000-0000-000000000002', 'Analytics', 'Write');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('43858364-d263-4b0a-9688-e46068edd41f', '00000002-0000-0000-0000-000000000002', 'Analytics', 'Delete');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('59d30269-3392-419d-8ae8-a5642bf993cc', '00000003-0000-0000-0000-000000000003', 'SetupThirdParty', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('f2473e3a-1893-45d9-8bf7-476606afadf3', '00000003-0000-0000-0000-000000000003', 'UserSettings', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('01999dee-e7fd-4a3a-b03d-bf31277c7e98', '00000003-0000-0000-0000-000000000003', 'UserSettings', 'Write');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('163e729c-71a8-401f-9d54-a602f9d844ab', '00000003-0000-0000-0000-000000000003', 'Jira', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('ca7dab5b-4809-4de7-82de-cf043f13f994', '00000003-0000-0000-0000-000000000003', 'Proxy', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('89915200-803d-4251-8d32-e6297df8280f', '00000003-0000-0000-0000-000000000003', 'RadarFlow', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('732879e2-44d6-4a6e-b21d-4b120fb8136c', '00000003-0000-0000-0000-000000000003', 'RadarCollection', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('3d984618-2e51-407b-bc94-069ca8e5c053', '00000003-0000-0000-0000-000000000003', 'AllowDropMonitor', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('08b10e9e-eb8e-491e-ad9b-28c0d3f5bcd8', '00000003-0000-0000-0000-000000000003', 'WatcherSettings', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('692ab50b-b3aa-4d2d-b8b1-180db96bf0d6', '00000003-0000-0000-0000-000000000003', 'Analytics', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('46aa26d3-ab44-4b59-b18d-0cb164263465', '00000004-0000-0000-0000-000000000004', 'SetupThirdParty', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('c1d2ec30-4b3d-4652-8ac7-1303d7a7df45', '00000004-0000-0000-0000-000000000004', 'UserSettings', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('e0406ee8-0c63-4c69-9fb5-f7b504653f4c', '00000004-0000-0000-0000-000000000004', 'UserSettings', 'Write');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('3cda7f71-907a-49f5-8340-2e6b8000d56d', '00000004-0000-0000-0000-000000000004', 'Proxy', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('f56bd7a0-757c-4461-824c-176dd459a91b', '00000004-0000-0000-0000-000000000004', 'RadarFlow', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('2813dce4-e671-4366-9c00-e4a2f3affc55', '00000004-0000-0000-0000-000000000004', 'RadarCollection', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('0b1f63fb-9441-4eaf-b7ee-02e6fb905293', '00000004-0000-0000-0000-000000000004', 'AllowDropMonitor', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('3cf6c17d-a4bc-4650-b726-feb5fc6d03e9', '00000004-0000-0000-0000-000000000004', 'WatcherSettings', 'Read');
     END IF;
 END $EF$;
 
@@ -1510,18 +2046,10 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260515000000_CustomRoleBuilder') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260515000000_CustomRoleBuilder', '10.0.5');
+    VALUES ('20260515000000_CustomRoleBuilder', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
-
--- =============================================================================
--- 20260521000000_AuditOverhaul
--- Unified product-wide audit log (AuditEntries) + SIEM forwarding config
--- (SiemSettings). Copies legacy AnalyticsAuditEntries rows over with
--- Category='Analytics'. Seeds Audit grants for the four built-in roles so
--- the new menu entries are reachable out of the box.
--- =============================================================================
 
 START TRANSACTION;
 
@@ -1531,12 +2059,12 @@ BEGIN
     CREATE TABLE "AuditEntries" (
         "Id" uuid NOT NULL,
         "At" timestamp with time zone NOT NULL,
-        "Actor" text NULL,
+        "Actor" text,
         "Category" text NOT NULL,
         "Action" text NOT NULL,
         "Summary" text NOT NULL,
-        "Details" text NULL,
-        "ForwardedAt" timestamp with time zone NULL,
+        "Details" text,
+        "ForwardedAt" timestamp with time zone,
         CONSTRAINT "PK_AuditEntries" PRIMARY KEY ("Id")
     );
     END IF;
@@ -1559,9 +2087,7 @@ END $EF$;
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260521000000_AuditOverhaul') THEN
-    CREATE INDEX "IX_AuditEntries_ForwardedAt_pending"
-        ON "AuditEntries" ("At")
-        WHERE "ForwardedAt" IS NULL;
+    CREATE INDEX "IX_AuditEntries_ForwardedAt_pending" ON "AuditEntries" ("At") WHERE "ForwardedAt" IS NULL;
     END IF;
 END $EF$;
 
@@ -1572,62 +2098,54 @@ BEGIN
         "Id" uuid NOT NULL,
         "Enabled" boolean NOT NULL,
         "Protocol" integer NOT NULL,
-        "EndpointUrl" text NULL,
-        "Token" text NULL,
-        "Index" text NULL,
-        "SyslogHost" text NULL,
-        "SyslogPort" integer NULL,
-        "AppName" text NULL,
+        "EndpointUrl" text,
+        "Token" text,
+        "Index" text,
+        "SyslogHost" text,
+        "SyslogPort" integer,
+        "AppName" text,
         "ForwardAuditLogs" boolean NOT NULL,
         "ForwardPolicyMonitoringLogs" boolean NOT NULL,
         "AllowInsecureTls" boolean NOT NULL,
         "RetentionDays" integer NOT NULL DEFAULT 90,
-        "PolicyMonitoringForwardedThrough" timestamp with time zone NULL,
+        "PolicyMonitoringForwardedThrough" timestamp with time zone,
         "UpdatedAt" timestamp with time zone NOT NULL,
-        "UpdatedBy" text NULL,
+        "UpdatedBy" text,
         CONSTRAINT "PK_SiemSettings" PRIMARY KEY ("Id")
     );
     END IF;
 END $EF$;
 
--- Backfill: every existing analytics audit row gets a copy in the unified
--- table with Category='Analytics'. Old table stays in place so legacy
--- /api/analytics/audit endpoints keep working. The IF NOT EXISTS on the
--- migration-history gate makes the whole backfill idempotent.
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260521000000_AuditOverhaul') THEN
-    IF EXISTS (
-        SELECT 1 FROM information_schema.tables
-        WHERE table_schema = 'public' AND table_name = 'AnalyticsAuditEntries'
-    ) THEN
-        INSERT INTO "AuditEntries" ("Id", "At", "Actor", "Category", "Action", "Summary", "Details", "ForwardedAt")
-        SELECT "Id", "At", "Actor", 'Analytics', "Action", "Summary", "Details", NULL
-        FROM "AnalyticsAuditEntries"
-        ON CONFLICT DO NOTHING;
-    END IF;
+
+                    INSERT INTO "AuditEntries" ("Id", "At", "Actor", "Category", "Action", "Summary", "Details", "ForwardedAt")
+                    SELECT "Id", "At", "Actor", 'Analytics', "Action", "Summary", "Details", NULL
+                    FROM "AnalyticsAuditEntries"
+                    ON CONFLICT DO NOTHING;
+                
     END IF;
 END $EF$;
 
--- Grant the Audit resource to the seeded built-in roles. Without this
--- every menu item gated on Audit.Read/Manage stays hidden â€” the Audit
--- page would exist but be unreachable.
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260521000000_AuditOverhaul') THEN
-    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
-    SELECT gen_random_uuid(), g.role_id, 'Audit', g.scope
-    FROM (VALUES
-        ('00000001-0000-0000-0000-000000000001'::uuid, 'Manage'), -- Admin
-        ('00000002-0000-0000-0000-000000000002'::uuid, 'Read'),   -- NetworkOperator
-        ('00000003-0000-0000-0000-000000000003'::uuid, 'Read')    -- Auditor
-    ) AS g(role_id, scope)
-    WHERE NOT EXISTS (
-        SELECT 1 FROM "CustomRolePermissions" p
-        WHERE p."CustomRoleId" = g.role_id
-          AND p."Resource"     = 'Audit'
-          AND p."Scope"        = g.scope
-    );
+
+                    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+                    SELECT gen_random_uuid(), g.role_id, 'Audit', g.scope
+                    FROM (VALUES
+                        ('00000001-0000-0000-0000-000000000001'::uuid, 'Manage'), -- Admin
+                        ('00000002-0000-0000-0000-000000000002'::uuid, 'Read'),   -- NetworkOperator
+                        ('00000003-0000-0000-0000-000000000003'::uuid, 'Read')    -- Auditor
+                    ) AS g(role_id, scope)
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM "CustomRolePermissions" p
+                        WHERE p."CustomRoleId" = g.role_id
+                          AND p."Resource"     = 'Audit'
+                          AND p."Scope"        = g.scope
+                    );
+                
     END IF;
 END $EF$;
 
@@ -1635,26 +2153,17 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260521000000_AuditOverhaul') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260521000000_AuditOverhaul', '10.0.5');
+    VALUES ('20260521000000_AuditOverhaul', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
-
--- =============================================================================
--- 20260521020000_SiemRetention
--- Adds SiemSettings.RetentionDays for clusters that already ran AuditOverhaul
--- against an older schema (no RetentionDays in the CREATE TABLE). Fresh
--- installs running AuditOverhaul *with* the column see IF NOT EXISTS make
--- this an idempotent no-op.
--- =============================================================================
 
 START TRANSACTION;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260521020000_SiemRetention') THEN
-    ALTER TABLE "SiemSettings"
-        ADD COLUMN IF NOT EXISTS "RetentionDays" integer NOT NULL DEFAULT 90;
+    ALTER TABLE "SiemSettings" ADD COLUMN IF NOT EXISTS "RetentionDays" integer NOT NULL DEFAULT 90;
     END IF;
 END $EF$;
 
@@ -1662,24 +2171,17 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260521020000_SiemRetention') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260521020000_SiemRetention', '10.0.5');
+    VALUES ('20260521020000_SiemRetention', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
-
--- =============================================================================
--- 20260521030000_SiemCategoryFilter
--- Optional per-category SIEM forwarding allow-list. NULL = forward all
--- categories (back-compat), populated text[] = only those tags.
--- =============================================================================
 
 START TRANSACTION;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260521030000_SiemCategoryFilter') THEN
-    ALTER TABLE "SiemSettings"
-        ADD COLUMN IF NOT EXISTS "ForwardedAuditCategories" text[];
+    ALTER TABLE "SiemSettings" ADD COLUMN IF NOT EXISTS "ForwardedAuditCategories" text[];
     END IF;
 END $EF$;
 
@@ -1687,52 +2189,31 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260521030000_SiemCategoryFilter') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260521030000_SiemCategoryFilter', '10.0.5');
+    VALUES ('20260521030000_SiemCategoryFilter', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
 
--- =============================================================================
--- 20260522000000_IncidentsAndThreatIntel
--- Stand-up of the Incidents pipeline + threat-intel configuration.
---   * SiemSettings gains ForwardIncidents (default TRUE) and an
---     IncidentsForwardedThrough watermark used by SiemForwarderHostedService.
---   * New tables: Incidents, IncidentEvents (FK cascade), ThreatIntelSettings
---     (singleton), ThreatIntelFeeds (per-feed config).
---   * Seeds four built-in opensource feeds (FireHOL Level1, Feodo Tracker,
---     URLhaus, Tor exit) and the ThreatIntelSettings singleton row so the
---     admin UI lands on real values instead of an empty form.
---   * Grants Incident + ThreatIntel resources to the built-in roles
---     (Admin = Manage, NetworkOperator + Auditor = Read), mirroring the
---     pattern AuditOverhaul used for the Audit resource.
--- =============================================================================
-
 START TRANSACTION;
 
--- ---- SiemSettings: incident-stream toggle + watermark ----------------------
-
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260522000000_IncidentsAndThreatIntel') THEN
-    ALTER TABLE "SiemSettings"
-        ADD COLUMN IF NOT EXISTS "ForwardIncidents" boolean NOT NULL DEFAULT TRUE;
+    ALTER TABLE "SiemSettings" ADD COLUMN IF NOT EXISTS "ForwardIncidents" boolean NOT NULL DEFAULT TRUE;
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260522000000_IncidentsAndThreatIntel') THEN
-    ALTER TABLE "SiemSettings"
-        ADD COLUMN IF NOT EXISTS "IncidentsForwardedThrough" timestamp with time zone;
+    ALTER TABLE "SiemSettings" ADD COLUMN IF NOT EXISTS "IncidentsForwardedThrough" timestamp with time zone;
     END IF;
 END $EF$;
-
--- ---- Incidents -------------------------------------------------------------
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260522000000_IncidentsAndThreatIntel') THEN
-    CREATE TABLE IF NOT EXISTS "Incidents" (
+    CREATE TABLE "Incidents" (
         "Id" uuid NOT NULL,
         "FirstSeenAt" timestamp with time zone NOT NULL,
         "LastSeenAt" timestamp with time zone NOT NULL,
@@ -1761,38 +2242,34 @@ END $EF$;
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260522000000_IncidentsAndThreatIntel') THEN
-    CREATE INDEX IF NOT EXISTS "IX_Incidents_CorrelationKey_Active"
-        ON "Incidents" ("CorrelationKey");
+    CREATE INDEX "IX_Incidents_CorrelationKey_Active" ON "Incidents" ("CorrelationKey");
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260522000000_IncidentsAndThreatIntel') THEN
-    CREATE INDEX IF NOT EXISTS "IX_Incidents_LastSeenAt"
-        ON "Incidents" ("LastSeenAt");
+    CREATE INDEX "IX_Incidents_LastSeenAt" ON "Incidents" ("LastSeenAt");
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260522000000_IncidentsAndThreatIntel') THEN
-    CREATE INDEX IF NOT EXISTS "IX_Incidents_ForwardedAt"
-        ON "Incidents" ("ForwardedAt");
+    CREATE INDEX "IX_Incidents_ForwardedAt" ON "Incidents" ("ForwardedAt");
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260522000000_IncidentsAndThreatIntel') THEN
-    CREATE TABLE IF NOT EXISTS "IncidentEvents" (
+    CREATE TABLE "IncidentEvents" (
         "Id" uuid NOT NULL,
         "IncidentId" uuid NOT NULL,
         "At" timestamp with time zone NOT NULL,
         "Payload" text,
         CONSTRAINT "PK_IncidentEvents" PRIMARY KEY ("Id"),
-        CONSTRAINT "FK_IncidentEvents_Incidents_IncidentId"
-            FOREIGN KEY ("IncidentId") REFERENCES "Incidents" ("Id") ON DELETE CASCADE
+        CONSTRAINT "FK_IncidentEvents_Incidents_IncidentId" FOREIGN KEY ("IncidentId") REFERENCES "Incidents" ("Id") ON DELETE CASCADE
     );
     END IF;
 END $EF$;
@@ -1800,17 +2277,14 @@ END $EF$;
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260522000000_IncidentsAndThreatIntel') THEN
-    CREATE INDEX IF NOT EXISTS "IX_IncidentEvents_Incident_At"
-        ON "IncidentEvents" ("IncidentId", "At");
+    CREATE INDEX "IX_IncidentEvents_Incident_At" ON "IncidentEvents" ("IncidentId", "At");
     END IF;
 END $EF$;
-
--- ---- ThreatIntelSettings (singleton) ---------------------------------------
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260522000000_IncidentsAndThreatIntel') THEN
-    CREATE TABLE IF NOT EXISTS "ThreatIntelSettings" (
+    CREATE TABLE "ThreatIntelSettings" (
         "Id" uuid NOT NULL,
         "Enabled" boolean NOT NULL,
         "IpReputationEnabled" boolean NOT NULL,
@@ -1831,12 +2305,10 @@ BEGIN
     END IF;
 END $EF$;
 
--- ---- ThreatIntelFeeds ------------------------------------------------------
-
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260522000000_IncidentsAndThreatIntel') THEN
-    CREATE TABLE IF NOT EXISTS "ThreatIntelFeeds" (
+    CREATE TABLE "ThreatIntelFeeds" (
         "Id" uuid NOT NULL,
         "Key" character varying(64) NOT NULL,
         "DisplayName" character varying(256) NOT NULL,
@@ -1856,76 +2328,70 @@ END $EF$;
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260522000000_IncidentsAndThreatIntel') THEN
-    CREATE UNIQUE INDEX IF NOT EXISTS "IX_ThreatIntelFeeds_Key"
-        ON "ThreatIntelFeeds" ("Key");
+    CREATE UNIQUE INDEX "IX_ThreatIntelFeeds_Key" ON "ThreatIntelFeeds" ("Key");
     END IF;
 END $EF$;
-
--- ---- Seed: four built-in feeds (idempotent via ON CONFLICT on Key) --------
--- Air-gapped customers can override Url after install; Enabled stays toggle-able.
--- Tor exit is shipped disabled because legitimate Tor egress is common in
--- some environments â€” flip it on in Admin â†’ Threat Intel when policy says so.
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260522000000_IncidentsAndThreatIntel') THEN
-    INSERT INTO "ThreatIntelFeeds"
-        ("Id", "Key", "DisplayName", "Kind", "Url", "Enabled", "IsBuiltIn", "EntryCount", "CreatedAt")
-    VALUES
-        (gen_random_uuid(), 'firehol-level1', 'FireHOL Level1 (high-confidence malicious networks)', 0,
-         'https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/firehol_level1.netset',
-         TRUE, TRUE, 0, now()),
-        (gen_random_uuid(), 'feodo-tracker', 'abuse.ch Feodo Tracker (active botnet C2)', 0,
-         'https://feodotracker.abuse.ch/downloads/ipblocklist.txt',
-         TRUE, TRUE, 0, now()),
-        (gen_random_uuid(), 'urlhaus', 'abuse.ch URLhaus (malware-hosting domains)', 1,
-         'https://urlhaus.abuse.ch/downloads/text/',
-         TRUE, TRUE, 0, now()),
-        (gen_random_uuid(), 'tor-exit', 'Tor Project exit-node list', 0,
-         'https://check.torproject.org/torbulkexitlist',
-         FALSE, TRUE, 0, now())
-    ON CONFLICT ("Key") DO NOTHING;
+
+                    INSERT INTO "ThreatIntelFeeds"
+                        ("Id", "Key", "DisplayName", "Kind", "Url", "Enabled", "IsBuiltIn", "EntryCount", "CreatedAt")
+                    VALUES
+                        (gen_random_uuid(), 'firehol-level1', 'FireHOL Level1 (high-confidence malicious networks)', 0,
+                         'https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/firehol_level1.netset',
+                         true, true, 0, now()),
+                        (gen_random_uuid(), 'feodo-tracker', 'abuse.ch Feodo Tracker (active botnet C2)', 0,
+                         'https://feodotracker.abuse.ch/downloads/ipblocklist.txt',
+                         true, true, 0, now()),
+                        (gen_random_uuid(), 'urlhaus', 'abuse.ch URLhaus (malware-hosting domains)', 1,
+                         'https://urlhaus.abuse.ch/downloads/text/',
+                         true, true, 0, now()),
+                        (gen_random_uuid(), 'tor-exit', 'Tor Project exit-node list', 0,
+                         'https://check.torproject.org/torbulkexitlist',
+                         false, true, 0, now())
+                    ON CONFLICT DO NOTHING;
+                
     END IF;
 END $EF$;
-
--- ---- Seed: ThreatIntelSettings singleton -----------------------------------
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260522000000_IncidentsAndThreatIntel') THEN
-    INSERT INTO "ThreatIntelSettings"
-        ("Id", "Enabled", "IpReputationEnabled", "DnsThreatEnabled",
-         "LateralMovementEnabled", "AllowInsecureTls",
-         "ProviderHighSeverityThreshold", "CorrelationWindowMinutes",
-         "UpdatedAt")
-    SELECT gen_random_uuid(), TRUE, TRUE, TRUE, TRUE, FALSE, 50, 15, now()
-    WHERE NOT EXISTS (SELECT 1 FROM "ThreatIntelSettings");
+
+                    INSERT INTO "ThreatIntelSettings"
+                        ("Id", "Enabled", "IpReputationEnabled", "DnsThreatEnabled",
+                         "LateralMovementEnabled", "AllowInsecureTls",
+                         "ProviderHighSeverityThreshold", "CorrelationWindowMinutes",
+                         "UpdatedAt")
+                    SELECT gen_random_uuid(), true, true, true, true, false, 50, 15, now()
+                    WHERE NOT EXISTS (SELECT 1 FROM "ThreatIntelSettings");
+                
     END IF;
 END $EF$;
-
--- ---- RBAC: grant Incident + ThreatIntel on the built-in roles --------------
--- Mirrors AuditOverhaul.cs / CustomRoleBuilder seeds. Stable role ids match
--- those earlier migrations. NOT EXISTS guards keep replays idempotent.
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260522000000_IncidentsAndThreatIntel') THEN
-    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
-    SELECT gen_random_uuid(), g.role_id, g.resource, g.scope
-    FROM (VALUES
-        ('00000001-0000-0000-0000-000000000001'::uuid, 'Incident',    'Manage'),
-        ('00000001-0000-0000-0000-000000000001'::uuid, 'ThreatIntel', 'Manage'),
-        ('00000002-0000-0000-0000-000000000002'::uuid, 'Incident',    'Read'),
-        ('00000002-0000-0000-0000-000000000002'::uuid, 'ThreatIntel', 'Read'),
-        ('00000003-0000-0000-0000-000000000003'::uuid, 'Incident',    'Read'),
-        ('00000003-0000-0000-0000-000000000003'::uuid, 'ThreatIntel', 'Read')
-    ) AS g(role_id, resource, scope)
-    WHERE NOT EXISTS (
-        SELECT 1 FROM "CustomRolePermissions" p
-        WHERE p."CustomRoleId" = g.role_id
-          AND p."Resource"     = g.resource
-          AND p."Scope"        = g.scope
-    );
+
+                    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+                    SELECT gen_random_uuid(), g.role_id, g.resource, g.scope
+                    FROM (VALUES
+                        ('00000001-0000-0000-0000-000000000001'::uuid, 'Incident',    'Manage'),
+                        ('00000001-0000-0000-0000-000000000001'::uuid, 'ThreatIntel', 'Manage'),
+                        ('00000002-0000-0000-0000-000000000002'::uuid, 'Incident',    'Read'),
+                        ('00000002-0000-0000-0000-000000000002'::uuid, 'ThreatIntel', 'Read'),
+                        ('00000003-0000-0000-0000-000000000003'::uuid, 'Incident',    'Read'),
+                        ('00000003-0000-0000-0000-000000000003'::uuid, 'ThreatIntel', 'Read')
+                    ) AS g(role_id, resource, scope)
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM "CustomRolePermissions" p
+                        WHERE p."CustomRoleId" = g.role_id
+                          AND p."Resource"     = g.resource
+                          AND p."Scope"        = g.scope
+                    );
+                
     END IF;
 END $EF$;
 
@@ -1933,26 +2399,17 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260522000000_IncidentsAndThreatIntel') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260522000000_IncidentsAndThreatIntel', '10.0.5');
+    VALUES ('20260522000000_IncidentsAndThreatIntel', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
-
--- =============================================================================
--- 20260523000000_ThreatIntelExclusions
--- Operational gate the detection pipeline consults before any detector
--- runs. One row = "ignore (cluster, namespace, workload)" â€” Kind=0 covers
--- the whole namespace, Kind=1 narrows to one workload; Cluster=NULL means
--- cluster-wide. Collection-grouped exclusions live as multiple rows
--- sharing a Source tag (frontend expands at write time).
--- =============================================================================
 
 START TRANSACTION;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260523000000_ThreatIntelExclusions') THEN
-    CREATE TABLE IF NOT EXISTS "ThreatIntelExclusions" (
+    CREATE TABLE "ThreatIntelExclusions" (
         "Id" uuid NOT NULL,
         "Kind" integer NOT NULL,
         "Cluster" character varying(256),
@@ -1970,8 +2427,7 @@ END $EF$;
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260523000000_ThreatIntelExclusions') THEN
-    CREATE INDEX IF NOT EXISTS "IX_ThreatIntelExclusions_Namespace"
-        ON "ThreatIntelExclusions" ("Namespace");
+    CREATE INDEX "IX_ThreatIntelExclusions_Namespace" ON "ThreatIntelExclusions" ("Namespace");
     END IF;
 END $EF$;
 
@@ -1979,33 +2435,24 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260523000000_ThreatIntelExclusions') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260523000000_ThreatIntelExclusions', '10.0.5');
+    VALUES ('20260523000000_ThreatIntelExclusions', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
-
--- =============================================================================
--- 20260524000000_IncidentNotificationChannels
--- Operational pack: per-detector beaconing toggle on ThreatIntelSettings,
--- outbound notification channels (Slack / Teams / PagerDuty / OpsGenie /
--- generic webhook) for incident lifecycle events, and per-user saved
--- filter views on the Incidents page.
--- =============================================================================
 
 START TRANSACTION;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260524000000_IncidentNotificationChannels') THEN
-    ALTER TABLE "ThreatIntelSettings"
-        ADD COLUMN IF NOT EXISTS "BeaconingEnabled" boolean NOT NULL DEFAULT TRUE;
+    ALTER TABLE "ThreatIntelSettings" ADD COLUMN IF NOT EXISTS "BeaconingEnabled" boolean NOT NULL DEFAULT TRUE;
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260524000000_IncidentNotificationChannels') THEN
-    CREATE TABLE IF NOT EXISTS "IncidentNotificationChannels" (
+    CREATE TABLE "IncidentNotificationChannels" (
         "Id" uuid NOT NULL,
         "Name" character varying(256) NOT NULL,
         "Kind" character varying(32) NOT NULL,
@@ -2027,7 +2474,7 @@ END $EF$;
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260524000000_IncidentNotificationChannels') THEN
-    CREATE TABLE IF NOT EXISTS "IncidentSavedViews" (
+    CREATE TABLE "IncidentSavedViews" (
         "Id" uuid NOT NULL,
         "Owner" character varying(256) NOT NULL,
         "Name" character varying(256) NOT NULL,
@@ -2043,8 +2490,7 @@ END $EF$;
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260524000000_IncidentNotificationChannels') THEN
-    CREATE INDEX IF NOT EXISTS "IX_IncidentSavedViews_Owner"
-        ON "IncidentSavedViews" ("Owner");
+    CREATE INDEX "IX_IncidentSavedViews_Owner" ON "IncidentSavedViews" ("Owner");
     END IF;
 END $EF$;
 
@@ -2052,25 +2498,17 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260524000000_IncidentNotificationChannels') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260524000000_IncidentNotificationChannels', '10.0.5');
+    VALUES ('20260524000000_IncidentNotificationChannels', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
-
--- =============================================================================
--- 20260525000000_ManualNetworkPolicies
--- Manual network policies â€” pre-approved src/dst/port rules that network
--- operators agree on with developers and bulk-upload via Excel. Goes
--- through a Pending â†’ Approved/Rejected workflow before surfacing in the
--- Cloud-Side Network Policies view with a "Manual" flag.
--- =============================================================================
 
 START TRANSACTION;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525000000_ManualNetworkPolicies') THEN
-    CREATE TABLE IF NOT EXISTS "ManualNetworkPolicies" (
+    CREATE TABLE "ManualNetworkPolicies" (
         "Id" uuid NOT NULL,
         "Name" character varying(256) NOT NULL,
         "ClusterName" character varying(256) NOT NULL,
@@ -2099,24 +2537,21 @@ END $EF$;
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525000000_ManualNetworkPolicies') THEN
-    CREATE INDEX IF NOT EXISTS "IX_ManualNetworkPolicies_UploadBatchId"
-        ON "ManualNetworkPolicies" ("UploadBatchId");
+    CREATE INDEX "IX_ManualNetworkPolicies_UploadBatchId" ON "ManualNetworkPolicies" ("UploadBatchId");
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525000000_ManualNetworkPolicies') THEN
-    CREATE INDEX IF NOT EXISTS "IX_ManualNetworkPolicies_ApprovalStatus"
-        ON "ManualNetworkPolicies" ("ApprovalStatus");
+    CREATE INDEX "IX_ManualNetworkPolicies_ApprovalStatus" ON "ManualNetworkPolicies" ("ApprovalStatus");
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525000000_ManualNetworkPolicies') THEN
-    CREATE INDEX IF NOT EXISTS "IX_ManualNetworkPolicies_Cluster_Namespace"
-        ON "ManualNetworkPolicies" ("ClusterName", "Namespace");
+    CREATE INDEX "IX_ManualNetworkPolicies_ClusterName_Namespace" ON "ManualNetworkPolicies" ("ClusterName", "Namespace");
     END IF;
 END $EF$;
 
@@ -2124,37 +2559,31 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525000000_ManualNetworkPolicies') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260525000000_ManualNetworkPolicies', '10.0.5');
+    VALUES ('20260525000000_ManualNetworkPolicies', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
-
--- =============================================================================
--- 20260525010000_ManualNetworkPolicyRbac
--- Grant the built-in roles access to the ManualNetworkPolicy resource.
--- Split from the schema migration above so envs that already applied
--- 20260525000000 before this RBAC existed still pick up the grants.
--- Admin / NetworkOperator â†’ Manage; Auditor â†’ Read; AccessUser â†’ no grant.
--- =============================================================================
 
 START TRANSACTION;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525010000_ManualNetworkPolicyRbac') THEN
-    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
-    SELECT gen_random_uuid(), g.role_id, g.resource, g.scope
-    FROM (VALUES
-        ('00000001-0000-0000-0000-000000000001'::uuid, 'ManualNetworkPolicy', 'Manage'),
-        ('00000002-0000-0000-0000-000000000002'::uuid, 'ManualNetworkPolicy', 'Manage'),
-        ('00000003-0000-0000-0000-000000000003'::uuid, 'ManualNetworkPolicy', 'Read')
-    ) AS g(role_id, resource, scope)
-    WHERE NOT EXISTS (
-        SELECT 1 FROM "CustomRolePermissions" p
-        WHERE p."CustomRoleId" = g.role_id
-          AND p."Resource"     = g.resource
-          AND p."Scope"        = g.scope
-    );
+
+                    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+                    SELECT gen_random_uuid(), g.role_id, g.resource, g.scope
+                    FROM (VALUES
+                        ('00000001-0000-0000-0000-000000000001'::uuid, 'ManualNetworkPolicy', 'Manage'),
+                        ('00000002-0000-0000-0000-000000000002'::uuid, 'ManualNetworkPolicy', 'Manage'),
+                        ('00000003-0000-0000-0000-000000000003'::uuid, 'ManualNetworkPolicy', 'Read')
+                    ) AS g(role_id, resource, scope)
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM "CustomRolePermissions" p
+                        WHERE p."CustomRoleId" = g.role_id
+                          AND p."Resource"     = g.resource
+                          AND p."Scope"        = g.scope
+                    );
+                
     END IF;
 END $EF$;
 
@@ -2162,70 +2591,206 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525010000_ManualNetworkPolicyRbac') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260525010000_ManualNetworkPolicyRbac', '10.0.5');
+    VALUES ('20260525010000_ManualNetworkPolicyRbac', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
-
--- =============================================================================
--- 20260525103259_ThreatIntelAdded
--- EF Core re-generated this migration after the model snapshot caught up to
--- the current code: relaxes a handful of character varying(N) columns to
--- plain text, drops some indexes that the regenerated snapshot no longer
--- declares, strips a few defaults the entity no longer carries, and recreates
--- PolicyHitDaily under the new shape. PolicyHitDaily is wrapped in
--- CREATE TABLE IF NOT EXISTS because an earlier migration (20260512100000)
--- already created it on existing clusters.
--- =============================================================================
 
 START TRANSACTION;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525103259_ThreatIntelAdded') THEN
-    -- ---- index cleanups (IF EXISTS so a re-run is harmless) ---------------
-    DROP INDEX IF EXISTS "IX_ManualNetworkPolicies_ApprovalStatus";
-    DROP INDEX IF EXISTS "IX_ManualNetworkPolicies_ClusterName_Namespace";
-    DROP INDEX IF EXISTS "IX_ManualNetworkPolicies_UploadBatchId";
-    DROP INDEX IF EXISTS "IX_AuditEntries_At";
-    DROP INDEX IF EXISTS "IX_AuditEntries_Category";
-    DROP INDEX IF EXISTS "IX_AnalyticsSavedViews_OwnerUserId";
-    DROP INDEX IF EXISTS "IX_AnalyticsAuditEntries_At";
-    DROP INDEX IF EXISTS "IX_AnalyticsAlertRules_OwnerUserId";
+    DROP INDEX "IX_ManualNetworkPolicies_ApprovalStatus";
+    END IF;
+END $EF$;
 
-    -- ---- ManualNetworkPolicies: relax char-varying columns to text -------
-    ALTER TABLE "ManualNetworkPolicies" ALTER COLUMN "Name"            TYPE text;
-    ALTER TABLE "ManualNetworkPolicies" ALTER COLUMN "ClusterName"     TYPE text;
-    ALTER TABLE "ManualNetworkPolicies" ALTER COLUMN "Namespace"       TYPE text;
-    ALTER TABLE "ManualNetworkPolicies" ALTER COLUMN "Direction"       TYPE text;
-    ALTER TABLE "ManualNetworkPolicies" ALTER COLUMN "Source"          TYPE text;
-    ALTER TABLE "ManualNetworkPolicies" ALTER COLUMN "Destination"     TYPE text;
-    ALTER TABLE "ManualNetworkPolicies" ALTER COLUMN "Protocol"        TYPE text;
-    ALTER TABLE "ManualNetworkPolicies" ALTER COLUMN "Description"     TYPE text;
-    ALTER TABLE "ManualNetworkPolicies" ALTER COLUMN "ApprovalStatus"  TYPE text;
-    ALTER TABLE "ManualNetworkPolicies" ALTER COLUMN "ApprovedBy"      TYPE text;
-    ALTER TABLE "ManualNetworkPolicies" ALTER COLUMN "RejectedBy"      TYPE text;
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525103259_ThreatIntelAdded') THEN
+    DROP INDEX "IX_ManualNetworkPolicies_ClusterName_Namespace";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525103259_ThreatIntelAdded') THEN
+    DROP INDEX "IX_ManualNetworkPolicies_UploadBatchId";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525103259_ThreatIntelAdded') THEN
+    DROP INDEX "IX_AuditEntries_At";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525103259_ThreatIntelAdded') THEN
+    DROP INDEX "IX_AuditEntries_Category";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525103259_ThreatIntelAdded') THEN
+    DROP INDEX "IX_AnalyticsSavedViews_OwnerUserId";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525103259_ThreatIntelAdded') THEN
+    DROP INDEX "IX_AnalyticsAuditEntries_At";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525103259_ThreatIntelAdded') THEN
+    DROP INDEX "IX_AnalyticsAlertRules_OwnerUserId";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525103259_ThreatIntelAdded') THEN
+    ALTER TABLE "SiemSettings" ALTER COLUMN "RetentionDays" DROP DEFAULT;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525103259_ThreatIntelAdded') THEN
+    ALTER TABLE "OpenShiftIntegrations" ALTER COLUMN "IsEnabled" DROP DEFAULT;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525103259_ThreatIntelAdded') THEN
+    ALTER TABLE "ManualNetworkPolicies" ALTER COLUMN "UploadedBy" TYPE text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525103259_ThreatIntelAdded') THEN
+    ALTER TABLE "ManualNetworkPolicies" ALTER COLUMN "SourceFileName" TYPE text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525103259_ThreatIntelAdded') THEN
+    ALTER TABLE "ManualNetworkPolicies" ALTER COLUMN "Source" TYPE text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525103259_ThreatIntelAdded') THEN
     ALTER TABLE "ManualNetworkPolicies" ALTER COLUMN "RejectionReason" TYPE text;
-    ALTER TABLE "ManualNetworkPolicies" ALTER COLUMN "UploadedBy"      TYPE text;
-    ALTER TABLE "ManualNetworkPolicies" ALTER COLUMN "SourceFileName"  TYPE text;
+    END IF;
+END $EF$;
 
-    -- ---- default-value strips --------------------------------------------
-    ALTER TABLE "SiemSettings"          ALTER COLUMN "RetentionDays"  DROP DEFAULT;
-    ALTER TABLE "OpenShiftIntegrations" ALTER COLUMN "IsEnabled"      DROP DEFAULT;
-    ALTER TABLE "CustomRoles"           ALTER COLUMN "IsBuiltIn"      DROP DEFAULT;
-    ALTER TABLE "AnalyticsAlertRules"   ALTER COLUMN "SuppressMinutes" DROP DEFAULT;
-    ALTER TABLE "AnalyticsAlertRules"   ALTER COLUMN "Severity"       DROP DEFAULT;
-    ALTER TABLE "AnalyticsAlertRules"   ALTER COLUMN "ClusterId"      DROP DEFAULT;
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525103259_ThreatIntelAdded') THEN
+    ALTER TABLE "ManualNetworkPolicies" ALTER COLUMN "RejectedBy" TYPE text;
+    END IF;
+END $EF$;
 
-    -- ---- PolicyHitDaily recreate (no-op when 20260512100000 already ran) -
-    CREATE TABLE IF NOT EXISTS "PolicyHitDaily" (
-        "PolicyRecordId" uuid NOT NULL,
-        "Day"            timestamp with time zone NOT NULL,
-        "Count"          bigint NOT NULL,
-        "UpdatedAt"      timestamp with time zone NOT NULL,
-        CONSTRAINT "PK_PolicyHitDaily" PRIMARY KEY ("PolicyRecordId", "Day")
-    );
-    CREATE INDEX IF NOT EXISTS "IX_PolicyHitDaily_Day" ON "PolicyHitDaily" ("Day");
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525103259_ThreatIntelAdded') THEN
+    ALTER TABLE "ManualNetworkPolicies" ALTER COLUMN "Protocol" TYPE text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525103259_ThreatIntelAdded') THEN
+    ALTER TABLE "ManualNetworkPolicies" ALTER COLUMN "Namespace" TYPE text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525103259_ThreatIntelAdded') THEN
+    ALTER TABLE "ManualNetworkPolicies" ALTER COLUMN "Name" TYPE text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525103259_ThreatIntelAdded') THEN
+    ALTER TABLE "ManualNetworkPolicies" ALTER COLUMN "Direction" TYPE text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525103259_ThreatIntelAdded') THEN
+    ALTER TABLE "ManualNetworkPolicies" ALTER COLUMN "Destination" TYPE text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525103259_ThreatIntelAdded') THEN
+    ALTER TABLE "ManualNetworkPolicies" ALTER COLUMN "Description" TYPE text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525103259_ThreatIntelAdded') THEN
+    ALTER TABLE "ManualNetworkPolicies" ALTER COLUMN "ClusterName" TYPE text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525103259_ThreatIntelAdded') THEN
+    ALTER TABLE "ManualNetworkPolicies" ALTER COLUMN "ApprovedBy" TYPE text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525103259_ThreatIntelAdded') THEN
+    ALTER TABLE "ManualNetworkPolicies" ALTER COLUMN "ApprovalStatus" TYPE text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525103259_ThreatIntelAdded') THEN
+    ALTER TABLE "CustomRoles" ALTER COLUMN "IsBuiltIn" DROP DEFAULT;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525103259_ThreatIntelAdded') THEN
+    ALTER TABLE "AnalyticsAlertRules" ALTER COLUMN "SuppressMinutes" DROP DEFAULT;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525103259_ThreatIntelAdded') THEN
+    ALTER TABLE "AnalyticsAlertRules" ALTER COLUMN "Severity" DROP DEFAULT;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525103259_ThreatIntelAdded') THEN
+    ALTER TABLE "AnalyticsAlertRules" ALTER COLUMN "ClusterId" DROP DEFAULT;
     END IF;
 END $EF$;
 
@@ -2233,21 +2798,17 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260525103259_ThreatIntelAdded') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260525103259_ThreatIntelAdded', '10.0.5');
+    VALUES ('20260525103259_ThreatIntelAdded', '10.0.12');
     END IF;
 END $EF$;
+COMMIT;
 
--- 20260601140000_AiSettingsAdded
--- DB-backed singleton row for the AI assistant configuration (model / endpoint
--- + behavioral-anomaly advisory tuning). No seed row here â€” the API seeds the
--- singleton from the "Ai" appsettings section on first boot.
-
--- ---- AiSettings (singleton) ------------------------------------------------
+START TRANSACTION;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260601140000_AiSettingsAdded') THEN
-    CREATE TABLE IF NOT EXISTS "AiSettings" (
+    CREATE TABLE "AiSettings" (
         "Id" uuid NOT NULL,
         "Enabled" boolean NOT NULL,
         "Provider" character varying(64) NOT NULL,
@@ -2272,25 +2833,31 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260601140000_AiSettingsAdded') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260601140000_AiSettingsAdded', '10.0.5');
+    VALUES ('20260601140000_AiSettingsAdded', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
-
--- 20260603120000_AiPolicyAdvisoryAdded
--- Background policy-recommendation tuning on the AiSettings singleton: master
--- toggle + per-cluster re-analysis interval (the effective cadence) + per-cluster
--- policy cap. Existing rows default to off / daily / 60 via the column defaults,
--- so the upgrade is a no-op until an admin enables it on the AI Platform page.
 
 START TRANSACTION;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260603120000_AiPolicyAdvisoryAdded') THEN
-    ALTER TABLE "AiSettings" ADD COLUMN "PolicyAdvisoryEnabled" boolean NOT NULL DEFAULT FALSE;
-    ALTER TABLE "AiSettings" ADD COLUMN "PolicyAdvisoryIntervalHours" integer NOT NULL DEFAULT 24;
-    ALTER TABLE "AiSettings" ADD COLUMN "PolicyAdvisoryMaxPolicies" integer NOT NULL DEFAULT 60;
+    ALTER TABLE "AiSettings" ADD "PolicyAdvisoryEnabled" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260603120000_AiPolicyAdvisoryAdded') THEN
+    ALTER TABLE "AiSettings" ADD "PolicyAdvisoryIntervalHours" integer NOT NULL DEFAULT 24;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260603120000_AiPolicyAdvisoryAdded') THEN
+    ALTER TABLE "AiSettings" ADD "PolicyAdvisoryMaxPolicies" integer NOT NULL DEFAULT 60;
     END IF;
 END $EF$;
 
@@ -2298,47 +2865,24 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260603120000_AiPolicyAdvisoryAdded') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260603120000_AiPolicyAdvisoryAdded', '10.0.5');
+    VALUES ('20260603120000_AiPolicyAdvisoryAdded', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
 
--- 20260604130000_NetworkPolicyDeploymentState
--- Distinguishes a NetworkPolicyRecord saved in Axera ("Draft") from one that
--- physically exists in the target cluster ("Deployed"). Existing rows default to
--- 'Draft'; the deployment reconciler promotes the ones actually present in the
--- cluster to 'Deployed' on the next pass, so the upgrade is safe.
-START TRANSACTION;
-
-DO $EF$
-BEGIN
-    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260604130000_NetworkPolicyDeploymentState') THEN
-    ALTER TABLE "NetworkPolicyRecords" ADD COLUMN "DeploymentState" character varying(32) NOT NULL DEFAULT 'Draft';
-    ALTER TABLE "NetworkPolicyRecords" ADD COLUMN "LastDeployedAt" timestamp with time zone NULL;
-    END IF;
-END $EF$;
-
-DO $EF$
-BEGIN
-    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260604130000_NetworkPolicyDeploymentState') THEN
-    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260604130000_NetworkPolicyDeploymentState', '10.0.7');
-    END IF;
-END $EF$;
-COMMIT;
-
--- 20260603130000_IncidentMitreAndScore
--- Adds MITRE ATT&CK technique tag + 0-100 entity score to Incidents so
--- pre-computed NDR detections (Radar fan-out / egress-volume) surface their
--- technique and Threat x Certainty priority in the UI. Both nullable, so
--- existing detectors are untouched and the upgrade is safe.
 START TRANSACTION;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260603130000_IncidentMitreAndScore') THEN
-    ALTER TABLE "Incidents" ADD COLUMN "MitreTechnique" character varying(32) NULL;
-    ALTER TABLE "Incidents" ADD COLUMN "Score" integer NULL;
+    ALTER TABLE "Incidents" ADD "MitreTechnique" character varying(32);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260603130000_IncidentMitreAndScore') THEN
+    ALTER TABLE "Incidents" ADD "Score" integer;
     END IF;
 END $EF$;
 
@@ -2346,13 +2890,36 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260603130000_IncidentMitreAndScore') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260603130000_IncidentMitreAndScore', '10.0.7');
+    VALUES ('20260603130000_IncidentMitreAndScore', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
--- 20260608120000_ShiftLeftAdded
--- Shift-Left: source-derived NetworkPolicy recommendations (repos opted into
--- scanning, scan runs, derived intents, synthesised recommendations).
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260604130000_NetworkPolicyDeploymentState') THEN
+    ALTER TABLE "NetworkPolicyRecords" ADD "DeploymentState" character varying(32) NOT NULL DEFAULT 'Draft';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260604130000_NetworkPolicyDeploymentState') THEN
+    ALTER TABLE "NetworkPolicyRecords" ADD "LastDeployedAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260604130000_NetworkPolicyDeploymentState') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260604130000_NetworkPolicyDeploymentState', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
 START TRANSACTION;
 
 DO $EF$
@@ -2362,86 +2929,140 @@ BEGIN
         "Id" uuid NOT NULL,
         "Provider" character varying(32) NOT NULL,
         "RepositoryUrl" character varying(1024) NOT NULL,
-        "Owner" character varying(256) NULL,
-        "Name" character varying(256) NULL,
+        "Owner" character varying(256),
+        "Name" character varying(256),
         "Branch" character varying(256) NOT NULL,
-        "PathGlobs" text NULL,
-        "TargetClusterName" character varying(256) NULL,
-        "TargetNamespace" character varying(256) NULL,
+        "PathGlobs" text,
+        "TargetClusterName" character varying(256),
+        "TargetNamespace" character varying(256),
         "AnalyzeManifests" boolean NOT NULL,
         "AnalyzeDockerfile" boolean NOT NULL,
         "AnalyzeCodeWithAi" boolean NOT NULL,
         "Enabled" boolean NOT NULL,
         "ScheduledScanEnabled" boolean NOT NULL,
         "ScanIntervalHours" integer NOT NULL,
-        "LastScanAt" timestamp with time zone NULL,
-        "LastScanStatus" character varying(32) NULL,
-        "LastCommitSha" character varying(64) NULL,
+        "LastScanAt" timestamp with time zone,
+        "LastScanStatus" character varying(32),
+        "LastCommitSha" character varying(64),
         "CreatedAt" timestamp with time zone NOT NULL,
-        "CreatedBy" character varying(256) NULL,
+        "CreatedBy" character varying(256),
         "UpdatedAt" timestamp with time zone NOT NULL,
-        "UpdatedBy" character varying(256) NULL,
+        "UpdatedBy" character varying(256),
         CONSTRAINT "PK_ScanRepositories" PRIMARY KEY ("Id")
     );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260608120000_ShiftLeftAdded') THEN
     CREATE TABLE "RepositoryScans" (
         "Id" uuid NOT NULL,
         "ScanRepositoryId" uuid NOT NULL,
         "Status" character varying(32) NOT NULL,
         "Trigger" character varying(16) NOT NULL,
-        "CommitSha" character varying(64) NULL,
+        "CommitSha" character varying(64),
         "StartedAt" timestamp with time zone NOT NULL,
-        "CompletedAt" timestamp with time zone NULL,
+        "CompletedAt" timestamp with time zone,
         "IntentCount" integer NOT NULL,
         "RecommendationCount" integer NOT NULL,
-        "Error" text NULL,
-        "TriggeredBy" character varying(256) NULL,
+        "Error" text,
+        "TriggeredBy" character varying(256),
         CONSTRAINT "PK_RepositoryScans" PRIMARY KEY ("Id"),
         CONSTRAINT "FK_RepositoryScans_ScanRepositories_ScanRepositoryId" FOREIGN KEY ("ScanRepositoryId") REFERENCES "ScanRepositories" ("Id") ON DELETE CASCADE
     );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260608120000_ShiftLeftAdded') THEN
     CREATE TABLE "PolicyIntents" (
         "Id" uuid NOT NULL,
         "RepositoryScanId" uuid NOT NULL,
         "SrcWorkload" character varying(256) NOT NULL,
         "SrcNamespace" character varying(256) NOT NULL,
-        "DstWorkload" character varying(256) NULL,
-        "DstNamespace" character varying(256) NULL,
+        "DstWorkload" character varying(256),
+        "DstNamespace" character varying(256),
         "DstExternal" boolean NOT NULL,
-        "DstHost" character varying(512) NULL,
+        "DstHost" character varying(512),
         "Port" integer NOT NULL,
         "Protocol" character varying(16) NOT NULL,
         "Direction" character varying(16) NOT NULL,
         "Confidence" integer NOT NULL,
         "Analyzer" character varying(16) NOT NULL,
-        "EvidenceFile" character varying(1024) NULL,
-        "EvidenceLine" integer NULL,
-        "EvidenceCommit" character varying(64) NULL,
-        "EvidenceSnippet" character varying(2000) NULL,
+        "EvidenceFile" character varying(1024),
+        "EvidenceLine" integer,
+        "EvidenceCommit" character varying(64),
+        "EvidenceSnippet" character varying(2000),
         CONSTRAINT "PK_PolicyIntents" PRIMARY KEY ("Id"),
         CONSTRAINT "FK_PolicyIntents_RepositoryScans_RepositoryScanId" FOREIGN KEY ("RepositoryScanId") REFERENCES "RepositoryScans" ("Id") ON DELETE CASCADE
     );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260608120000_ShiftLeftAdded') THEN
     CREATE TABLE "PolicyRecommendations" (
         "Id" uuid NOT NULL,
         "ScanRepositoryId" uuid NOT NULL,
         "RepositoryScanId" uuid NOT NULL,
-        "ClusterName" character varying(256) NULL,
-        "TargetNamespace" character varying(256) NULL,
-        "TargetWorkload" character varying(256) NULL,
+        "ClusterName" character varying(256),
+        "TargetNamespace" character varying(256),
+        "TargetWorkload" character varying(256),
         "PolicyName" character varying(256) NOT NULL,
-        "PolicyYaml" text NULL,
+        "PolicyYaml" text,
         "Confidence" integer NOT NULL,
-        "Summary" text NULL,
+        "Summary" text,
         "Status" character varying(16) NOT NULL,
-        "NetworkPolicyRecordId" uuid NULL,
+        "NetworkPolicyRecordId" uuid,
         "CreatedAt" timestamp with time zone NOT NULL,
-        "DecidedAt" timestamp with time zone NULL,
-        "DecidedBy" character varying(256) NULL,
+        "DecidedAt" timestamp with time zone,
+        "DecidedBy" character varying(256),
         CONSTRAINT "PK_PolicyRecommendations" PRIMARY KEY ("Id")
     );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260608120000_ShiftLeftAdded') THEN
     CREATE UNIQUE INDEX "IX_ScanRepositories_Url_Branch" ON "ScanRepositories" ("RepositoryUrl", "Branch");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260608120000_ShiftLeftAdded') THEN
     CREATE INDEX "IX_RepositoryScans_ScanRepositoryId" ON "RepositoryScans" ("ScanRepositoryId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260608120000_ShiftLeftAdded') THEN
     CREATE INDEX "IX_PolicyIntents_RepositoryScanId" ON "PolicyIntents" ("RepositoryScanId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260608120000_ShiftLeftAdded') THEN
     CREATE INDEX "IX_PolicyRecommendations_ScanRepositoryId" ON "PolicyRecommendations" ("ScanRepositoryId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260608120000_ShiftLeftAdded') THEN
     CREATE INDEX "IX_PolicyRecommendations_RepositoryScanId" ON "PolicyRecommendations" ("RepositoryScanId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260608120000_ShiftLeftAdded') THEN
     CREATE INDEX "IX_PolicyRecommendations_Status" ON "PolicyRecommendations" ("Status");
     END IF;
 END $EF$;
@@ -2450,14 +3071,11 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260608120000_ShiftLeftAdded') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260608120000_ShiftLeftAdded', '10.0.7');
+    VALUES ('20260608120000_ShiftLeftAdded', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
 
--- 20260609120000_AiMultiProviderAdded
--- Multi-provider AI: N named provider configs (Ollama / Anthropic / OpenAI /
--- Azure OpenAI / OpenAI-compatible) + per-feature routing to a config.
 START TRANSACTION;
 
 DO $EF$
@@ -2469,8 +3087,8 @@ BEGIN
         "Provider" character varying(64) NOT NULL,
         "BaseUrl" character varying(512) NOT NULL,
         "Model" character varying(256) NOT NULL,
-        "ApiKey" character varying(1024) NULL,
-        "ApiVersion" character varying(64) NULL,
+        "ApiKey" character varying(1024),
+        "ApiVersion" character varying(64),
         "TimeoutSeconds" integer NOT NULL,
         "Temperature" double precision NOT NULL,
         "MaxTokens" integer NOT NULL,
@@ -2478,20 +3096,44 @@ BEGIN
         "IsDefault" boolean NOT NULL,
         "CreatedAt" timestamp with time zone NOT NULL,
         "UpdatedAt" timestamp with time zone NOT NULL,
-        "UpdatedBy" character varying(256) NULL,
+        "UpdatedBy" character varying(256),
         CONSTRAINT "PK_AiModelConfigs" PRIMARY KEY ("Id")
     );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260609120000_AiMultiProviderAdded') THEN
     CREATE TABLE "AiFeatureRoutes" (
         "Id" uuid NOT NULL,
         "Feature" character varying(64) NOT NULL,
         "AiModelConfigId" uuid NOT NULL,
         "UpdatedAt" timestamp with time zone NOT NULL,
-        "UpdatedBy" character varying(256) NULL,
+        "UpdatedBy" character varying(256),
         CONSTRAINT "PK_AiFeatureRoutes" PRIMARY KEY ("Id"),
         CONSTRAINT "FK_AiFeatureRoutes_AiModelConfigs_AiModelConfigId" FOREIGN KEY ("AiModelConfigId") REFERENCES "AiModelConfigs" ("Id") ON DELETE CASCADE
     );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260609120000_AiMultiProviderAdded') THEN
     CREATE UNIQUE INDEX "IX_AiModelConfigs_Name" ON "AiModelConfigs" ("Name");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260609120000_AiMultiProviderAdded') THEN
     CREATE UNIQUE INDEX "IX_AiFeatureRoutes_Feature" ON "AiFeatureRoutes" ("Feature");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260609120000_AiMultiProviderAdded') THEN
     CREATE INDEX "IX_AiFeatureRoutes_AiModelConfigId" ON "AiFeatureRoutes" ("AiModelConfigId");
     END IF;
 END $EF$;
@@ -2500,12 +3142,11 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260609120000_AiMultiProviderAdded') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260609120000_AiMultiProviderAdded', '10.0.7');
+    VALUES ('20260609120000_AiMultiProviderAdded', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
 
--- ProtectedNamespaceSettings: operator delta for the configurable protected-namespace guard (jsonb)
 START TRANSACTION;
 
 DO $EF$
@@ -2525,12 +3166,11 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260701170428_ProtectedNamespaceSettingsAdded') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260701170428_ProtectedNamespaceSettingsAdded', '10.0.7');
+    VALUES ('20260701170428_ProtectedNamespaceSettingsAdded', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
 
--- DataProtectionKeys: DB-backed ASP.NET DataProtection key-ring (app.dpKeysStore=Database) â€” 20260703120841_DataProtectionKeysAdded
 START TRANSACTION;
 
 DO $EF$
@@ -2549,13 +3189,11 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260703120841_DataProtectionKeysAdded') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260703120841_DataProtectionKeysAdded', '10.0.7');
+    VALUES ('20260703120841_DataProtectionKeysAdded', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
 
-
--- v9.0.0: SiemPolicyHit ForwardedAt + incident partial-unique (idempotent)
 START TRANSACTION;
 
 DO $EF$
@@ -2607,14 +3245,11 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260710131804_SiemPolicyHitForwardedAndIncidentDedup') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260710131804_SiemPolicyHitForwardedAndIncidentDedup', '10.0.7');
+    VALUES ('20260710131804_SiemPolicyHitForwardedAndIncidentDedup', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
 
-
-
--- v0.7.3: Backup/Restore (BackupRecords + BackupSettings) â€” idempotent
 START TRANSACTION;
 
 DO $EF$
@@ -2689,29 +3324,10 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260716085021_BackupAndRestore') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260716085021_BackupAndRestore', '10.0.7');
+    VALUES ('20260716085021_BackupAndRestore', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
-
--- v0.7.3: Backup schema self-heal (drift guard). The CREATE TABLE blocks above are
--- migration-history-guarded, so if BackupRecords/BackupSettings were created by an EARLIER
--- revision (before the Name/ProductVersion/Monthly columns existed) the CREATE is skipped and
--- those columns would be missing. ADD COLUMN IF NOT EXISTS backfills them regardless; it's a
--- no-op once present, and the to_regclass guards skip cleanly when backup is disabled.
-DO $$
-BEGIN
-  IF to_regclass('"BackupRecords"') IS NOT NULL THEN
-    ALTER TABLE "BackupRecords"  ADD COLUMN IF NOT EXISTS "Name" character varying(256);
-    ALTER TABLE "BackupRecords"  ADD COLUMN IF NOT EXISTS "ProductVersion" character varying(64);
-  END IF;
-  IF to_regclass('"BackupSettings"') IS NOT NULL THEN
-    ALTER TABLE "BackupSettings" ADD COLUMN IF NOT EXISTS "MonthlyEnabled" boolean NOT NULL DEFAULT false;
-    ALTER TABLE "BackupSettings" ADD COLUMN IF NOT EXISTS "MonthlyCron" character varying(64) NOT NULL DEFAULT '0 4 1 * *';
-    ALTER TABLE "BackupSettings" ADD COLUMN IF NOT EXISTS "RetentionMonthly" integer NOT NULL DEFAULT 6;
-  END IF;
-END $$;
-
 
 START TRANSACTION;
 
@@ -2770,9 +3386,13 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260720140022_SiemDestinations') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260720140022_SiemDestinations', '10.0.7');
+    VALUES ('20260720140022_SiemDestinations', '10.0.12');
     END IF;
 END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260721084748_AddLicenseEdition') THEN
@@ -2784,9 +3404,12 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260721084748_AddLicenseEdition') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260721084748_AddLicenseEdition', '10.0.7');
+    VALUES ('20260721084748_AddLicenseEdition', '10.0.12');
     END IF;
 END $EF$;
+COMMIT;
+
+START TRANSACTION;
 
 DO $EF$
 BEGIN
@@ -2807,15 +3430,17 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260721121642_AddIncidentProcessAttribution') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260721121642_AddIncidentProcessAttribution', '10.0.7');
+    VALUES ('20260721121642_AddIncidentProcessAttribution', '10.0.12');
     END IF;
 END $EF$;
+COMMIT;
+
+START TRANSACTION;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260721122551_AddDeniedSprayDetectorSetting') THEN
     ALTER TABLE "ThreatIntelSettings" ADD COLUMN IF NOT EXISTS "DeniedSprayEnabled" boolean NOT NULL DEFAULT true;
-    ALTER TABLE "ThreatIntelSettings" ADD COLUMN IF NOT EXISTS "CloudMetadataAbuseEnabled" boolean NOT NULL DEFAULT true;
     END IF;
 END $EF$;
 
@@ -2823,9 +3448,12 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260721122551_AddDeniedSprayDetectorSetting') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260721122551_AddDeniedSprayDetectorSetting', '10.0.7');
+    VALUES ('20260721122551_AddDeniedSprayDetectorSetting', '10.0.12');
     END IF;
 END $EF$;
+COMMIT;
+
+START TRANSACTION;
 
 DO $EF$
 BEGIN
@@ -2838,15 +3466,17 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260721123923_AddMeshDenyDetectorSetting') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260721123923_AddMeshDenyDetectorSetting', '10.0.7');
+    VALUES ('20260721123923_AddMeshDenyDetectorSetting', '10.0.12');
     END IF;
 END $EF$;
+COMMIT;
 
+START TRANSACTION;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260721195257_AddWorkloadCriticality') THEN
-    CREATE TABLE IF NOT EXISTS "WorkloadCriticalities" (
+    CREATE TABLE "WorkloadCriticalities" (
         "Id" uuid NOT NULL,
         "ClusterName" character varying(256) NOT NULL,
         "Namespace" character varying(256) NOT NULL,
@@ -2857,7 +3487,13 @@ BEGIN
         "UpdatedBy" character varying(256),
         CONSTRAINT "PK_WorkloadCriticalities" PRIMARY KEY ("Id")
     );
-    CREATE UNIQUE INDEX IF NOT EXISTS "IX_WorkloadCriticalities_Identity" ON "WorkloadCriticalities" ("ClusterName", "Namespace", "Workload");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260721195257_AddWorkloadCriticality') THEN
+    CREATE UNIQUE INDEX "IX_WorkloadCriticalities_Identity" ON "WorkloadCriticalities" ("ClusterName", "Namespace", "Workload");
     END IF;
 END $EF$;
 
@@ -2865,15 +3501,17 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260721195257_AddWorkloadCriticality') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260721195257_AddWorkloadCriticality', '10.0.7');
+    VALUES ('20260721195257_AddWorkloadCriticality', '10.0.12');
     END IF;
 END $EF$;
+COMMIT;
 
+START TRANSACTION;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260721203248_AddRadarStateSnapshot') THEN
-    CREATE TABLE IF NOT EXISTS "RadarStateSnapshots" (
+    CREATE TABLE "RadarStateSnapshots" (
         "Key" character varying(128) NOT NULL,
         "Json" text NOT NULL,
         "UpdatedAt" timestamp with time zone NOT NULL,
@@ -2886,9 +3524,12 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260721203248_AddRadarStateSnapshot') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260721203248_AddRadarStateSnapshot', '10.0.7');
+    VALUES ('20260721203248_AddRadarStateSnapshot', '10.0.12');
     END IF;
 END $EF$;
+COMMIT;
+
+START TRANSACTION;
 
 DO $EF$
 BEGIN
@@ -2901,9 +3542,12 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260721215347_AddIncidentL4Protocol') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260721215347_AddIncidentL4Protocol', '10.0.7');
+    VALUES ('20260721215347_AddIncidentL4Protocol', '10.0.12');
     END IF;
 END $EF$;
+COMMIT;
+
+START TRANSACTION;
 
 DO $EF$
 BEGIN
@@ -2911,37 +3555,45 @@ BEGIN
     ALTER TABLE "ThreatIntelSettings" ADD COLUMN IF NOT EXISTS "Sensitivity" integer NOT NULL DEFAULT 1;
     END IF;
 END $EF$;
+
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260721220655_AddDetectionTuningSettings') THEN
     ALTER TABLE "ThreatIntelSettings" ADD COLUMN IF NOT EXISTS "SensitiveNamespaces" text NULL;
     END IF;
 END $EF$;
+
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260721220655_AddDetectionTuningSettings') THEN
     ALTER TABLE "ThreatIntelSettings" ADD COLUMN IF NOT EXISTS "IpReputationEastWest" boolean NOT NULL DEFAULT false;
     END IF;
 END $EF$;
+
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260721220655_AddDetectionTuningSettings') THEN
     ALTER TABLE "ThreatIntelSettings" ADD COLUMN IF NOT EXISTS "FeedRefreshIntervalHours" integer NOT NULL DEFAULT 24;
     END IF;
 END $EF$;
+
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260721220655_AddDetectionTuningSettings') THEN
     ALTER TABLE "ThreatIntelSettings" ADD COLUMN IF NOT EXISTS "ProviderDailyBudget" integer NOT NULL DEFAULT 1000;
     END IF;
 END $EF$;
+
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260721220655_AddDetectionTuningSettings') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260721220655_AddDetectionTuningSettings', '10.0.7');
+    VALUES ('20260721220655_AddDetectionTuningSettings', '10.0.12');
     END IF;
 END $EF$;
+COMMIT;
+
+START TRANSACTION;
 
 DO $EF$
 BEGIN
@@ -2968,66 +3620,66 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260722111249_AddPolicySoftDeleteRetention') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260722111249_AddPolicySoftDeleteRetention', '10.0.7');
+    VALUES ('20260722111249_AddPolicySoftDeleteRetention', '10.0.12');
     END IF;
 END $EF$;
+COMMIT;
 
-
-
--- 20260803135130_AddIncidentContainment (synced)
-DO $EF$
-BEGIN
-    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260803135130_AddIncidentContainment') THEN
-    ALTER TABLE "Incidents" ADD COLUMN IF NOT EXISTS "ContainedAt" timestamp with time zone;
-    END IF;
-END $EF$;
+START TRANSACTION;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260803135130_AddIncidentContainment') THEN
-    ALTER TABLE "Incidents" ADD COLUMN IF NOT EXISTS "ContainedBy" text;
+    ALTER TABLE "Incidents" ADD "ContainedAt" timestamp with time zone;
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260803135130_AddIncidentContainment') THEN
-    ALTER TABLE "Incidents" ADD COLUMN IF NOT EXISTS "ContainmentExpiresAt" timestamp with time zone;
+    ALTER TABLE "Incidents" ADD "ContainedBy" text;
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260803135130_AddIncidentContainment') THEN
-    ALTER TABLE "Incidents" ADD COLUMN IF NOT EXISTS "ContainmentLiftedAt" timestamp with time zone;
+    ALTER TABLE "Incidents" ADD "ContainmentExpiresAt" timestamp with time zone;
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260803135130_AddIncidentContainment') THEN
-    ALTER TABLE "Incidents" ADD COLUMN IF NOT EXISTS "ContainmentLiftedReason" text;
+    ALTER TABLE "Incidents" ADD "ContainmentLiftedAt" timestamp with time zone;
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260803135130_AddIncidentContainment') THEN
-    ALTER TABLE "Incidents" ADD COLUMN IF NOT EXISTS "ContainmentPolicyName" text;
+    ALTER TABLE "Incidents" ADD "ContainmentLiftedReason" text;
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260803135130_AddIncidentContainment') THEN
-    ALTER TABLE "Incidents" ADD COLUMN IF NOT EXISTS "ContainmentPolicyRecordId" uuid;
+    ALTER TABLE "Incidents" ADD "ContainmentPolicyName" text;
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260803135130_AddIncidentContainment') THEN
-    ALTER TABLE "AnalyticsSettings" ADD COLUMN IF NOT EXISTS "ContainmentDefaultTtlHours" integer NOT NULL DEFAULT 0;
+    ALTER TABLE "Incidents" ADD "ContainmentPolicyRecordId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260803135130_AddIncidentContainment') THEN
+    ALTER TABLE "AnalyticsSettings" ADD "ContainmentDefaultTtlHours" integer NOT NULL DEFAULT 0;
     END IF;
 END $EF$;
 
@@ -3035,22 +3687,24 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260803135130_AddIncidentContainment') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260803135130_AddIncidentContainment', '10.0.7');
+    VALUES ('20260803135130_AddIncidentContainment', '10.0.12');
     END IF;
 END $EF$;
+COMMIT;
 
--- 20260805070111_AddContainmentActionsAndSrcPrincipal (synced)
-DO $EF$
-BEGIN
-    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260805070111_AddContainmentActionsAndSrcPrincipal') THEN
-    ALTER TABLE "Incidents" ADD COLUMN IF NOT EXISTS "SrcPrincipal" text;
-    END IF;
-END $EF$;
+START TRANSACTION;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260805070111_AddContainmentActionsAndSrcPrincipal') THEN
-    CREATE TABLE IF NOT EXISTS "ContainmentActions" (
+    ALTER TABLE "Incidents" ADD "SrcPrincipal" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260805070111_AddContainmentActionsAndSrcPrincipal') THEN
+    CREATE TABLE "ContainmentActions" (
         "Id" uuid NOT NULL,
         "IncidentId" uuid NOT NULL,
         "Plane" character varying(32) NOT NULL,
@@ -3072,7 +3726,7 @@ END $EF$;
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260805070111_AddContainmentActionsAndSrcPrincipal') THEN
-    CREATE INDEX IF NOT EXISTS "IX_ContainmentActions_Incident_Status" ON "ContainmentActions" ("IncidentId", "Status");
+    CREATE INDEX "IX_ContainmentActions_Incident_Status" ON "ContainmentActions" ("IncidentId", "Status");
     END IF;
 END $EF$;
 
@@ -3080,15 +3734,17 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260805070111_AddContainmentActionsAndSrcPrincipal') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260805070111_AddContainmentActionsAndSrcPrincipal', '10.0.7');
+    VALUES ('20260805070111_AddContainmentActionsAndSrcPrincipal', '10.0.12');
     END IF;
 END $EF$;
+COMMIT;
 
--- 20260805072730_AddResponsePlaybooks (synced)
+START TRANSACTION;
+
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260805072730_AddResponsePlaybooks') THEN
-    CREATE TABLE IF NOT EXISTS "IncidentResponsePlaybooks" (
+    CREATE TABLE "IncidentResponsePlaybooks" (
         "Id" uuid NOT NULL,
         "Name" character varying(256) NOT NULL,
         "Enabled" boolean NOT NULL,
@@ -3114,7 +3770,7 @@ END $EF$;
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260805072730_AddResponsePlaybooks') THEN
-    CREATE TABLE IF NOT EXISTS "PlaybookExecutions" (
+    CREATE TABLE "PlaybookExecutions" (
         "Id" uuid NOT NULL,
         "PlaybookId" uuid NOT NULL,
         "PlaybookName" character varying(256) NOT NULL,
@@ -3131,21 +3787,21 @@ END $EF$;
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260805072730_AddResponsePlaybooks') THEN
-    CREATE INDEX IF NOT EXISTS "IX_IncidentResponsePlaybooks_Enabled_Priority" ON "IncidentResponsePlaybooks" ("Enabled", "Priority");
+    CREATE INDEX "IX_IncidentResponsePlaybooks_Enabled_Priority" ON "IncidentResponsePlaybooks" ("Enabled", "Priority");
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260805072730_AddResponsePlaybooks') THEN
-    CREATE INDEX IF NOT EXISTS "IX_PlaybookExecutions_IncidentId" ON "PlaybookExecutions" ("IncidentId");
+    CREATE INDEX "IX_PlaybookExecutions_IncidentId" ON "PlaybookExecutions" ("IncidentId");
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260805072730_AddResponsePlaybooks') THEN
-    CREATE INDEX IF NOT EXISTS "IX_PlaybookExecutions_MatchedAt" ON "PlaybookExecutions" ("MatchedAt");
+    CREATE INDEX "IX_PlaybookExecutions_MatchedAt" ON "PlaybookExecutions" ("MatchedAt");
     END IF;
 END $EF$;
 
@@ -3153,22 +3809,24 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260805072730_AddResponsePlaybooks') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260805072730_AddResponsePlaybooks', '10.0.7');
+    VALUES ('20260805072730_AddResponsePlaybooks', '10.0.12');
     END IF;
 END $EF$;
+COMMIT;
 
--- 20260805073750_AddAutoResponseSettings (synced)
-DO $EF$
-BEGIN
-    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260805073750_AddAutoResponseSettings') THEN
-    ALTER TABLE "AnalyticsSettings" ADD COLUMN IF NOT EXISTS "AutoResponseEnabled" boolean NOT NULL DEFAULT FALSE;
-    END IF;
-END $EF$;
+START TRANSACTION;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260805073750_AddAutoResponseSettings') THEN
-    ALTER TABLE "AnalyticsSettings" ADD COLUMN IF NOT EXISTS "AutoResponseMode" text NOT NULL DEFAULT '';
+    ALTER TABLE "AnalyticsSettings" ADD "AutoResponseEnabled" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260805073750_AddAutoResponseSettings') THEN
+    ALTER TABLE "AnalyticsSettings" ADD "AutoResponseMode" text NOT NULL DEFAULT '';
     END IF;
 END $EF$;
 
@@ -3176,67 +3834,70 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260805073750_AddAutoResponseSettings') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260805073750_AddAutoResponseSettings', '10.0.7');
+    VALUES ('20260805073750_AddAutoResponseSettings', '10.0.12');
     END IF;
 END $EF$;
+COMMIT;
 
--- 20260805074650_AddThreatIntelEgressBlock (synced)
-DO $EF$
-BEGIN
-    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260805074650_AddThreatIntelEgressBlock') THEN
-    ALTER TABLE "AnalyticsSettings" ADD COLUMN IF NOT EXISTS "ThreatIntelEgressBlockEnabled" boolean NOT NULL DEFAULT FALSE;
-    END IF;
-END $EF$;
+START TRANSACTION;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260805074650_AddThreatIntelEgressBlock') THEN
+    ALTER TABLE "AnalyticsSettings" ADD "ThreatIntelEgressBlockEnabled" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260805074650_AddThreatIntelEgressBlock') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260805074650_AddThreatIntelEgressBlock', '10.0.7');
+    VALUES ('20260805074650_AddThreatIntelEgressBlock', '10.0.12');
     END IF;
 END $EF$;
+COMMIT;
 
-
--- 20260805123625_AddContainmentVerification (NDR Response P2 FR-35 containment verification)
-DO $EF$
-BEGIN
-    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260805123625_AddContainmentVerification') THEN
-    ALTER TABLE "Incidents" ADD COLUMN IF NOT EXISTS "FlowLastSeenAfterContainAt" timestamp with time zone;
-    END IF;
-END $EF$;
+START TRANSACTION;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260805123625_AddContainmentVerification') THEN
-    ALTER TABLE "Incidents" ADD COLUMN IF NOT EXISTS "LastVerifiedAt" timestamp with time zone;
+    ALTER TABLE "Incidents" ADD "FlowLastSeenAfterContainAt" timestamp with time zone;
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260805123625_AddContainmentVerification') THEN
-    ALTER TABLE "Incidents" ADD COLUMN IF NOT EXISTS "VerificationStatus" text;
+    ALTER TABLE "Incidents" ADD "LastVerifiedAt" timestamp with time zone;
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260805123625_AddContainmentVerification') THEN
-    ALTER TABLE "Incidents" ADD COLUMN IF NOT EXISTS "VerifiedAt" timestamp with time zone;
+    ALTER TABLE "Incidents" ADD "VerificationStatus" text;
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260805123625_AddContainmentVerification') THEN
-    ALTER TABLE "AnalyticsSettings" ADD COLUMN IF NOT EXISTS "ContainmentAutoReopenOnResume" boolean NOT NULL DEFAULT TRUE;
+    ALTER TABLE "Incidents" ADD "VerifiedAt" timestamp with time zone;
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260805123625_AddContainmentVerification') THEN
-    ALTER TABLE "AnalyticsSettings" ADD COLUMN IF NOT EXISTS "ContainmentVerifyGraceMinutes" integer NOT NULL DEFAULT 15;
+    ALTER TABLE "AnalyticsSettings" ADD "ContainmentAutoReopenOnResume" boolean NOT NULL DEFAULT TRUE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260805123625_AddContainmentVerification') THEN
+    ALTER TABLE "AnalyticsSettings" ADD "ContainmentVerifyGraceMinutes" integer NOT NULL DEFAULT 15;
     END IF;
 END $EF$;
 
@@ -3244,15 +3905,41 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260805123625_AddContainmentVerification') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260805123625_AddContainmentVerification', '10.0.7');
+    VALUES ('20260805123625_AddContainmentVerification', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260807135208_AddCloudMetadataAbuseSetting') THEN
+    ALTER TABLE "ThreatIntelSettings" ADD COLUMN IF NOT EXISTS "CloudMetadataAbuseEnabled" boolean NOT NULL DEFAULT true;
     END IF;
 END $EF$;
 
--- 20260807142835_AddIncidentReplicaFusion (synced)
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260807135208_AddCloudMetadataAbuseSetting') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260807135208_AddCloudMetadataAbuseSetting', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260807142835_AddIncidentReplicaFusion') THEN
     ALTER TABLE "Incidents" ADD COLUMN IF NOT EXISTS "ReplicaCount" integer NOT NULL DEFAULT 1;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260807142835_AddIncidentReplicaFusion') THEN
     ALTER TABLE "Incidents" ADD COLUMN IF NOT EXISTS "ReplicaKeys" text;
     END IF;
 END $EF$;
@@ -3261,15 +3948,23 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260807142835_AddIncidentReplicaFusion') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260807142835_AddIncidentReplicaFusion', '10.0.7');
+    VALUES ('20260807142835_AddIncidentReplicaFusion', '10.0.12');
     END IF;
 END $EF$;
+COMMIT;
 
--- 20260807143956_AddTlsFingerprintSecretReadSettings (synced)
+START TRANSACTION;
+
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260807143956_AddTlsFingerprintSecretReadSettings') THEN
     ALTER TABLE "ThreatIntelSettings" ADD COLUMN IF NOT EXISTS "TlsFingerprintEnabled" boolean NOT NULL DEFAULT true;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260807143956_AddTlsFingerprintSecretReadSettings') THEN
     ALTER TABLE "ThreatIntelSettings" ADD COLUMN IF NOT EXISTS "SecretReadEnabled" boolean NOT NULL DEFAULT true;
     END IF;
 END $EF$;
@@ -3278,11 +3973,13 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260807143956_AddTlsFingerprintSecretReadSettings') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260807143956_AddTlsFingerprintSecretReadSettings', '10.0.7');
+    VALUES ('20260807143956_AddTlsFingerprintSecretReadSettings', '10.0.12');
     END IF;
 END $EF$;
+COMMIT;
 
--- 20260807145318_AddKubeAuditSetting (synced)
+START TRANSACTION;
+
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260807145318_AddKubeAuditSetting') THEN
@@ -3294,34 +3991,41 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260807145318_AddKubeAuditSetting') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260807145318_AddKubeAuditSetting', '10.0.7');
+    VALUES ('20260807145318_AddKubeAuditSetting', '10.0.12');
     END IF;
 END $EF$;
+COMMIT;
 
--- 20260807145834_AddWorkloadImagePosture (synced)
+START TRANSACTION;
+
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260807145834_AddWorkloadImagePosture') THEN
-    CREATE TABLE IF NOT EXISTS "WorkloadImagePostures" (
+    CREATE TABLE "WorkloadImagePostures" (
         "Id" uuid NOT NULL,
         "ClusterName" character varying(256) NOT NULL,
         "Namespace" character varying(256) NOT NULL,
         "Workload" character varying(256) NOT NULL,
         "Image" character varying(1024) NOT NULL,
-        "ImageDigest" character varying(256) NULL,
-        "CriticalCves" integer NOT NULL DEFAULT 0,
-        "HighCves" integer NOT NULL DEFAULT 0,
-        "MediumCves" integer NOT NULL DEFAULT 0,
-        "LowCves" integer NOT NULL DEFAULT 0,
-        "FixableCves" integer NOT NULL DEFAULT 0,
-        "TopCveIds" character varying(2048) NULL,
-        "Scanner" character varying(64) NULL,
+        "ImageDigest" character varying(256),
+        "CriticalCves" integer NOT NULL,
+        "HighCves" integer NOT NULL,
+        "MediumCves" integer NOT NULL,
+        "LowCves" integer NOT NULL,
+        "FixableCves" integer NOT NULL,
+        "TopCveIds" character varying(2048),
+        "Scanner" character varying(64),
         "ScannedAt" timestamp with time zone NOT NULL,
         "UpdatedAt" timestamp with time zone NOT NULL,
         CONSTRAINT "PK_WorkloadImagePostures" PRIMARY KEY ("Id")
     );
-    CREATE UNIQUE INDEX IF NOT EXISTS "IX_WorkloadImagePostures_Identity"
-        ON "WorkloadImagePostures" ("ClusterName", "Namespace", "Workload", "Image");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260807145834_AddWorkloadImagePosture') THEN
+    CREATE UNIQUE INDEX "IX_WorkloadImagePostures_Identity" ON "WorkloadImagePostures" ("ClusterName", "Namespace", "Workload", "Image");
     END IF;
 END $EF$;
 
@@ -3329,10 +4033,9 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260807145834_AddWorkloadImagePosture') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260807145834_AddWorkloadImagePosture', '10.0.7');
+    VALUES ('20260807145834_AddWorkloadImagePosture', '10.0.12');
     END IF;
 END $EF$;
-
 COMMIT;
 
 START TRANSACTION;
@@ -3425,7 +4128,7 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260813093542_AddCaptureSessions') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260813093542_AddCaptureSessions', '10.0.7');
+    VALUES ('20260813093542_AddCaptureSessions', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
@@ -3450,10 +4153,11 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260813100436_AddCaptureLabelSelectors') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260813100436_AddCaptureLabelSelectors', '10.0.7');
+    VALUES ('20260813100436_AddCaptureLabelSelectors', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
+
 START TRANSACTION;
 
 DO $EF$
@@ -3467,10 +4171,11 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260813110209_AddCaptureActivePerClusterUniqueIndex') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260813110209_AddCaptureActivePerClusterUniqueIndex', '10.0.7');
+    VALUES ('20260813110209_AddCaptureActivePerClusterUniqueIndex', '10.0.12');
     END IF;
 END $EF$;
 COMMIT;
+
 START TRANSACTION;
 
 DO $EF$
@@ -3491,9 +4196,13 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260813111830_AddCaptureIncidentLink') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260813111830_AddCaptureIncidentLink', '10.0.7');
+    VALUES ('20260813111830_AddCaptureIncidentLink', '10.0.12');
     END IF;
 END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260817074250_AddKubernetesIamGovernance') THEN
@@ -4024,48 +4733,5542 @@ DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260817074250_AddKubernetesIamGovernance') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260817074250_AddKubernetesIamGovernance', '10.0.7');
+    VALUES ('20260817074250_AddKubernetesIamGovernance', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819063313_AddIamEffectivePermissionRoleIndex') THEN
+    CREATE INDEX "IX_EffectivePermissions_Cluster_SourceRole" ON "EffectivePermissions" ("ClusterName", "SourceRoleKey");
     END IF;
 END $EF$;
 
--- 20260902090000_AddIamReportSchedules: scheduled governance report mails.
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819063313_AddIamEffectivePermissionRoleIndex') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260819063313_AddIamEffectivePermissionRoleIndex', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819094648_AddNetworkPolicyModifiedBy') THEN
+    ALTER TABLE "NetworkPolicyRecords" ADD "LastModifiedBy" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819094648_AddNetworkPolicyModifiedBy') THEN
+    ALTER TABLE "NetworkPolicyRecords" ADD "LastModifiedByGroups" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819094648_AddNetworkPolicyModifiedBy') THEN
+    ALTER TABLE "NetworkPolicyRecords" ADD "LastModifiedVia" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819094648_AddNetworkPolicyModifiedBy') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260819094648_AddNetworkPolicyModifiedBy', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819121603_AddNetworkPolicyModifiedAudit') THEN
+    ALTER TABLE "NetworkPolicyRecords" ADD "LastModifiedAudit" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819121603_AddNetworkPolicyModifiedAudit') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260819121603_AddNetworkPolicyModifiedAudit', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819124356_AddNetworkPolicyLastAttributedAt') THEN
+    ALTER TABLE "NetworkPolicyRecords" ADD "LastAttributedAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819124356_AddNetworkPolicyLastAttributedAt') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260819124356_AddNetworkPolicyLastAttributedAt', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819170640_AddIamOwnershipRolesAndDirectoryGroups') THEN
+    ALTER TABLE "UserSettings" ADD "IamAccessFlowConfig" jsonb;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819170640_AddIamOwnershipRolesAndDirectoryGroups') THEN
+    CREATE TABLE "DirectoryGroupMemberships" (
+        "Id" uuid NOT NULL,
+        "UserName" character varying(256) NOT NULL,
+        "GroupCn" character varying(256) NOT NULL,
+        "GroupDn" character varying(1024) NOT NULL,
+        "SyncedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_DirectoryGroupMemberships" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819170640_AddIamOwnershipRolesAndDirectoryGroups') THEN
+    CREATE INDEX "IX_DirectoryGroupMemberships_Group" ON "DirectoryGroupMemberships" ("GroupCn");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819170640_AddIamOwnershipRolesAndDirectoryGroups') THEN
+    CREATE UNIQUE INDEX "IX_DirectoryGroupMemberships_User_Group" ON "DirectoryGroupMemberships" ("UserName", "GroupCn");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819170640_AddIamOwnershipRolesAndDirectoryGroups') THEN
+    INSERT INTO "CustomRoles" ("Id", "Name", "Description", "IsBuiltIn", "CreatedAt", "UpdatedAt")
+    VALUES ('00000005-0000-0000-0000-000000000005', 'IamGeneralApprover', 'Approves Identity access requests that no owner has been assigned for. Can read the inventory and governance reports, but cannot reassign ownership.', TRUE, TIMESTAMPTZ '2026-08-19T00:00:00Z', TIMESTAMPTZ '2026-08-19T00:00:00Z');
+    INSERT INTO "CustomRoles" ("Id", "Name", "Description", "IsBuiltIn", "CreatedAt", "UpdatedAt")
+    VALUES ('00000006-0000-0000-0000-000000000006', 'IamAdmin', 'Full control of the Identity module: inventory, requests, approvals and governance. Can decide any request as an override, but never their own.', TRUE, TIMESTAMPTZ '2026-08-19T00:00:00Z', TIMESTAMPTZ '2026-08-19T00:00:00Z');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819170640_AddIamOwnershipRolesAndDirectoryGroups') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('981af793-a5be-44b1-bef6-085f5df01258', '00000005-0000-0000-0000-000000000005', 'IamApprovals', 'Write');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819170640_AddIamOwnershipRolesAndDirectoryGroups') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('dc27bd7f-5f77-4dcb-85f5-d07e6afcd5a5', '00000005-0000-0000-0000-000000000005', 'IamRequests', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819170640_AddIamOwnershipRolesAndDirectoryGroups') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('ecabc442-12a3-4bf9-b640-cd41dc14faed', '00000005-0000-0000-0000-000000000005', 'IamInventory', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819170640_AddIamOwnershipRolesAndDirectoryGroups') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('4fc39eb1-8a71-4e3a-ade9-db50bf9493fe', '00000005-0000-0000-0000-000000000005', 'IamGovernance', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819170640_AddIamOwnershipRolesAndDirectoryGroups') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('69f75739-2eec-4464-b6c6-348600e30d4b', '00000005-0000-0000-0000-000000000005', 'SetupThirdParty', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819170640_AddIamOwnershipRolesAndDirectoryGroups') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('c896d1dc-93d1-4746-a7a6-fe9158f2a78b', '00000005-0000-0000-0000-000000000005', 'UserSettings', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819170640_AddIamOwnershipRolesAndDirectoryGroups') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('2349fe38-04b5-49c8-a8bc-250245fccf26', '00000005-0000-0000-0000-000000000005', 'UserSettings', 'Write');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819170640_AddIamOwnershipRolesAndDirectoryGroups') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('969b776c-3138-4f4c-ac82-ffc822b654c7', '00000006-0000-0000-0000-000000000006', 'IamInventory', 'Manage');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819170640_AddIamOwnershipRolesAndDirectoryGroups') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('f9808151-9e66-4ebe-9ac2-6d028a52f4d3', '00000006-0000-0000-0000-000000000006', 'IamRequests', 'Manage');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819170640_AddIamOwnershipRolesAndDirectoryGroups') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('3af63003-0b1d-449e-a3be-c076317e6626', '00000006-0000-0000-0000-000000000006', 'IamApprovals', 'Manage');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819170640_AddIamOwnershipRolesAndDirectoryGroups') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('56a2500a-65b1-4d85-8a23-7c86e1531c67', '00000006-0000-0000-0000-000000000006', 'IamGovernance', 'Manage');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819170640_AddIamOwnershipRolesAndDirectoryGroups') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('b3b47158-dbd6-4655-824e-f11407fbd8ff', '00000006-0000-0000-0000-000000000006', 'SetupThirdParty', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819170640_AddIamOwnershipRolesAndDirectoryGroups') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('da0f8984-8ef2-44a7-8a56-ec59aee57642', '00000006-0000-0000-0000-000000000006', 'UserSettings', 'Read');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819170640_AddIamOwnershipRolesAndDirectoryGroups') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    VALUES ('1267ada0-67c7-45ef-b273-4f066a562573', '00000006-0000-0000-0000-000000000006', 'UserSettings', 'Write');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260819170640_AddIamOwnershipRolesAndDirectoryGroups') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260819170640_AddIamOwnershipRolesAndDirectoryGroups', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260821224652_AddIamScopeOwners') THEN
+    CREATE TABLE "ScopeOwners" (
+        "Id" uuid NOT NULL,
+        "Scope" character varying(16) NOT NULL,
+        "ClusterName" character varying(256) NOT NULL,
+        "Namespace" character varying(256),
+        "OwnerType" character varying(32) NOT NULL,
+        "OwnerRef" character varying(512) NOT NULL,
+        "OwnerDisplayName" character varying(512),
+        "BackupOwnerType" character varying(32),
+        "BackupOwnerRef" character varying(512),
+        "Source" character varying(16) NOT NULL,
+        "AssignedBy" character varying(256) NOT NULL,
+        "AssignedAt" timestamp with time zone NOT NULL,
+        "IsStale" boolean NOT NULL,
+        CONSTRAINT "PK_ScopeOwners" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260821224652_AddIamScopeOwners') THEN
+    CREATE UNIQUE INDEX "IX_ScopeOwners_Cluster" ON "ScopeOwners" ("ClusterName") WHERE "Namespace" IS NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260821224652_AddIamScopeOwners') THEN
+    CREATE UNIQUE INDEX "IX_ScopeOwners_Namespace" ON "ScopeOwners" ("ClusterName", "Namespace") WHERE "Namespace" IS NOT NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260821224652_AddIamScopeOwners') THEN
+    CREATE INDEX "IX_ScopeOwners_OwnerRef" ON "ScopeOwners" ("OwnerRef");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260821224652_AddIamScopeOwners') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260821224652_AddIamScopeOwners', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822064013_AddIamRequestDeliveryOptions') THEN
+    ALTER TABLE "AccessRequests" ADD "ClusterAppliedAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822064013_AddIamRequestDeliveryOptions') THEN
+    ALTER TABLE "AccessRequests" ADD "CreateTicket" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822064013_AddIamRequestDeliveryOptions') THEN
+    ALTER TABLE "AccessRequests" ADD "DeliverToCluster" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822064013_AddIamRequestDeliveryOptions') THEN
+    ALTER TABLE "AccessRequests" ADD "DeliverToGit" boolean NOT NULL DEFAULT TRUE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822064013_AddIamRequestDeliveryOptions') THEN
+    ALTER TABLE "AccessRequests" ADD "TicketKey" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822064013_AddIamRequestDeliveryOptions') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260822064013_AddIamRequestDeliveryOptions', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822080300_AddEntitlementOwnershipAndAttestationV2') THEN
+    DROP INDEX "IX_IdentityOwners_Identity";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822080300_AddEntitlementOwnershipAndAttestationV2') THEN
+    ALTER TABLE "IdentityOwners" ALTER COLUMN "IdentityId" DROP NOT NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822080300_AddEntitlementOwnershipAndAttestationV2') THEN
+    ALTER TABLE "IdentityOwners" ADD "EntitlementType" character varying(16) NOT NULL DEFAULT 'Identity';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822080300_AddEntitlementOwnershipAndAttestationV2') THEN
+    ALTER TABLE "IdentityOwners" ADD "RoleId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822080300_AddEntitlementOwnershipAndAttestationV2') THEN
+    ALTER TABLE "AttestationCampaigns" ADD "EntitlementPattern" character varying(512);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822080300_AddEntitlementOwnershipAndAttestationV2') THEN
+    ALTER TABLE "AttestationCampaigns" ADD "EntitlementType" character varying(16) NOT NULL DEFAULT 'Identity';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822080300_AddEntitlementOwnershipAndAttestationV2') THEN
+    ALTER TABLE "AttestationCampaigns" ADD "NamespacePattern" character varying(512);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822080300_AddEntitlementOwnershipAndAttestationV2') THEN
+    ALTER TABLE "AttestationCampaigns" ADD "SecondReviewer" character varying(32) NOT NULL DEFAULT 'None';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822080300_AddEntitlementOwnershipAndAttestationV2') THEN
+    ALTER TABLE "AttestationCampaignItems" ALTER COLUMN "IdentityId" DROP NOT NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822080300_AddEntitlementOwnershipAndAttestationV2') THEN
+    ALTER TABLE "AttestationCampaignItems" ADD "EntitlementType" character varying(16) NOT NULL DEFAULT 'Identity';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822080300_AddEntitlementOwnershipAndAttestationV2') THEN
+    ALTER TABLE "AttestationCampaignItems" ADD "IsResolved" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822080300_AddEntitlementOwnershipAndAttestationV2') THEN
+    ALTER TABLE "AttestationCampaignItems" ADD "Namespace" character varying(256);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822080300_AddEntitlementOwnershipAndAttestationV2') THEN
+    ALTER TABLE "AttestationCampaignItems" ADD "RoleId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822080300_AddEntitlementOwnershipAndAttestationV2') THEN
+    ALTER TABLE "AttestationCampaignItems" ADD "SecondDecidedAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822080300_AddEntitlementOwnershipAndAttestationV2') THEN
+    ALTER TABLE "AttestationCampaignItems" ADD "SecondDecidedBy" character varying(256);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822080300_AddEntitlementOwnershipAndAttestationV2') THEN
+    ALTER TABLE "AttestationCampaignItems" ADD "SecondDecision" character varying(16) NOT NULL DEFAULT 'Pending';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822080300_AddEntitlementOwnershipAndAttestationV2') THEN
+    ALTER TABLE "AttestationCampaignItems" ADD "SecondReviewerRef" character varying(512);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822080300_AddEntitlementOwnershipAndAttestationV2') THEN
+    CREATE UNIQUE INDEX "IX_IdentityOwners_Identity" ON "IdentityOwners" ("IdentityId") WHERE "IdentityId" IS NOT NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822080300_AddEntitlementOwnershipAndAttestationV2') THEN
+    CREATE UNIQUE INDEX "IX_IdentityOwners_Role" ON "IdentityOwners" ("RoleId") WHERE "RoleId" IS NOT NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822080300_AddEntitlementOwnershipAndAttestationV2') THEN
+    CREATE INDEX "IX_AttestationCampaignItems_Reviewer_Open" ON "AttestationCampaignItems" ("ReviewerRef", "IsResolved");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822080300_AddEntitlementOwnershipAndAttestationV2') THEN
+    CREATE INDEX "IX_AttestationCampaignItems_SecondReviewer_Open" ON "AttestationCampaignItems" ("SecondReviewerRef", "IsResolved");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822080300_AddEntitlementOwnershipAndAttestationV2') THEN
+    ALTER TABLE "IdentityOwners" ADD CONSTRAINT "FK_IdentityOwners_RbacRoles_RoleId" FOREIGN KEY ("RoleId") REFERENCES "RbacRoles" ("Id") ON DELETE CASCADE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822080300_AddEntitlementOwnershipAndAttestationV2') THEN
+    UPDATE "AttestationCampaignItems"
+    SET "IsResolved" = true
+    WHERE "Decision" <> 'Pending';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822080300_AddEntitlementOwnershipAndAttestationV2') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260822080300_AddEntitlementOwnershipAndAttestationV2', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822090000_RenameIamRolesAndAddIamUser') THEN
+    UPDATE "CustomRoles" SET "Name" = 'IAM Admin' WHERE "Name" = 'IamAdmin';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822090000_RenameIamRolesAndAddIamUser') THEN
+    UPDATE "AspNetRoles" SET "Name" = 'IAM Admin', "NormalizedName" = 'IAM ADMIN' WHERE "Name" = 'IamAdmin';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822090000_RenameIamRolesAndAddIamUser') THEN
+    UPDATE "AspNetUsers" SET "Role" = 'IAM Admin' WHERE "Role" = 'IamAdmin';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822090000_RenameIamRolesAndAddIamUser') THEN
+    UPDATE "ADRoleMappings" SET "ApplicationRole" = 'IAM Admin' WHERE "ApplicationRole" = 'IamAdmin';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822090000_RenameIamRolesAndAddIamUser') THEN
+    UPDATE "ApprovalSteps" SET "ApproverRef" = 'Role:IAM Admin' WHERE "ApproverRef" = 'Role:IamAdmin';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822090000_RenameIamRolesAndAddIamUser') THEN
+    UPDATE "CustomRoles" SET "Name" = 'IAM Approver' WHERE "Name" = 'IamGeneralApprover';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822090000_RenameIamRolesAndAddIamUser') THEN
+    UPDATE "AspNetRoles" SET "Name" = 'IAM Approver', "NormalizedName" = 'IAM APPROVER' WHERE "Name" = 'IamGeneralApprover';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822090000_RenameIamRolesAndAddIamUser') THEN
+    UPDATE "AspNetUsers" SET "Role" = 'IAM Approver' WHERE "Role" = 'IamGeneralApprover';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822090000_RenameIamRolesAndAddIamUser') THEN
+    UPDATE "ADRoleMappings" SET "ApplicationRole" = 'IAM Approver' WHERE "ApplicationRole" = 'IamGeneralApprover';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822090000_RenameIamRolesAndAddIamUser') THEN
+    UPDATE "ApprovalSteps" SET "ApproverRef" = 'Role:IAM Approver' WHERE "ApproverRef" = 'Role:IamGeneralApprover';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822090000_RenameIamRolesAndAddIamUser') THEN
+    INSERT INTO "CustomRoles" ("Id", "Name", "Description", "IsBuiltIn", "CreatedAt", "UpdatedAt")
+    SELECT '00000007-0000-0000-0000-000000000007', 'IAM User',
+           'Everyday use of the Identity module: browse the inventory and raise access requests. Approves nothing and owns nothing.',
+           true, TIMESTAMPTZ '2026-08-22 00:00:00+00', TIMESTAMPTZ '2026-08-22 00:00:00+00'
+    WHERE NOT EXISTS (SELECT 1 FROM "CustomRoles" WHERE "Id" = '00000007-0000-0000-0000-000000000007');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822090000_RenameIamRolesAndAddIamUser') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    SELECT gen_random_uuid(), '00000007-0000-0000-0000-000000000007', 'IamInventory', 'Read'
+    WHERE NOT EXISTS (
+        SELECT 1 FROM "CustomRolePermissions"
+        WHERE "CustomRoleId" = '00000007-0000-0000-0000-000000000007' AND "Resource" = 'IamInventory' AND "Scope" = 'Read'
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822090000_RenameIamRolesAndAddIamUser') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    SELECT gen_random_uuid(), '00000007-0000-0000-0000-000000000007', 'IamRequests', 'Read'
+    WHERE NOT EXISTS (
+        SELECT 1 FROM "CustomRolePermissions"
+        WHERE "CustomRoleId" = '00000007-0000-0000-0000-000000000007' AND "Resource" = 'IamRequests' AND "Scope" = 'Read'
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822090000_RenameIamRolesAndAddIamUser') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    SELECT gen_random_uuid(), '00000007-0000-0000-0000-000000000007', 'IamRequests', 'Write'
+    WHERE NOT EXISTS (
+        SELECT 1 FROM "CustomRolePermissions"
+        WHERE "CustomRoleId" = '00000007-0000-0000-0000-000000000007' AND "Resource" = 'IamRequests' AND "Scope" = 'Write'
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822090000_RenameIamRolesAndAddIamUser') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    SELECT gen_random_uuid(), '00000007-0000-0000-0000-000000000007', 'SetupThirdParty', 'Read'
+    WHERE NOT EXISTS (
+        SELECT 1 FROM "CustomRolePermissions"
+        WHERE "CustomRoleId" = '00000007-0000-0000-0000-000000000007' AND "Resource" = 'SetupThirdParty' AND "Scope" = 'Read'
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822090000_RenameIamRolesAndAddIamUser') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    SELECT gen_random_uuid(), '00000007-0000-0000-0000-000000000007', 'UserSettings', 'Read'
+    WHERE NOT EXISTS (
+        SELECT 1 FROM "CustomRolePermissions"
+        WHERE "CustomRoleId" = '00000007-0000-0000-0000-000000000007' AND "Resource" = 'UserSettings' AND "Scope" = 'Read'
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822090000_RenameIamRolesAndAddIamUser') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    SELECT gen_random_uuid(), '00000007-0000-0000-0000-000000000007', 'UserSettings', 'Write'
+    WHERE NOT EXISTS (
+        SELECT 1 FROM "CustomRolePermissions"
+        WHERE "CustomRoleId" = '00000007-0000-0000-0000-000000000007' AND "Resource" = 'UserSettings' AND "Scope" = 'Write'
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260822090000_RenameIamRolesAndAddIamUser') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260822090000_RenameIamRolesAndAddIamUser', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260825090000_GrantIamUserApprovalScopes') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    SELECT gen_random_uuid(), '00000007-0000-0000-0000-000000000007', 'IamApprovals', 'Read'
+    WHERE EXISTS (SELECT 1 FROM "CustomRoles" WHERE "Id" = '00000007-0000-0000-0000-000000000007')
+      AND NOT EXISTS (
+        SELECT 1 FROM "CustomRolePermissions"
+        WHERE "CustomRoleId" = '00000007-0000-0000-0000-000000000007' AND "Resource" = 'IamApprovals' AND "Scope" = 'Read'
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260825090000_GrantIamUserApprovalScopes') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    SELECT gen_random_uuid(), '00000007-0000-0000-0000-000000000007', 'IamApprovals', 'Write'
+    WHERE EXISTS (SELECT 1 FROM "CustomRoles" WHERE "Id" = '00000007-0000-0000-0000-000000000007')
+      AND NOT EXISTS (
+        SELECT 1 FROM "CustomRolePermissions"
+        WHERE "CustomRoleId" = '00000007-0000-0000-0000-000000000007' AND "Resource" = 'IamApprovals' AND "Scope" = 'Write'
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260825090000_GrantIamUserApprovalScopes') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260825090000_GrantIamUserApprovalScopes', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260825100246_EgressRuleIntentsAdded') THEN
+    CREATE TABLE "EgressRuleIntents" (
+        "Id" uuid NOT NULL,
+        "Name" text NOT NULL,
+        "ClusterName" text NOT NULL,
+        "Namespace" text NOT NULL,
+        "Workload" text NOT NULL,
+        "AllowedDomains" text NOT NULL,
+        "AllowedCidrs" text NOT NULL,
+        "AllowedPorts" text NOT NULL,
+        "Description" text NOT NULL,
+        "Status" text NOT NULL,
+        "RenderedFor" text NOT NULL,
+        "CreatedBy" text NOT NULL,
+        "CreatedAt" timestamp with time zone NOT NULL,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_EgressRuleIntents" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260825100246_EgressRuleIntentsAdded') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260825100246_EgressRuleIntentsAdded', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260827090000_AddCampaignOwnedOnly') THEN
+    ALTER TABLE "AttestationCampaigns"
+    ADD COLUMN IF NOT EXISTS "OwnedOnly" boolean NOT NULL DEFAULT false;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260827090000_AddCampaignOwnedOnly') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260827090000_AddCampaignOwnedOnly', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260827120221_AiRunLedgerAdded') THEN
+    CREATE TABLE "AiRuns" (
+        "Id" uuid NOT NULL,
+        "Feature" character varying(64) NOT NULL,
+        "TargetKind" character varying(32),
+        "TargetId" character varying(256),
+        "ConfigId" uuid,
+        "ConfigName" character varying(128),
+        "Provider" character varying(64),
+        "Model" character varying(256),
+        "Status" character varying(32) NOT NULL,
+        "Error" character varying(2048),
+        "ResponseRaw" text,
+        "PromptChars" integer NOT NULL,
+        "PromptTokens" integer,
+        "CompletionTokens" integer,
+        "DurationMs" bigint,
+        "PromptTruncated" boolean NOT NULL,
+        "PromptHash" character varying(64),
+        "StartedAt" timestamp with time zone NOT NULL,
+        "FinishedAt" timestamp with time zone NOT NULL,
+        "TriggeredBy" character varying(256),
+        CONSTRAINT "PK_AiRuns" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260827120221_AiRunLedgerAdded') THEN
+    CREATE INDEX "IX_AiRuns_Feature_StartedAt" ON "AiRuns" ("Feature", "StartedAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260827120221_AiRunLedgerAdded') THEN
+    CREATE INDEX "IX_AiRuns_StartedAt" ON "AiRuns" ("StartedAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260827120221_AiRunLedgerAdded') THEN
+    CREATE INDEX "IX_AiRuns_TargetKind_TargetId_StartedAt" ON "AiRuns" ("TargetKind", "TargetId", "StartedAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260827120221_AiRunLedgerAdded') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260827120221_AiRunLedgerAdded', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260827193501_AiRunUsabilityAdded') THEN
+    ALTER TABLE "AiRuns" ADD "Usable" boolean;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260827193501_AiRunUsabilityAdded') THEN
+    ALTER TABLE "AiRuns" ADD "UsableNote" character varying(512);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260827193501_AiRunUsabilityAdded') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260827193501_AiRunUsabilityAdded', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260827202540_IncidentCorrelationHistoryIndexAdded') THEN
+    CREATE INDEX "IX_Incidents_CorrelationKey_History" ON "Incidents" ("CorrelationKey", "LastSeenAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260827202540_IncidentCorrelationHistoryIndexAdded') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260827202540_IncidentCorrelationHistoryIndexAdded', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260902090000_AddIamReportSchedules') THEN
-    ALTER TABLE "IamSettings" ADD COLUMN IF NOT EXISTS "ReportSchedulesJson" text NULL;
-    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260902090000_AddIamReportSchedules', '10.0.7');
+    ALTER TABLE "IamSettings"
+    ADD COLUMN IF NOT EXISTS "ReportSchedulesJson" text NULL;
     END IF;
 END $EF$;
 
--- 20260904090000_AddIamResyncMinutes: discovery cadence in minutes.
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260902090000_AddIamReportSchedules') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260902090000_AddIamReportSchedules', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260904090000_AddIamResyncMinutes') THEN
-    ALTER TABLE "IamSettings" ADD COLUMN IF NOT EXISTS "FullResyncIntervalMinutes" integer NULL;
-    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260904090000_AddIamResyncMinutes', '10.0.7');
+    ALTER TABLE "IamSettings"
+    ADD COLUMN IF NOT EXISTS "FullResyncIntervalMinutes" integer NULL;
     END IF;
 END $EF$;
 
--- 20260904120000_AddIamAllowSelfApproval: opt-in self-approval for scope owners.
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260904090000_AddIamResyncMinutes') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260904090000_AddIamResyncMinutes', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260904120000_AddIamAllowSelfApproval') THEN
-    ALTER TABLE "IamSettings" ADD COLUMN IF NOT EXISTS "AllowSelfApproval" boolean NOT NULL DEFAULT false;
-    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260904120000_AddIamAllowSelfApproval', '10.0.7');
+    ALTER TABLE "IamSettings"
+    ADD COLUMN IF NOT EXISTS "AllowSelfApproval" boolean NOT NULL DEFAULT false;
     END IF;
 END $EF$;
 
--- 20260905090000_AddIamPerClusterResync: per-cluster discovery cadence.
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260904120000_AddIamAllowSelfApproval') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260904120000_AddIamAllowSelfApproval', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260905065325_IncidentSeverityPinned') THEN
+    ALTER TABLE "Incidents" ADD "SeverityPinned" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260905065325_IncidentSeverityPinned') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260905065325_IncidentSeverityPinned', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260905072712_IncidentDismissedAt') THEN
+    ALTER TABLE "Incidents" ADD "DismissedAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260905072712_IncidentDismissedAt') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260905072712_IncidentDismissedAt', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260905090000_AddIamPerClusterResync') THEN
-    ALTER TABLE "IamClusterSyncStates" ADD COLUMN IF NOT EXISTS "ResyncIntervalMinutes" integer NULL;
-    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260905090000_AddIamPerClusterResync', '10.0.7');
+    ALTER TABLE "IamClusterSyncStates"
+    ADD COLUMN IF NOT EXISTS "ResyncIntervalMinutes" integer NULL;
     END IF;
 END $EF$;
 
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260905090000_AddIamPerClusterResync') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260905090000_AddIamPerClusterResync', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260911081954_MeshPolicyRbac') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    SELECT gen_random_uuid(), g.role_id, 'MeshPolicy', g.mesh_scope
+    FROM (
+        SELECT DISTINCT np."CustomRoleId" AS role_id, m.mesh_scope
+        FROM "CustomRolePermissions" np
+        JOIN (VALUES
+            ('Read', 'Read'),
+            ('Write', 'Write'),
+            ('Delete', 'Delete'),
+            ('Manage', 'Manage')
+        ) AS m(np_scope, mesh_scope) ON m.np_scope = np."Scope"
+        WHERE np."Resource" = 'NetworkPolicy'
+    ) AS g
+    WHERE NOT EXISTS (
+        SELECT 1 FROM "CustomRolePermissions" p
+        WHERE p."CustomRoleId" = g.role_id
+          AND p."Resource"     = 'MeshPolicy'
+          AND p."Scope"        = g.mesh_scope
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260911081954_MeshPolicyRbac') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260911081954_MeshPolicyRbac', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260911130524_AddMeshPolicyTamperDetector') THEN
+    ALTER TABLE "ThreatIntelSettings" ADD COLUMN IF NOT EXISTS "MeshPolicyTamperEnabled" boolean NOT NULL DEFAULT true;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260911130524_AddMeshPolicyTamperDetector') THEN
+    CREATE TABLE IF NOT EXISTS "MeshPolicyChanges" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" character varying(256) NOT NULL,
+        "Kind" character varying(64) NOT NULL,
+        "Namespace" character varying(256) NOT NULL,
+        "Name" character varying(256) NOT NULL,
+        "Verb" character varying(32) NOT NULL,
+        "Actor" character varying(512) NOT NULL,
+        "ActorGroups" text NULL,
+        "ImpersonatedUser" character varying(512) NULL,
+        "SourceIp" character varying(64) NULL,
+        "UserAgent" character varying(1024) NULL,
+        "AuditId" character varying(128) NULL,
+        "Reason" text NULL,
+        "RequestObject" jsonb NULL,
+        "ResponseObject" jsonb NULL,
+        "Action" character varying(32) NULL,
+        "MeshWide" boolean NOT NULL,
+        "Governed" boolean NOT NULL,
+        "GovernanceReason" character varying(512) NULL,
+        "Assessment" character varying(32) NOT NULL,
+        "AssessmentDetail" text NULL,
+        "Rule" character varying(64) NULL,
+        "IncidentRaised" boolean NOT NULL,
+        "At" timestamp with time zone NOT NULL,
+        "RecordedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_MeshPolicyChanges" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260911130524_AddMeshPolicyTamperDetector') THEN
+    CREATE INDEX IF NOT EXISTS "IX_MeshPolicyChanges_Cluster_At" ON "MeshPolicyChanges" ("ClusterName", "At");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260911130524_AddMeshPolicyTamperDetector') THEN
+    CREATE INDEX IF NOT EXISTS "IX_MeshPolicyChanges_Object_At" ON "MeshPolicyChanges" ("ClusterName", "Kind", "Namespace", "Name", "At");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260911130524_AddMeshPolicyTamperDetector') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260911130524_AddMeshPolicyTamperDetector', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260911211928_MeshEvidencePacksAdded') THEN
+    CREATE TABLE "MeshEvidencePacks" (
+        "Id" uuid NOT NULL,
+        "RequestedBy" character varying(512) NOT NULL,
+        "Origin" character varying(32) NOT NULL,
+        "ScopeClusters" text NOT NULL,
+        "ScopeNamespaces" text NOT NULL,
+        "CollectionId" uuid,
+        "CollectionName" character varying(512),
+        "WindowFromUtc" timestamp with time zone NOT NULL,
+        "WindowToUtc" timestamp with time zone NOT NULL,
+        "Sections" text NOT NULL,
+        "Sha256" character varying(64) NOT NULL,
+        "SizeBytes" bigint NOT NULL,
+        "Content" bytea NOT NULL,
+        "FileName" character varying(256) NOT NULL,
+        "AcknowledgedUnknowns" boolean NOT NULL,
+        "UnknownCount" integer NOT NULL,
+        "CreatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_MeshEvidencePacks" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260911211928_MeshEvidencePacksAdded') THEN
+    CREATE INDEX "IX_MeshEvidencePacks_Collection_CreatedAt" ON "MeshEvidencePacks" ("CollectionId", "CreatedAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260911211928_MeshEvidencePacksAdded') THEN
+    CREATE INDEX "IX_MeshEvidencePacks_CreatedAt" ON "MeshEvidencePacks" ("CreatedAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260911211928_MeshEvidencePacksAdded') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260911211928_MeshEvidencePacksAdded', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914121222_MeshPolicyWatchSource') THEN
+    ALTER TABLE "MeshPolicyChanges" ADD "ActorAttribution" character varying(512);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914121222_MeshPolicyWatchSource') THEN
+    ALTER TABLE "MeshPolicyChanges" ADD "Source" character varying(16) NOT NULL DEFAULT 'audit';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914121222_MeshPolicyWatchSource') THEN
+    ALTER TABLE "MeshPolicyChanges" ADD "TransitionObserved" boolean NOT NULL DEFAULT TRUE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914121222_MeshPolicyWatchSource') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260914121222_MeshPolicyWatchSource', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914125921_MeshPolicyChangeTwoLaneMerge') THEN
+    ALTER TABLE "MeshPolicyChanges" ADD "CorrelationNote" character varying(1024);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914125921_MeshPolicyChangeTwoLaneMerge') THEN
+    ALTER TABLE "MeshPolicyChanges" ADD "IncidentId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914125921_MeshPolicyChangeTwoLaneMerge') THEN
+    ALTER TABLE "MeshPolicyChanges" ADD "SecondaryAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914125921_MeshPolicyChangeTwoLaneMerge') THEN
+    ALTER TABLE "MeshPolicyChanges" ADD "SecondarySource" character varying(16);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914125921_MeshPolicyChangeTwoLaneMerge') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260914125921_MeshPolicyChangeTwoLaneMerge', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914133754_MeshPolicyChangeTime') THEN
+    ALTER TABLE "MeshPolicyChanges" ADD "ChangedAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914133754_MeshPolicyChangeTime') THEN
+    ALTER TABLE "MeshPolicyChanges" ADD "ChangedAtSource" character varying(32) NOT NULL DEFAULT 'unknown';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914133754_MeshPolicyChangeTime') THEN
+    ALTER TABLE "MeshPolicyChanges" ADD "ObservedAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914133754_MeshPolicyChangeTime') THEN
+    UPDATE "MeshPolicyChanges"
+                         SET "ChangedAt" = "At", "ChangedAtSource" = 'audit-request'
+                       WHERE "Source" = 'audit' AND "ChangedAt" IS NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914133754_MeshPolicyChangeTime') THEN
+    UPDATE "MeshPolicyChanges"
+                         SET "ObservedAt" = "At"
+                       WHERE "Source" = 'watch' AND "ObservedAt" IS NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914133754_MeshPolicyChangeTime') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260914133754_MeshPolicyChangeTime', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914141359_KubeAuditFeedWatermark') THEN
+    CREATE TABLE "KubeAuditFeedWatermarks" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" character varying(256) NOT NULL DEFAULT '',
+        "LastEventAt" timestamp with time zone NOT NULL,
+        "EventCount" bigint NOT NULL,
+        "LastAbuseShapeAt" timestamp with time zone,
+        "AbuseShapeCount" bigint NOT NULL,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_KubeAuditFeedWatermarks" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914141359_KubeAuditFeedWatermark') THEN
+    CREATE UNIQUE INDEX "IX_KubeAuditFeedWatermarks_Cluster" ON "KubeAuditFeedWatermarks" ("ClusterName");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914141359_KubeAuditFeedWatermark') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260914141359_KubeAuditFeedWatermark', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914143202_RbacBindingWatch') THEN
+    CREATE TABLE "RbacBindingChanges" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" character varying(256) NOT NULL,
+        "Kind" character varying(64) NOT NULL,
+        "Namespace" character varying(256) NOT NULL,
+        "Name" character varying(256) NOT NULL,
+        "Verb" character varying(32) NOT NULL,
+        "Source" character varying(16) NOT NULL DEFAULT 'watch',
+        "Actor" character varying(512) NOT NULL,
+        "ActorAttribution" character varying(1024),
+        "TransitionObserved" boolean NOT NULL DEFAULT TRUE,
+        "IsBaselineSnapshot" boolean NOT NULL DEFAULT FALSE,
+        "Evidence" character varying(32) NOT NULL,
+        "EvidenceDetail" text,
+        "SpecWriter" character varying(256),
+        "RequestObject" jsonb,
+        "ResponseObject" jsonb,
+        "PreviousObject" jsonb,
+        "RoleRef" character varying(512),
+        "RolePower" character varying(32),
+        "SubjectCount" integer,
+        "OpenSubjects" text,
+        "ClusterWide" boolean NOT NULL,
+        "Governed" boolean NOT NULL,
+        "GovernanceReason" character varying(512),
+        "Assessment" character varying(32) NOT NULL,
+        "AssessmentDetail" text,
+        "Rule" character varying(64),
+        "IncidentRaised" boolean NOT NULL,
+        "IncidentId" uuid,
+        "SecondarySource" character varying(16),
+        "SecondaryAt" timestamp with time zone,
+        "CorrelationNote" character varying(1024),
+        "At" timestamp with time zone NOT NULL,
+        "ChangedAt" timestamp with time zone,
+        "ChangedAtSource" character varying(32) NOT NULL DEFAULT 'unknown',
+        "ObservedAt" timestamp with time zone,
+        "RecordedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_RbacBindingChanges" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914143202_RbacBindingWatch') THEN
+    CREATE TABLE "RbacWatchLaneStates" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" character varying(256) NOT NULL,
+        "Kind" character varying(64) NOT NULL,
+        "State" character varying(32) NOT NULL,
+        "Reason" character varying(2048),
+        "At" timestamp with time zone NOT NULL,
+        "RecordedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_RbacWatchLaneStates" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914143202_RbacBindingWatch') THEN
+    CREATE INDEX "IX_RbacBindingChanges_Cluster_At" ON "RbacBindingChanges" ("ClusterName", "At");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914143202_RbacBindingWatch') THEN
+    CREATE INDEX "IX_RbacBindingChanges_Object_At" ON "RbacBindingChanges" ("ClusterName", "Kind", "Namespace", "Name", "At");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914143202_RbacBindingWatch') THEN
+    CREATE UNIQUE INDEX "UX_RbacWatchLaneStates_Cluster_Kind" ON "RbacWatchLaneStates" ("ClusterName", "Kind");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914143202_RbacBindingWatch') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260914143202_RbacBindingWatch', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914161341_ContainmentAttachmentWatch') THEN
+    ALTER TABLE "ContainmentActions" ADD "AttachmentActor" character varying(256);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914161341_ContainmentAttachmentWatch') THEN
+    ALTER TABLE "ContainmentActions" ADD "AttachmentCheckedAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914161341_ContainmentAttachmentWatch') THEN
+    ALTER TABLE "ContainmentActions" ADD "AttachmentDetail" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914161341_ContainmentAttachmentWatch') THEN
+    ALTER TABLE "ContainmentActions" ADD "AttachmentState" character varying(16);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914161341_ContainmentAttachmentWatch') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260914161341_ContainmentAttachmentWatch', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914165605_MeshPolicyChangeLaneIndex') THEN
+    CREATE INDEX "IX_MeshPolicyChanges_Cluster_Source_At" ON "MeshPolicyChanges" ("ClusterName", "Source", "At");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914165605_MeshPolicyChangeLaneIndex') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260914165605_MeshPolicyChangeLaneIndex', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914180210_MeshPolicyChangeArchive') THEN
+    CREATE TABLE "MeshPolicyChangeArchive" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "SourceId" bigint NOT NULL,
+        "ClusterName" character varying(256) NOT NULL,
+        "Kind" character varying(64) NOT NULL,
+        "Namespace" character varying(256) NOT NULL,
+        "Name" character varying(256) NOT NULL,
+        "Verb" character varying(32) NOT NULL,
+        "Source" character varying(16) NOT NULL DEFAULT 'audit',
+        "Actor" character varying(512) NOT NULL,
+        "ActorAttribution" character varying(512),
+        "ActorGroups" text,
+        "ImpersonatedUser" character varying(512),
+        "SourceIp" character varying(64),
+        "UserAgent" character varying(1024),
+        "AuditId" character varying(128),
+        "Reason" text,
+        "Action" character varying(32),
+        "MeshWide" boolean NOT NULL,
+        "Governed" boolean NOT NULL,
+        "GovernanceReason" character varying(512),
+        "Assessment" character varying(32) NOT NULL,
+        "AssessmentDetail" text,
+        "Rule" character varying(64),
+        "IncidentRaised" boolean NOT NULL,
+        "IncidentId" uuid,
+        "TransitionObserved" boolean NOT NULL DEFAULT TRUE,
+        "SecondarySource" character varying(16),
+        "SecondaryAt" timestamp with time zone,
+        "CorrelationNote" character varying(1024),
+        "At" timestamp with time zone NOT NULL,
+        "ChangedAt" timestamp with time zone,
+        "ChangedAtSource" character varying(32) NOT NULL DEFAULT 'unknown',
+        "ObservedAt" timestamp with time zone,
+        "RecordedAt" timestamp with time zone NOT NULL,
+        "RequestObject" jsonb,
+        "ResponseObject" jsonb,
+        "BodiesRetained" boolean NOT NULL DEFAULT FALSE,
+        "ArchivedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_MeshPolicyChangeArchive" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914180210_MeshPolicyChangeArchive') THEN
+    CREATE INDEX "IX_MeshPolicyChangeArchive_At" ON "MeshPolicyChangeArchive" ("At");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914180210_MeshPolicyChangeArchive') THEN
+    CREATE INDEX "IX_MeshPolicyChangeArchive_Object_At" ON "MeshPolicyChangeArchive" ("ClusterName", "Kind", "Namespace", "Name", "At");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914180210_MeshPolicyChangeArchive') THEN
+    CREATE UNIQUE INDEX "UX_MeshPolicyChangeArchive_SourceId" ON "MeshPolicyChangeArchive" ("SourceId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914180210_MeshPolicyChangeArchive') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260914180210_MeshPolicyChangeArchive', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914180457_DetectorLaneState') THEN
+    CREATE TABLE "DetectorLaneStates" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "Detector" character varying(64) NOT NULL,
+        "ClusterName" character varying(256) NOT NULL,
+        "Lane" character varying(64) NOT NULL,
+        "State" character varying(32) NOT NULL,
+        "Reason" character varying(2048),
+        "LastObservedAt" timestamp with time zone,
+        "At" timestamp with time zone NOT NULL,
+        "RecordedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_DetectorLaneStates" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914180457_DetectorLaneState') THEN
+    CREATE UNIQUE INDEX "UX_DetectorLaneStates_Detector_Cluster_Lane" ON "DetectorLaneStates" ("Detector", "ClusterName", "Lane");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914180457_DetectorLaneState') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260914180457_DetectorLaneState', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914182024_MeshEvidencePackRegimes') THEN
+    ALTER TABLE "MeshEvidencePacks" ADD "Regimes" text NOT NULL DEFAULT '';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914182024_MeshEvidencePackRegimes') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260914182024_MeshEvidencePackRegimes', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214307_MeshP2Register') THEN
+    ALTER TABLE "MeshEvidencePacks" ADD "ChainHash" character varying(64);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214307_MeshP2Register') THEN
+    ALTER TABLE "MeshEvidencePacks" ADD "PreviousChainHash" character varying(64);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214307_MeshP2Register') THEN
+    CREATE TABLE "MeshDenyStorms" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "ClusterName" character varying(256) NOT NULL,
+        "Namespace" character varying(256) NOT NULL,
+        "DistinctIdentities" integer NOT NULL,
+        "DistinctServices" integer NOT NULL,
+        "WindowStartUtc" timestamp with time zone NOT NULL,
+        "WindowEndUtc" timestamp with time zone NOT NULL,
+        "Arbitration" character varying(32) NOT NULL,
+        "Governed" boolean NOT NULL,
+        "GovernanceReason" character varying(2048) NOT NULL,
+        "ActorAttribution" character varying(1024),
+        "LaneEvidence" character varying(2048) NOT NULL,
+        "ExplainedByChangeId" bigint,
+        "IncidentId" uuid,
+        "RecordedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_MeshDenyStorms" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214307_MeshP2Register') THEN
+    CREATE TABLE "MeshExpectationFindings" (
+        "Id" uuid NOT NULL,
+        "ExpectationId" uuid NOT NULL,
+        "Cluster" character varying(256) NOT NULL,
+        "AssertionText" text NOT NULL,
+        "PreviousAnswer" character varying(16) NOT NULL,
+        "NewAnswer" character varying(16) NOT NULL,
+        "PreviousReason" text,
+        "NewReason" text NOT NULL,
+        "ObservedAtUtc" timestamp with time zone NOT NULL,
+        "PreviousAnsweredAtUtc" timestamp with time zone,
+        "ObservedBy" character varying(512) NOT NULL,
+        "CreatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_MeshExpectationFindings" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214307_MeshP2Register') THEN
+    CREATE TABLE "MeshExpectations" (
+        "Id" uuid NOT NULL,
+        "Cluster" character varying(256) NOT NULL,
+        "SourcePrincipal" character varying(512),
+        "SourceNamespace" character varying(253),
+        "SourceWorkload" character varying(253),
+        "DestinationNamespace" character varying(253) NOT NULL,
+        "DestinationWorkload" character varying(253) NOT NULL,
+        "Port" integer NOT NULL,
+        "Expectation" character varying(16) NOT NULL,
+        "SourceText" text NOT NULL,
+        "Author" character varying(512) NOT NULL,
+        "CreatedAt" timestamp with time zone NOT NULL,
+        "LastAnswer" character varying(16),
+        "LastAnswerReason" text,
+        "LastAnsweredAtUtc" timestamp with time zone,
+        "LastAnswerChangedAtUtc" timestamp with time zone,
+        CONSTRAINT "PK_MeshExpectations" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214307_MeshP2Register') THEN
+    CREATE TABLE "MeshManifestFindings" (
+        "Id" uuid NOT NULL,
+        "RepositoryScanId" uuid NOT NULL,
+        "ScanRepositoryId" uuid NOT NULL,
+        "CheckId" character varying(64) NOT NULL,
+        "Outcome" character varying(16) NOT NULL,
+        "EnforcementPoint" character varying(16) NOT NULL,
+        "ResourceKind" character varying(64) NOT NULL,
+        "ResourceName" character varying(256) NOT NULL,
+        "ResourceNamespace" character varying(256) NOT NULL,
+        "Title" character varying(256) NOT NULL,
+        "Detail" text NOT NULL,
+        "EvidenceFile" character varying(1024),
+        "EvidenceCommit" character varying(64),
+        "CreatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_MeshManifestFindings" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_MeshManifestFindings_RepositoryScans_RepositoryScanId" FOREIGN KEY ("RepositoryScanId") REFERENCES "RepositoryScans" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214307_MeshP2Register') THEN
+    CREATE TABLE "MeshOpenUnknowns" (
+        "Id" uuid NOT NULL,
+        "Cluster" character varying(256) NOT NULL,
+        "Section" character varying(64) NOT NULL,
+        "Input" character varying(512) NOT NULL,
+        "LastReason" text NOT NULL,
+        "Blocking" boolean NOT NULL,
+        "FirstSeenUtc" timestamp with time zone NOT NULL,
+        "LastSeenUtc" timestamp with time zone NOT NULL,
+        "LastSeenBy" character varying(512) NOT NULL,
+        "ClosedAtUtc" timestamp with time zone,
+        "ClosedBy" character varying(512),
+        "Owner" character varying(512),
+        "Justification" text,
+        "ReviewByUtc" timestamp with time zone,
+        "AcceptedAtUtc" timestamp with time zone,
+        "AcceptedBy" character varying(512),
+        "CreatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_MeshOpenUnknowns" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214307_MeshP2Register') THEN
+    CREATE TABLE "MeshPolicyAccessRequests" (
+        "Id" uuid NOT NULL,
+        "Reference" character varying(64) NOT NULL,
+        "ClusterName" character varying(256) NOT NULL,
+        "Namespace" character varying(256) NOT NULL,
+        "Workload" character varying(256) NOT NULL,
+        "PolicyRecordId" uuid NOT NULL,
+        "PolicyName" character varying(256) NOT NULL,
+        "PolicyContentHash" character varying(128) NOT NULL,
+        "RequestedIdentityKind" character varying(32) NOT NULL,
+        "RequestedIdentity" character varying(512) NOT NULL,
+        "RequestedPorts" character varying(256) NOT NULL,
+        "BusinessReason" character varying(512) NOT NULL,
+        "ExpiresAtUtc" timestamp with time zone,
+        "TicketKey" character varying(256),
+        "GitRef" character varying(256),
+        "RequestedBy" character varying(512) NOT NULL,
+        "RequestedAtUtc" timestamp with time zone NOT NULL,
+        "RoutedOwner" character varying(512) NOT NULL,
+        "RoutedOwnerContact" character varying(512),
+        "RoutedOwnerSource" character varying(64) NOT NULL,
+        "RoutedOwnerDetail" text NOT NULL,
+        "RoutedOwnerIsBlanket" boolean NOT NULL,
+        "PreflightCandidateHash" character varying(128) NOT NULL,
+        "PreflightRanAtUtc" timestamp with time zone NOT NULL,
+        "PreflightOutcome" character varying(64) NOT NULL,
+        "PreflightFlips" integer NOT NULL,
+        "PreflightAllowToDeny" integer NOT NULL,
+        "PreflightDenyToAllow" integer NOT NULL,
+        "PreflightZeroFlipsConclusive" boolean NOT NULL,
+        "PreflightObservedHits" bigint NOT NULL,
+        "PreflightQualifications" text NOT NULL,
+        "Qualifications" text NOT NULL,
+        "Status" character varying(32) NOT NULL,
+        "DecidedBy" character varying(512),
+        "DecidedAtUtc" timestamp with time zone,
+        "DecisionNote" character varying(2048),
+        "StampedOnRecord" boolean NOT NULL,
+        "StampedAtUtc" timestamp with time zone,
+        "StampFailureReason" character varying(1024),
+        "CreatedAt" timestamp with time zone NOT NULL,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_MeshPolicyAccessRequests" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214307_MeshP2Register') THEN
+    CREATE TABLE "MeshRecertificationAttestations" (
+        "Id" uuid NOT NULL,
+        "ScopeKey" character varying(1024) NOT NULL,
+        "ClusterName" character varying(256) NOT NULL,
+        "Namespace" character varying(256) NOT NULL,
+        "PolicyName" character varying(256) NOT NULL,
+        "SourceField" character varying(32) NOT NULL,
+        "NamedValue" character varying(512) NOT NULL,
+        "RuleIndexes" character varying(256) NOT NULL,
+        "RoutedOwner" character varying(256) NOT NULL,
+        "RoutedOwnerSource" character varying(64) NOT NULL,
+        "RoutedOwnerDetail" character varying(1024) NOT NULL,
+        "RoutedOwnerIsBlanket" boolean NOT NULL,
+        "Decision" character varying(16) NOT NULL,
+        "Note" character varying(1024),
+        "AttestedBy" character varying(256) NOT NULL,
+        "AttestedAtUtc" timestamp with time zone NOT NULL,
+        "WindowFromUtc" timestamp with time zone NOT NULL,
+        "WindowToUtc" timestamp with time zone NOT NULL,
+        "WindowDays" integer NOT NULL,
+        "DaysObserved" integer NOT NULL,
+        "DaysInWindow" integer NOT NULL,
+        "ObservedHits" bigint NOT NULL,
+        "ObservedDays" integer NOT NULL,
+        "ObservedLastSeenUtc" timestamp with time zone,
+        "CreatedAt" timestamp with time zone NOT NULL,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_MeshRecertificationAttestations" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214307_MeshP2Register') THEN
+    CREATE INDEX "IX_MeshEvidencePacks_ChainHash" ON "MeshEvidencePacks" ("ChainHash");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214307_MeshP2Register') THEN
+    CREATE UNIQUE INDEX "UX_MeshEvidencePacks_PreviousChainHash" ON "MeshEvidencePacks" ("PreviousChainHash");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214307_MeshP2Register') THEN
+    CREATE INDEX "IX_MeshDenyStorms_Arbitration_WindowEnd" ON "MeshDenyStorms" ("Arbitration", "WindowEndUtc");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214307_MeshP2Register') THEN
+    CREATE INDEX "IX_MeshDenyStorms_Scope_WindowEnd" ON "MeshDenyStorms" ("ClusterName", "Namespace", "WindowEndUtc");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214307_MeshP2Register') THEN
+    CREATE INDEX "IX_MeshExpectationFindings_Cluster_Observed" ON "MeshExpectationFindings" ("Cluster", "ObservedAtUtc");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214307_MeshP2Register') THEN
+    CREATE INDEX "IX_MeshExpectationFindings_Expectation" ON "MeshExpectationFindings" ("ExpectationId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214307_MeshP2Register') THEN
+    CREATE INDEX "IX_MeshExpectations_Cluster" ON "MeshExpectations" ("Cluster");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214307_MeshP2Register') THEN
+    CREATE INDEX "IX_MeshManifestFindings_RepositoryScanId" ON "MeshManifestFindings" ("RepositoryScanId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214307_MeshP2Register') THEN
+    CREATE INDEX "IX_MeshManifestFindings_ScanRepositoryId_CreatedAt" ON "MeshManifestFindings" ("ScanRepositoryId", "CreatedAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214307_MeshP2Register') THEN
+    CREATE INDEX "IX_MeshOpenUnknowns_Closed_Cluster" ON "MeshOpenUnknowns" ("ClosedAtUtc", "Cluster");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214307_MeshP2Register') THEN
+    CREATE INDEX "IX_MeshOpenUnknowns_Open_FirstSeen" ON "MeshOpenUnknowns" ("FirstSeenUtc") WHERE "ClosedAtUtc" IS NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214307_MeshP2Register') THEN
+    CREATE INDEX "IX_MeshOpenUnknowns_ReviewBy" ON "MeshOpenUnknowns" ("ReviewByUtc") WHERE "ClosedAtUtc" IS NULL AND "ReviewByUtc" IS NOT NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214307_MeshP2Register') THEN
+    CREATE UNIQUE INDEX "UX_MeshOpenUnknowns_Key" ON "MeshOpenUnknowns" ("Cluster", "Section", "Input");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214307_MeshP2Register') THEN
+    CREATE INDEX "IX_MeshPolicyAccessRequests_Open" ON "MeshPolicyAccessRequests" ("ClusterName", "RequestedAtUtc") WHERE "Status" = 'pending';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214307_MeshP2Register') THEN
+    CREATE INDEX "IX_MeshPolicyAccessRequests_Record" ON "MeshPolicyAccessRequests" ("PolicyRecordId", "RequestedAtUtc");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214307_MeshP2Register') THEN
+    CREATE UNIQUE INDEX "UX_MeshPolicyAccessRequests_Reference" ON "MeshPolicyAccessRequests" ("Reference");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214307_MeshP2Register') THEN
+    CREATE INDEX "IX_MeshRecertificationAttestations_Cluster_Ns_AttestedAt" ON "MeshRecertificationAttestations" ("ClusterName", "Namespace", "AttestedAtUtc");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214307_MeshP2Register') THEN
+    CREATE INDEX "IX_MeshRecertificationAttestations_Cluster_Scope_AttestedAt" ON "MeshRecertificationAttestations" ("ClusterName", "ScopeKey", "AttestedAtUtc");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260914214307_MeshP2Register') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260914214307_MeshP2Register', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260916074546_MeshIngestTokenOnCluster') THEN
+    ALTER TABLE "SetupThirdParties" ADD "MeshIngestTokenEncrypted" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260916074546_MeshIngestTokenOnCluster') THEN
+    ALTER TABLE "SetupThirdParties" ADD "MeshIngestTokenMintedAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260916074546_MeshIngestTokenOnCluster') THEN
+    ALTER TABLE "SetupThirdParties" ADD "MeshSidecarMonitoringEnabled" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260916074546_MeshIngestTokenOnCluster') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260916074546_MeshIngestTokenOnCluster', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260916093459_MeshVerdictSiemStream') THEN
+    ALTER TABLE "SiemSettings" ADD "ForwardMeshVerdictAllows" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260916093459_MeshVerdictSiemStream') THEN
+    ALTER TABLE "SiemSettings" ADD "ForwardMeshVerdicts" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260916093459_MeshVerdictSiemStream') THEN
+    ALTER TABLE "SiemSettings" ADD "MeshVerdictsDestinationId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260916093459_MeshVerdictSiemStream') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260916093459_MeshVerdictSiemStream', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260922063331_ComplianceRegimeSelectionAndClauseOverrides') THEN
+    ALTER TABLE "MeshEvidencePacks" ADD "ExcludedControls" text NOT NULL DEFAULT '';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260922063331_ComplianceRegimeSelectionAndClauseOverrides') THEN
+    ALTER TABLE "MeshEvidencePacks" ADD "LicensedEdition" integer NOT NULL DEFAULT 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260922063331_ComplianceRegimeSelectionAndClauseOverrides') THEN
+    CREATE TABLE "RegulatoryClauseOverrides" (
+        "Id" uuid NOT NULL,
+        "ControlId" text NOT NULL,
+        "Clause" text NOT NULL,
+        "SuppliedBy" text NOT NULL,
+        "SuppliedAtUtc" timestamp with time zone NOT NULL,
+        "Note" text,
+        CONSTRAINT "PK_RegulatoryClauseOverrides" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260922063331_ComplianceRegimeSelectionAndClauseOverrides') THEN
+    CREATE TABLE "RegulatoryRegimeSelections" (
+        "Id" uuid NOT NULL,
+        "Regime" text NOT NULL,
+        "SelectedBy" text NOT NULL,
+        "SelectedAtUtc" timestamp with time zone NOT NULL,
+        "RemovedAtUtc" timestamp with time zone,
+        "RemovedBy" text,
+        CONSTRAINT "PK_RegulatoryRegimeSelections" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260922063331_ComplianceRegimeSelectionAndClauseOverrides') THEN
+    CREATE UNIQUE INDEX "IX_RegulatoryClauseOverrides_ControlId" ON "RegulatoryClauseOverrides" ("ControlId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260922063331_ComplianceRegimeSelectionAndClauseOverrides') THEN
+    CREATE UNIQUE INDEX "IX_RegulatoryRegimeSelections_Regime" ON "RegulatoryRegimeSelections" ("Regime") WHERE "RemovedAtUtc" IS NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260922063331_ComplianceRegimeSelectionAndClauseOverrides') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260922063331_ComplianceRegimeSelectionAndClauseOverrides', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260928084925_AddMcpWriteGateSettings') THEN
+    ALTER TABLE "AnalyticsSettings" ADD "AllowMcpContainmentActions" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260928084925_AddMcpWriteGateSettings') THEN
+    CREATE TABLE "McpWriteGateSettings" (
+        "Id" uuid NOT NULL,
+        "AllowNetworkPolicyDeploy" boolean NOT NULL,
+        "AllowManualNetworkPolicyApproval" boolean NOT NULL,
+        "AllowKubernetesPush" boolean NOT NULL,
+        "AllowIdentityReachContainment" boolean NOT NULL,
+        "AllowGlobalWhitelistWrite" boolean NOT NULL,
+        "AllowProtectedNamespaceWrite" boolean NOT NULL,
+        CONSTRAINT "PK_McpWriteGateSettings" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260928084925_AddMcpWriteGateSettings') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260928084925_AddMcpWriteGateSettings', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260928120020_ObsAnalyticsAlertRuleOutcome') THEN
+    ALTER TABLE "AnalyticsAlertRules" ADD "LastOutcome" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260928120020_ObsAnalyticsAlertRuleOutcome') THEN
+    ALTER TABLE "AnalyticsAlertRules" ADD "LastOutcomeReason" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260928120020_ObsAnalyticsAlertRuleOutcome') THEN
+    ALTER TABLE "AnalyticsAlertRules" ADD "LastValueComplete" boolean;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260928120020_ObsAnalyticsAlertRuleOutcome') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260928120020_ObsAnalyticsAlertRuleOutcome', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260928144245_SegAuthorRevertMergeTimesNullable') THEN
+    ALTER TABLE "OldNetworkPolicyRecords" ALTER COLUMN "LastRevertedTime" DROP NOT NULL;
+    ALTER TABLE "OldNetworkPolicyRecords" ALTER COLUMN "LastRevertedTime" DROP DEFAULT;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260928144245_SegAuthorRevertMergeTimesNullable') THEN
+    ALTER TABLE "OldNetworkPolicyRecords" ALTER COLUMN "LastMergeTime" DROP NOT NULL;
+    ALTER TABLE "OldNetworkPolicyRecords" ALTER COLUMN "LastMergeTime" DROP DEFAULT;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260928144245_SegAuthorRevertMergeTimesNullable') THEN
+    ALTER TABLE "NetworkPolicyRecords" ALTER COLUMN "LastRevertedTime" DROP NOT NULL;
+    ALTER TABLE "NetworkPolicyRecords" ALTER COLUMN "LastRevertedTime" DROP DEFAULT;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260928144245_SegAuthorRevertMergeTimesNullable') THEN
+    ALTER TABLE "NetworkPolicyRecords" ALTER COLUMN "LastMergeTime" DROP NOT NULL;
+    ALTER TABLE "NetworkPolicyRecords" ALTER COLUMN "LastMergeTime" DROP DEFAULT;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260928144245_SegAuthorRevertMergeTimesNullable') THEN
+    UPDATE "NetworkPolicyRecords" SET "LastRevertedTime" = NULL WHERE COALESCE("RevertedBy", '') = '' AND "LastRevertedTime" IS NOT NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260928144245_SegAuthorRevertMergeTimesNullable') THEN
+    UPDATE "NetworkPolicyRecords" SET "LastMergeTime" = NULL WHERE COALESCE("MergedBy", '') = '' AND "LastMergeTime" IS NOT NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260928144245_SegAuthorRevertMergeTimesNullable') THEN
+    UPDATE "OldNetworkPolicyRecords" SET "LastRevertedTime" = NULL WHERE COALESCE("RevertedBy", '') = '' AND "LastRevertedTime" IS NOT NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260928144245_SegAuthorRevertMergeTimesNullable') THEN
+    UPDATE "OldNetworkPolicyRecords" SET "LastMergeTime" = NULL WHERE COALESCE("MergedBy", '') = '' AND "LastMergeTime" IS NOT NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260928144245_SegAuthorRevertMergeTimesNullable') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260928144245_SegAuthorRevertMergeTimesNullable', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260930132232_AddRemainingMcpWriteGates') THEN
+    ALTER TABLE "McpWriteGateSettings" ADD "AllowAuthzPolicyDelete" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260930132232_AddRemainingMcpWriteGates') THEN
+    ALTER TABLE "McpWriteGateSettings" ADD "AllowAuthzPolicyDeploy" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260930132232_AddRemainingMcpWriteGates') THEN
+    ALTER TABLE "McpWriteGateSettings" ADD "AllowAuthzPolicyManualApply" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260930132232_AddRemainingMcpWriteGates') THEN
+    ALTER TABLE "McpWriteGateSettings" ADD "AllowAxeraFlowDeployment" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260930132232_AddRemainingMcpWriteGates') THEN
+    ALTER TABLE "McpWriteGateSettings" ADD "AllowAxeraFlowUninstall" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260930132232_AddRemainingMcpWriteGates') THEN
+    ALTER TABLE "McpWriteGateSettings" ADD "AllowBackupDelete" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260930132232_AddRemainingMcpWriteGates') THEN
+    ALTER TABLE "McpWriteGateSettings" ADD "AllowBackupRestore" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260930132232_AddRemainingMcpWriteGates') THEN
+    ALTER TABLE "McpWriteGateSettings" ADD "AllowCaptureDelete" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260930132232_AddRemainingMcpWriteGates') THEN
+    ALTER TABLE "McpWriteGateSettings" ADD "AllowKubernetesNetworkPolicyProxyWrite" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260930132232_AddRemainingMcpWriteGates') THEN
+    ALTER TABLE "McpWriteGateSettings" ADD "AllowMeshSidecarMonitoringWrite" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260930132232_AddRemainingMcpWriteGates') THEN
+    ALTER TABLE "McpWriteGateSettings" ADD "AllowNetworkPolicyWatcherWrite" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260930132232_AddRemainingMcpWriteGates') THEN
+    ALTER TABLE "McpWriteGateSettings" ADD "AllowPolicyVersionRollback" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260930132232_AddRemainingMcpWriteGates') THEN
+    ALTER TABLE "McpWriteGateSettings" ADD "AllowProcessPolicyDelete" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260930132232_AddRemainingMcpWriteGates') THEN
+    ALTER TABLE "McpWriteGateSettings" ADD "AllowProcessPolicyDeploy" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260930132232_AddRemainingMcpWriteGates') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260930132232_AddRemainingMcpWriteGates', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261001134127_GitLayoutProfiles') THEN
+    CREATE TABLE "GitLayoutProfiles" (
+        "Id" uuid NOT NULL,
+        "Name" character varying(200) NOT NULL,
+        "Description" character varying(2000),
+        "IsDefault" boolean NOT NULL,
+        "Spec" jsonb NOT NULL,
+        "Version" integer NOT NULL,
+        "CreatedAt" timestamp with time zone NOT NULL,
+        "CreatedBy" character varying(256),
+        "UpdatedAt" timestamp with time zone,
+        "UpdatedBy" character varying(256),
+        CONSTRAINT "PK_GitLayoutProfiles" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261001134127_GitLayoutProfiles') THEN
+    CREATE UNIQUE INDEX "IX_GitLayoutProfiles_IsDefault" ON "GitLayoutProfiles" ("IsDefault") WHERE "IsDefault" = true;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261001134127_GitLayoutProfiles') THEN
+    CREATE UNIQUE INDEX "IX_GitLayoutProfiles_Name" ON "GitLayoutProfiles" ("Name");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261001134127_GitLayoutProfiles') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261001134127_GitLayoutProfiles', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    ALTER TABLE "SetupThirdParties" ADD "ExcessPrivileges" text[];
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    ALTER TABLE "SetupThirdParties" ADD "LastPrivilegeCheckAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    ALTER TABLE "SetupThirdParties" ADD "LastPrivilegeCheckError" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    ALTER TABLE "ScanRepositories" ADD "CredentialOwnerUserId" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    ALTER TABLE "PolicyHitDaily" ADD "AclCount" bigint NOT NULL DEFAULT 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    ALTER TABLE "PolicyHitDaily" ADD "FlowCount" bigint NOT NULL DEFAULT 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    ALTER TABLE "OldNetworkPolicyRecords" ADD "SavedBy" character varying(256) NOT NULL DEFAULT '';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    ALTER TABLE "NetworkPolicyRecords" ADD "AclHitCount" bigint NOT NULL DEFAULT 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    ALTER TABLE "NetworkPolicyRecords" ADD "DeployedSpecHash" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    ALTER TABLE "NetworkPolicyRecords" ADD "DeployedVersionNumber" integer;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    ALTER TABLE "NetworkPolicyRecords" ADD "FlowHitCount" bigint NOT NULL DEFAULT 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    ALTER TABLE "NetworkPolicyRecords" ADD "LiveDriftDetectedAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    ALTER TABLE "NetworkPolicyRecords" ADD "SavedBy" character varying(256) NOT NULL DEFAULT '';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    ALTER TABLE "MeshRecertificationAttestations" ADD "EvidenceFromUtc" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    ALTER TABLE "McpWriteGateSettings" ADD "AllowAiSettingsWrite" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    ALTER TABLE "McpWriteGateSettings" ADD "AllowAnalyticsSettingsWrite" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    ALTER TABLE "McpWriteGateSettings" ADD "AllowBackupCreate" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    ALTER TABLE "McpWriteGateSettings" ADD "AllowBackupSettingsWrite" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    ALTER TABLE "McpWriteGateSettings" ADD "AllowCaptureCreate" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    ALTER TABLE "McpWriteGateSettings" ADD "AllowLicenseWrite" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    ALTER TABLE "McpWriteGateSettings" ADD "AllowLoggingReconfigure" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    ALTER TABLE "McpWriteGateSettings" ADD "AllowNetworkPolicyRecordMigration" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    ALTER TABLE "LDAPConnections" ADD "DisplayName" character varying(128);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    ALTER TABLE "KubernetesPushCronResults" ALTER COLUMN "CreatedAt" SET DEFAULT (now());
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    ALTER TABLE "GitProviderSettings" ALTER COLUMN "Shared" SET DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    CREATE TABLE "AnalyticsAlertFirings" (
+        "Id" uuid NOT NULL,
+        "RuleId" uuid NOT NULL,
+        "RuleName" text NOT NULL,
+        "ClusterId" text NOT NULL,
+        "MetricKind" text NOT NULL,
+        "Value" double precision NOT NULL,
+        "Complete" boolean,
+        "Severity" text NOT NULL,
+        "Trigger" text NOT NULL,
+        "FiredAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_AnalyticsAlertFirings" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    CREATE TABLE "PolicyRecommendationSnapshots" (
+        "ClusterName" character varying(253) NOT NULL,
+        "ReportJson" jsonb NOT NULL,
+        "GeneratedAt" timestamp with time zone NOT NULL,
+        "Model" text,
+        "DurationMs" bigint,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_PolicyRecommendationSnapshots" PRIMARY KEY ("ClusterName")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    INSERT INTO "McpWriteGateSettings" ("Id", "AllowNetworkPolicyDeploy", "AllowManualNetworkPolicyApproval", "AllowKubernetesPush", "AllowIdentityReachContainment", "AllowGlobalWhitelistWrite", "AllowProtectedNamespaceWrite", "AllowBackupDelete", "AllowBackupRestore", "AllowAxeraFlowDeployment", "AllowAxeraFlowUninstall", "AllowKubernetesNetworkPolicyProxyWrite", "AllowCaptureDelete", "AllowNetworkPolicyWatcherWrite", "AllowMeshSidecarMonitoringWrite", "AllowAuthzPolicyDeploy", "AllowAuthzPolicyManualApply", "AllowAuthzPolicyDelete", "AllowPolicyVersionRollback", "AllowProcessPolicyDeploy", "AllowProcessPolicyDelete", "AllowCaptureCreate", "AllowBackupCreate", "AllowBackupSettingsWrite", "AllowLicenseWrite", "AllowAiSettingsWrite", "AllowLoggingReconfigure", "AllowAnalyticsSettingsWrite", "AllowNetworkPolicyRecordMigration")
+    SELECT gen_random_uuid(), FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE
+    WHERE NOT EXISTS (SELECT 1 FROM "McpWriteGateSettings");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    UPDATE "AnalyticsTrackedScopes"
+    SET "ClusterName" = btrim("ClusterName"), "Namespace" = NULLIF(btrim("Namespace"), '')
+    WHERE "ClusterName" <> btrim("ClusterName") OR "Namespace" IS DISTINCT FROM NULLIF(btrim("Namespace"), '');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    DELETE FROM "AnalyticsTrackedScopes" s
+    USING (SELECT "Id", ROW_NUMBER() OVER (PARTITION BY "ClusterName", COALESCE("Namespace", '') ORDER BY "CreatedAt", "Id") AS rn
+           FROM "AnalyticsTrackedScopes") d
+    WHERE s."Id" = d."Id" AND d.rn > 1;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    UPDATE "NetworkPolicyRecords" r SET "HitCount" = d.s
+    FROM (SELECT "PolicyRecordId", SUM("Count") AS s FROM "PolicyHitDaily" GROUP BY 1) d
+    WHERE r."Id" = d."PolicyRecordId" AND r."HitCount" < d.s;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    UPDATE "AnalyticsAlertRules"
+    SET "WindowMinutes" = CAST(GREATEST(5, CEIL("WindowMinutes" / 5.0) * 5) AS integer)
+    WHERE "WindowMinutes" < 5 OR "WindowMinutes" % 5 <> 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    UPDATE "AnalyticsAlertRules" SET "Threshold" = "Threshold" / 100.0
+    WHERE "MetricKind" = 'drop_rate' AND "Threshold" > 1 AND "Threshold" <= 100;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    UPDATE "AnalyticsAlertRules"
+    SET "Enabled" = FALSE, "LastOutcome" = 'not-judged',
+        "LastOutcomeReason" = 'disabled by the v13.3.0 upgrade: a drop_rate threshold above 100% is invalid'
+    WHERE "MetricKind" = 'drop_rate' AND "Threshold" > 100;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    UPDATE "NetworkPolicyRecords" SET "NetworkPolicy" = jsonb_set("NetworkPolicy", '{ApiVersion}', '"networking.k8s.io/v1"')
+    WHERE jsonb_typeof("NetworkPolicy") = 'object' AND COALESCE("NetworkPolicy"->>'ApiVersion', '') = '';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    UPDATE "NetworkPolicyRecords" SET "NetworkPolicy" = jsonb_set("NetworkPolicy", '{Kind}', '"NetworkPolicy"')
+    WHERE jsonb_typeof("NetworkPolicy") = 'object' AND COALESCE("NetworkPolicy"->>'Kind', '') = '';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    UPDATE "OldNetworkPolicyRecords" SET "NetworkPolicy" = jsonb_set("NetworkPolicy", '{ApiVersion}', '"networking.k8s.io/v1"')
+    WHERE jsonb_typeof("NetworkPolicy") = 'object' AND COALESCE("NetworkPolicy"->>'ApiVersion', '') = '';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    UPDATE "OldNetworkPolicyRecords" SET "NetworkPolicy" = jsonb_set("NetworkPolicy", '{Kind}', '"NetworkPolicy"')
+    WHERE jsonb_typeof("NetworkPolicy") = 'object' AND COALESCE("NetworkPolicy"->>'Kind', '') = '';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    UPDATE "AnalyticsSettings"
+    SET "AutoResponseMode" = CASE WHEN lower("AutoResponseMode") = 'enforce' THEN 'Enforce' ELSE 'Monitor' END
+    WHERE "AutoResponseMode" IS DISTINCT FROM 'Monitor' AND "AutoResponseMode" IS DISTINCT FROM 'Enforce';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    ALTER TABLE "AnalyticsSettings" ALTER COLUMN "AutoResponseMode" SET DEFAULT 'Monitor';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    WITH d AS (
+        SELECT "Id", "OwnerUserId", "Name",
+               ROW_NUMBER() OVER (PARTITION BY "OwnerUserId", "Name" ORDER BY "CreatedAt", "Id") AS rn
+        FROM "AnalyticsSavedViews")
+    UPDATE "AnalyticsSavedViews" v
+    SET "Name" = CASE
+            WHEN EXISTS (SELECT 1 FROM "AnalyticsSavedViews" o
+                         WHERE o."OwnerUserId" = d."OwnerUserId" AND o."Name" = d."Name" || ' (' || d.rn || ')')
+            THEN d."Name" || ' (' || d.rn || ', ' || left(v."Id"::text, 8) || ')'
+            ELSE d."Name" || ' (' || d.rn || ')'
+        END
+    FROM d
+    WHERE v."Id" = d."Id" AND d.rn > 1;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    UPDATE "NetworkPolicyRecords" SET "DeployedVersionNumber" = "VersionNumber"
+    WHERE "DeploymentState" = 'Deployed' AND "DeployedVersionNumber" IS NULL
+      AND ("LastDeployedAt" IS NULL OR "LastModifiedTime" <= "LastDeployedAt"
+           OR ("RecoveredAt" IS NOT NULL AND "RecoveredAt" >= "LastDeployedAt"
+               AND "LastModifiedTime" <= "RecoveredAt" + interval '1 second'));
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    UPDATE "NetworkPolicyRecords" r SET "DeployedVersionNumber" = s.v
+    FROM (SELECT c."Id", MAX(o."VersionNumber") AS v
+          FROM "NetworkPolicyRecords" c
+          JOIN "OldNetworkPolicyRecords" o
+            ON o."Name" = c."Name" AND o."ClusterName" = c."ClusterName" AND o."Namespace" = c."Namespace"
+           AND o."VersionNumber" < c."VersionNumber" AND o."LastModifiedTime" <= c."LastDeployedAt"
+          WHERE c."DeploymentState" = 'Deployed' AND c."DeployedVersionNumber" IS NULL
+            AND c."LastModifiedTime" > c."LastDeployedAt"
+          GROUP BY c."Id") s
+    WHERE r."Id" = s."Id" AND r."DeployedVersionNumber" IS NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    UPDATE "ScanRepositories" r SET "CredentialOwnerUserId" = u."Id"
+    FROM (SELECT DISTINCT ON (reg.repo_id) reg.repo_id, reg.actor
+          FROM (SELECT lower(substring(e."Details" from '"Id"[[:space:]]*:[[:space:]]*"([0-9A-Fa-f-]{36})"')) AS repo_id,
+                       regexp_replace(COALESCE(e."Actor", ''), ' \(via MCP agent\)$', '') AS actor,
+                       e."At" AS at, e."Id" AS audit_id
+                FROM "AuditEntries" e
+                WHERE e."Action" = 'shiftLeft.repository.register') reg
+          WHERE reg.repo_id IS NOT NULL
+          ORDER BY reg.repo_id, reg.at, reg.audit_id) first_registration
+    JOIN "AspNetUsers" u ON u."UserName" = first_registration.actor
+    WHERE r."CredentialOwnerUserId" IS NULL AND r."Id"::text = first_registration.repo_id;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    UPDATE "NetworkPolicyRecords" SET "SavedBy" = "CreatedBy" WHERE "VersionNumber" = 1 AND "SavedBy" = '';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    UPDATE "OldNetworkPolicyRecords" SET "SavedBy" = "CreatedBy" WHERE "VersionNumber" = 1 AND "SavedBy" = '';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    UPDATE "KubernetesPushCronResults" SET "CreatedAt" = COALESCE("ScheduledAt", "UpdatedAt", now())
+    WHERE "CreatedAt" = '-infinity';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    DELETE FROM "KubernetesPushCronResults"
+    WHERE "Status" = 0 AND "ScheduledAt" IS NULL AND "Immediate" = FALSE AND "JobId" = '';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    UPDATE "WatcherSettings" SET "AddedEventAction" = 1 WHERE "AddedEventAction" NOT IN (1, 2, 3);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    UPDATE "WatcherSettings" SET "ModifiedEventAction" = 1 WHERE "ModifiedEventAction" NOT IN (1, 2, 3);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    UPDATE "WatcherSettings" SET "DeletedEventAction" = 1 WHERE "DeletedEventAction" NOT IN (1, 2, 3);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    DELETE FROM "CustomRolePermissions" WHERE "Resource" = 'Proxy';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "UX_AnalyticsTrackedScopes_Cluster_Namespace"
+    ON "AnalyticsTrackedScopes" ("ClusterName", COALESCE("Namespace", ''));
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    ALTER TABLE "WatcherSettings" ADD CONSTRAINT "CK_WatcherSettings_AddedEventAction" CHECK ("AddedEventAction" IN (1, 2, 3));
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    ALTER TABLE "WatcherSettings" ADD CONSTRAINT "CK_WatcherSettings_DeletedEventAction" CHECK ("DeletedEventAction" IN (1, 2, 3));
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    ALTER TABLE "WatcherSettings" ADD CONSTRAINT "CK_WatcherSettings_ModifiedEventAction" CHECK ("ModifiedEventAction" IN (1, 2, 3));
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    CREATE UNIQUE INDEX "IX_AnalyticsSavedViews_OwnerUserId_Name" ON "AnalyticsSavedViews" ("OwnerUserId", "Name");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    CREATE INDEX "IX_AnalyticsAlertFirings_FiredAt" ON "AnalyticsAlertFirings" ("FiredAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261004085500_AxeraV1330AppSchema') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261004085500_AxeraV1330AppSchema', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261005081941_AddPersonalAccessTokens') THEN
+    CREATE TABLE "PersonalAccessTokens" (
+        "Id" uuid NOT NULL,
+        "UserId" text NOT NULL,
+        "Name" character varying(100) NOT NULL,
+        "TokenHint" character varying(16) NOT NULL,
+        "CreatedAt" timestamp with time zone NOT NULL,
+        "ExpiresAt" timestamp with time zone NOT NULL,
+        "LastUsedAt" timestamp with time zone,
+        "RevokedAt" timestamp with time zone,
+        "RevokedBy" character varying(256),
+        CONSTRAINT "PK_PersonalAccessTokens" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_PersonalAccessTokens_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261005081941_AddPersonalAccessTokens') THEN
+    CREATE INDEX "IX_PersonalAccessTokens_UserId" ON "PersonalAccessTokens" ("UserId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261005081941_AddPersonalAccessTokens') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    SELECT gen_random_uuid(), r."Id", 'ApiToken', 'Write'
+    FROM "CustomRoles" r
+    WHERE NOT EXISTS (
+        SELECT 1 FROM "CustomRolePermissions" p
+        WHERE p."CustomRoleId" = r."Id"
+          AND p."Resource"     = 'ApiToken'
+          AND p."Scope"        = 'Write'
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261005081941_AddPersonalAccessTokens') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261005081941_AddPersonalAccessTokens', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261007110243_AddApiTokenScopesAndLastUsedAddress') THEN
+    ALTER TABLE "PersonalAccessTokens" ADD "LastUsedIp" character varying(64);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261007110243_AddApiTokenScopesAndLastUsedAddress') THEN
+    ALTER TABLE "PersonalAccessTokens" ADD "LastUsedUserAgent" character varying(256);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261007110243_AddApiTokenScopesAndLastUsedAddress') THEN
+    ALTER TABLE "PersonalAccessTokens" ADD "Scopes" character varying(8000);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261007110243_AddApiTokenScopesAndLastUsedAddress') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261007110243_AddApiTokenScopesAndLastUsedAddress', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261008131628_AddOAuthClients') THEN
+    ALTER TABLE "PersonalAccessTokens" ADD "Audience" character varying(2000);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261008131628_AddOAuthClients') THEN
+    ALTER TABLE "PersonalAccessTokens" ADD "OAuthClientId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261008131628_AddOAuthClients') THEN
+    ALTER TABLE "PersonalAccessTokens" ADD "PreviousRefreshTokenHash" character varying(64);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261008131628_AddOAuthClients') THEN
+    ALTER TABLE "PersonalAccessTokens" ADD "RefreshExpiresAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261008131628_AddOAuthClients') THEN
+    ALTER TABLE "PersonalAccessTokens" ADD "RefreshRotatedAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261008131628_AddOAuthClients') THEN
+    ALTER TABLE "PersonalAccessTokens" ADD "RefreshTokenHash" character varying(64);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261008131628_AddOAuthClients') THEN
+    CREATE TABLE "OAuthClients" (
+        "Id" uuid NOT NULL,
+        "ClientId" character varying(64) NOT NULL,
+        "Name" character varying(100) NOT NULL,
+        "Description" character varying(500),
+        "SecretHash" character varying(64),
+        "RedirectUris" character varying(4000) NOT NULL,
+        "MaxScopes" character varying(8000),
+        "AccessTokenLifetimeMinutes" integer NOT NULL,
+        "RefreshTokenIdleDays" integer NOT NULL,
+        "ConnectionLifetimeDays" integer NOT NULL,
+        "IsDisabled" boolean NOT NULL,
+        "CreatedAt" timestamp with time zone NOT NULL,
+        "CreatedBy" character varying(256),
+        "UpdatedAt" timestamp with time zone,
+        CONSTRAINT "PK_OAuthClients" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261008131628_AddOAuthClients') THEN
+    CREATE TABLE "OAuthAuthorizationCodes" (
+        "Id" uuid NOT NULL,
+        "CodeHash" character varying(64) NOT NULL,
+        "OAuthClientId" uuid NOT NULL,
+        "UserId" text NOT NULL,
+        "RedirectUri" character varying(2000) NOT NULL,
+        "CodeChallenge" character varying(128) NOT NULL,
+        "Scopes" character varying(8000),
+        "Resource" character varying(2000),
+        "CreatedAt" timestamp with time zone NOT NULL,
+        "ExpiresAt" timestamp with time zone NOT NULL,
+        "ConsumedAt" timestamp with time zone,
+        "ConnectionId" uuid,
+        CONSTRAINT "PK_OAuthAuthorizationCodes" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_OAuthAuthorizationCodes_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers" ("Id") ON DELETE CASCADE,
+        CONSTRAINT "FK_OAuthAuthorizationCodes_OAuthClients_OAuthClientId" FOREIGN KEY ("OAuthClientId") REFERENCES "OAuthClients" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261008131628_AddOAuthClients') THEN
+    CREATE INDEX "IX_PersonalAccessTokens_OAuthClientId" ON "PersonalAccessTokens" ("OAuthClientId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261008131628_AddOAuthClients') THEN
+    CREATE INDEX "IX_PersonalAccessTokens_PreviousRefreshTokenHash" ON "PersonalAccessTokens" ("PreviousRefreshTokenHash");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261008131628_AddOAuthClients') THEN
+    CREATE UNIQUE INDEX "IX_PersonalAccessTokens_RefreshTokenHash" ON "PersonalAccessTokens" ("RefreshTokenHash");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261008131628_AddOAuthClients') THEN
+    CREATE UNIQUE INDEX "IX_OAuthAuthorizationCodes_CodeHash" ON "OAuthAuthorizationCodes" ("CodeHash");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261008131628_AddOAuthClients') THEN
+    CREATE INDEX "IX_OAuthAuthorizationCodes_ExpiresAt" ON "OAuthAuthorizationCodes" ("ExpiresAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261008131628_AddOAuthClients') THEN
+    CREATE INDEX "IX_OAuthAuthorizationCodes_OAuthClientId" ON "OAuthAuthorizationCodes" ("OAuthClientId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261008131628_AddOAuthClients') THEN
+    CREATE INDEX "IX_OAuthAuthorizationCodes_UserId" ON "OAuthAuthorizationCodes" ("UserId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261008131628_AddOAuthClients') THEN
+    CREATE UNIQUE INDEX "IX_OAuthClients_ClientId" ON "OAuthClients" ("ClientId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261008131628_AddOAuthClients') THEN
+    ALTER TABLE "PersonalAccessTokens" ADD CONSTRAINT "FK_PersonalAccessTokens_OAuthClients_OAuthClientId" FOREIGN KEY ("OAuthClientId") REFERENCES "OAuthClients" ("Id") ON DELETE CASCADE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261008131628_AddOAuthClients') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261008131628_AddOAuthClients', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261014230336_WidenThirdPartyCredentialColumns') THEN
+    ALTER TABLE "SetupThirdParties" ALTER COLUMN "Token" TYPE character varying(8192);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261014230336_WidenThirdPartyCredentialColumns') THEN
+    ALTER TABLE "SetupThirdParties" ALTER COLUMN "Password" TYPE character varying(4096);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261014230336_WidenThirdPartyCredentialColumns') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261014230336_WidenThirdPartyCredentialColumns', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015051303_AddWorkloadFindings') THEN
+    CREATE TABLE "SecurityFeedSources" (
+        "Id" uuid NOT NULL,
+        "Name" character varying(200) NOT NULL,
+        "Vendor" character varying(32) NOT NULL,
+        "Mode" character varying(16) NOT NULL,
+        "ClusterName" character varying(256),
+        "Origin" character varying(16) NOT NULL,
+        "Enabled" boolean NOT NULL,
+        "CreatedAt" timestamp with time zone NOT NULL,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_SecurityFeedSources" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015051303_AddWorkloadFindings') THEN
+    CREATE TABLE "WorkloadFindings" (
+        "Id" uuid NOT NULL,
+        "IdentityHash" character varying(64) NOT NULL,
+        "ClusterName" character varying(256) NOT NULL,
+        "Namespace" character varying(256) NOT NULL,
+        "Workload" character varying(256) NOT NULL,
+        "WorkloadKind" character varying(64) NOT NULL,
+        "Container" character varying(256) NOT NULL,
+        "ImageDigest" character varying(80) NOT NULL,
+        "ScanDigest" character varying(80),
+        "ImageRef" character varying(1024),
+        "VulnId" character varying(128) NOT NULL,
+        "Aliases" character varying(1024),
+        "PackageName" character varying(512) NOT NULL,
+        "PackageVersion" character varying(256) NOT NULL,
+        "PackageClass" character varying(16) NOT NULL,
+        "PackageType" character varying(64),
+        "PackagePurl" character varying(1024),
+        "PackagePath" character varying(2048),
+        "FixedVersion" character varying(256),
+        "DistroFamily" character varying(16),
+        "OsName" character varying(128),
+        "Severity" character varying(16) NOT NULL,
+        "Cvss" double precision,
+        "Kev" boolean NOT NULL,
+        "Exploitable" boolean,
+        "Title" character varying(512),
+        "PrimaryLink" character varying(1024),
+        "Reachability" character varying(24) NOT NULL,
+        "Granularity" character varying(24),
+        "Confidence" character varying(16),
+        "UnknownReason" character varying(64),
+        "NotObservedDays" integer,
+        "VerdictDetail" character varying(1024),
+        "VerdictAlgorithmVersion" integer NOT NULL,
+        "HintsTableVersion" character varying(32),
+        "VerdictFingerprint" character varying(32),
+        "ReachabilityAssessedAt" timestamp with time zone,
+        "LastEvidenceAt" timestamp with time zone,
+        "InteractiveSeen" boolean NOT NULL,
+        "InUseByEntrypoint" boolean NOT NULL,
+        "EvidenceCount" integer NOT NULL,
+        "EvidenceOmitted" integer NOT NULL,
+        "DigestRunning" boolean NOT NULL,
+        "DigestRunningSince" timestamp with time zone,
+        "DigestLastRunningAt" timestamp with time zone,
+        "ImageMatchesRunning" boolean,
+        "FirstReportedAt" timestamp with time zone NOT NULL,
+        "LastReportedAt" timestamp with time zone NOT NULL,
+        "StaleSince" timestamp with time zone,
+        CONSTRAINT "PK_WorkloadFindings" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015051303_AddWorkloadFindings') THEN
+    CREATE TABLE "SecurityFeedLanes" (
+        "Id" uuid NOT NULL,
+        "SourceId" uuid NOT NULL,
+        "Lane" character varying(16) NOT NULL,
+        "Enabled" boolean NOT NULL,
+        "IntervalMinutes" integer NOT NULL,
+        "State" character varying(24) NOT NULL,
+        "LastRunAt" timestamp with time zone,
+        "LastSuccessAt" timestamp with time zone,
+        "LastPullComplete" boolean NOT NULL,
+        "LastError" character varying(2000),
+        "ConsecutiveFailures" integer NOT NULL,
+        "ItemsReceived" integer NOT NULL,
+        "ItemsMapped" integer NOT NULL,
+        "ItemsUnmapped" integer NOT NULL,
+        "ItemsDropped" integer NOT NULL,
+        "ReportsRead" integer NOT NULL,
+        "LastPullId" uuid,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_SecurityFeedLanes" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_SecurityFeedLanes_SecurityFeedSources_SourceId" FOREIGN KEY ("SourceId") REFERENCES "SecurityFeedSources" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015051303_AddWorkloadFindings') THEN
+    CREATE TABLE "WorkloadFindingEvidence" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "FindingId" uuid NOT NULL,
+        "Kind" character varying(32) NOT NULL,
+        "Session" character varying(16) NOT NULL,
+        "Binary" character varying(2048) NOT NULL,
+        "Path" character varying(2048),
+        "Detail" character varying(512),
+        "Container" character varying(256) NOT NULL,
+        "PodName" character varying(256),
+        "NodeName" character varying(256),
+        "ImageDigest" character varying(80) NOT NULL,
+        "ContainerInit" boolean NOT NULL,
+        "FirstSeenAt" timestamp with time zone NOT NULL,
+        "LastSeenAt" timestamp with time zone NOT NULL,
+        "HitCount" bigint NOT NULL,
+        "Source" character varying(32) NOT NULL,
+        "CopiedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_WorkloadFindingEvidence" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_WorkloadFindingEvidence_WorkloadFindings_FindingId" FOREIGN KEY ("FindingId") REFERENCES "WorkloadFindings" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015051303_AddWorkloadFindings') THEN
+    CREATE TABLE "WorkloadFindingSourceReports" (
+        "Id" uuid NOT NULL,
+        "FindingId" uuid NOT NULL,
+        "SourceId" uuid NOT NULL,
+        "VendorRecordId" character varying(512),
+        "VendorSeverity" character varying(32) NOT NULL,
+        "NormalizedSeverity" character varying(16) NOT NULL,
+        "VendorScore" double precision,
+        "VendorPackageName" character varying(512) NOT NULL,
+        "VendorPath" character varying(2048),
+        "VendorScannedAt" timestamp with time zone,
+        "VendorUrl" character varying(1024),
+        "VendorInUse" boolean,
+        "VendorInUseKey" character varying(128),
+        "VendorState" character varying(64),
+        "FirstReportedAt" timestamp with time zone NOT NULL,
+        "LastReportedAt" timestamp with time zone NOT NULL,
+        "LastPullId" uuid NOT NULL,
+        CONSTRAINT "PK_WorkloadFindingSourceReports" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_WorkloadFindingSourceReports_SecurityFeedSources_SourceId" FOREIGN KEY ("SourceId") REFERENCES "SecurityFeedSources" ("Id") ON DELETE CASCADE,
+        CONSTRAINT "FK_WorkloadFindingSourceReports_WorkloadFindings_FindingId" FOREIGN KEY ("FindingId") REFERENCES "WorkloadFindings" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015051303_AddWorkloadFindings') THEN
+    CREATE UNIQUE INDEX "IX_SecurityFeedLanes_Source_Lane" ON "SecurityFeedLanes" ("SourceId", "Lane");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015051303_AddWorkloadFindings') THEN
+    CREATE UNIQUE INDEX "IX_SecurityFeedSources_Name" ON "SecurityFeedSources" ("Name");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015051303_AddWorkloadFindings') THEN
+    CREATE INDEX "IX_SecurityFeedSources_Vendor_Cluster" ON "SecurityFeedSources" ("Vendor", "ClusterName");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015051303_AddWorkloadFindings') THEN
+    CREATE INDEX "IX_WorkloadFindingEvidence_Finding_LastSeen" ON "WorkloadFindingEvidence" ("FindingId", "LastSeenAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015051303_AddWorkloadFindings') THEN
+    CREATE INDEX "IX_WorkloadFindings_Cluster_Reachability" ON "WorkloadFindings" ("ClusterName", "Reachability");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015051303_AddWorkloadFindings') THEN
+    CREATE INDEX "IX_WorkloadFindings_Digest" ON "WorkloadFindings" ("ClusterName", "ImageDigest");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015051303_AddWorkloadFindings') THEN
+    CREATE INDEX "IX_WorkloadFindings_DigestRunning" ON "WorkloadFindings" ("DigestRunning", "DigestLastRunningAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015051303_AddWorkloadFindings') THEN
+    CREATE UNIQUE INDEX "IX_WorkloadFindings_IdentityHash" ON "WorkloadFindings" ("IdentityHash");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015051303_AddWorkloadFindings') THEN
+    CREATE INDEX "IX_WorkloadFindings_StaleSince" ON "WorkloadFindings" ("StaleSince");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015051303_AddWorkloadFindings') THEN
+    CREATE INDEX "IX_WorkloadFindings_Workload" ON "WorkloadFindings" ("ClusterName", "Namespace", "Workload");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015051303_AddWorkloadFindings') THEN
+    CREATE UNIQUE INDEX "IX_WorkloadFindingSourceReports_Finding_Source" ON "WorkloadFindingSourceReports" ("FindingId", "SourceId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015051303_AddWorkloadFindings') THEN
+    CREATE INDEX "IX_WorkloadFindingSourceReports_Source_Pull" ON "WorkloadFindingSourceReports" ("SourceId", "LastPullId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015051303_AddWorkloadFindings') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261015051303_AddWorkloadFindings', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015053303_IncidentStoryPhase0') THEN
+    ALTER TABLE "Incidents" ADD "ClientIdentity" character varying(32);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015053303_IncidentStoryPhase0') THEN
+    ALTER TABLE "Incidents" ADD "ClientKey" character varying(64);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015053303_IncidentStoryPhase0') THEN
+    ALTER TABLE "Incidents" ADD "EntryRef" character varying(256);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015053303_IncidentStoryPhase0') THEN
+    ALTER TABLE "Incidents" ADD "SrcIp" character varying(64);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015053303_IncidentStoryPhase0') THEN
+    ALTER TABLE "IncidentEvents" ADD "Kind" character varying(32) NOT NULL DEFAULT 'detection';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015053303_IncidentStoryPhase0') THEN
+    CREATE INDEX "IX_Incidents_Cluster_Dst_LastSeen" ON "Incidents" ("ClusterName", "DstNamespace", "DstWorkload", "LastSeenAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015053303_IncidentStoryPhase0') THEN
+    CREATE INDEX "IX_Incidents_Cluster_DstHost_LastSeen" ON "Incidents" ("ClusterName", "DstHost", "LastSeenAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015053303_IncidentStoryPhase0') THEN
+    CREATE INDEX "IX_Incidents_Cluster_DstIp_LastSeen" ON "Incidents" ("ClusterName", "DstIp", "LastSeenAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015053303_IncidentStoryPhase0') THEN
+    CREATE INDEX "IX_Incidents_Cluster_Src_LastSeen" ON "Incidents" ("ClusterName", "SrcNamespace", "SrcWorkload", "LastSeenAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015053303_IncidentStoryPhase0') THEN
+    CREATE INDEX "IX_IncidentEvents_Incident_Kind_At" ON "IncidentEvents" ("IncidentId", "Kind", "At");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015053303_IncidentStoryPhase0') THEN
+    UPDATE "IncidentEvents" SET "Kind" = 'containment-attachment' WHERE "Payload" LIKE '{"kind":"containment-attachment"%';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015053303_IncidentStoryPhase0') THEN
+    UPDATE "IncidentEvents" SET "Kind" = 'correction' WHERE "Payload" LIKE '{"correction":%';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015053303_IncidentStoryPhase0') THEN
+    UPDATE "Incidents" i SET "EventCount" = GREATEST(1, i."EventCount" - c.n)
+      FROM (SELECT "IncidentId", count(*)::int AS n FROM "IncidentEvents" WHERE "Kind" = 'correction' GROUP BY "IncidentId") c
+      WHERE i."Id" = c."IncidentId" AND i."Detector" = 'mesh-policy-tamper';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015053303_IncidentStoryPhase0') THEN
+    UPDATE "Incidents" SET "ClientKey" = substring("Title" from '^New external source ([^ ]+) reached ')
+      WHERE "Detector" = 'ingress-first-contact' AND "ClientKey" IS NULL
+        AND char_length(substring("Title" from '^New external source ([^ ]+) reached ')) <= 64;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015053303_IncidentStoryPhase0') THEN
+    UPDATE "Incidents" SET "SrcIp" = "ClientKey"
+      WHERE "Detector" = 'ingress-first-contact' AND "SrcIp" IS NULL AND "ClientKey" IS NOT NULL AND position('/' in "ClientKey") = 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015053303_IncidentStoryPhase0') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261015053303_IncidentStoryPhase0', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015081846_IncidentDisposition') THEN
+    ALTER TABLE "Incidents" ADD "Disposition" integer;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015081846_IncidentDisposition') THEN
+    ALTER TABLE "Incidents" ADD "DispositionAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015081846_IncidentDisposition') THEN
+    ALTER TABLE "Incidents" ADD "DispositionBy" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015081846_IncidentDisposition') THEN
+    UPDATE "Incidents" SET "Disposition" = 2, "DispositionAt" = COALESCE("DismissedAt", "UpdatedAt"), "DispositionBy" = 'migration: closed as FalsePositive' WHERE "Status" = 3 AND "Disposition" IS NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261015081846_IncidentDisposition') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261015081846_IncidentDisposition', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016164002_IncidentStoryFrames') THEN
+    ALTER TABLE "Incidents" ADD "StoryLegalHold" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016164002_IncidentStoryFrames') THEN
+    ALTER TABLE "Incidents" ADD "StoryLegalHoldAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016164002_IncidentStoryFrames') THEN
+    ALTER TABLE "Incidents" ADD "StoryLegalHoldBy" character varying(256);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016164002_IncidentStoryFrames') THEN
+    CREATE TABLE "IncidentStoryFrameSchedules" (
+        "Id" uuid NOT NULL,
+        "IncidentId" uuid NOT NULL,
+        "Frame" character varying(32) NOT NULL,
+        "DueAtUtc" timestamp with time zone NOT NULL,
+        "CreatedAtUtc" timestamp with time zone NOT NULL,
+        "UpdatedAtUtc" timestamp with time zone NOT NULL,
+        "HangfireJobId" character varying(64),
+        "State" character varying(16) NOT NULL,
+        "RequestedBy" character varying(256),
+        "Note" character varying(256),
+        CONSTRAINT "PK_IncidentStoryFrameSchedules" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_IncidentStoryFrameSchedules_Incidents_IncidentId" FOREIGN KEY ("IncidentId") REFERENCES "Incidents" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016164002_IncidentStoryFrames') THEN
+    CREATE TABLE "IncidentStorySnapshots" (
+        "Id" uuid NOT NULL,
+        "IncidentId" uuid NOT NULL,
+        "ScheduleId" uuid,
+        "Frame" character varying(32) NOT NULL,
+        "TakenAtUtc" timestamp with time zone NOT NULL,
+        "ScheduledForUtc" timestamp with time zone,
+        "WindowFromUtc" timestamp with time zone NOT NULL,
+        "WindowToUtc" timestamp with time zone NOT NULL,
+        "AnchorUtc" timestamp with time zone NOT NULL,
+        "ClampNote" text,
+        "Status" character varying(16) NOT NULL,
+        "Reason" character varying(256),
+        "SchemaVersion" integer NOT NULL,
+        "CollectorVersion" character varying(32),
+        "PodIpGeneration" bigint,
+        "Actor" character varying(256) NOT NULL,
+        "Payload" text,
+        "Coverage" jsonb,
+        "RedactionClientAddresses" jsonb,
+        "ContentHash" character varying(64),
+        "Bytes" integer NOT NULL,
+        CONSTRAINT "PK_IncidentStorySnapshots" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_IncidentStorySnapshots_Incidents_IncidentId" FOREIGN KEY ("IncidentId") REFERENCES "Incidents" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016164002_IncidentStoryFrames') THEN
+    CREATE INDEX "IX_IncidentStoryFrameSchedules_Created" ON "IncidentStoryFrameSchedules" ("CreatedAtUtc");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016164002_IncidentStoryFrames') THEN
+    CREATE INDEX "IX_IncidentStoryFrameSchedules_Incident_State" ON "IncidentStoryFrameSchedules" ("IncidentId", "State");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016164002_IncidentStoryFrames') THEN
+    CREATE INDEX "IX_IncidentStoryFrameSchedules_State_Due" ON "IncidentStoryFrameSchedules" ("State", "DueAtUtc");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016164002_IncidentStoryFrames') THEN
+    CREATE INDEX "IX_IncidentStorySnapshots_Incident_Taken" ON "IncidentStorySnapshots" ("IncidentId", "TakenAtUtc");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016164002_IncidentStoryFrames') THEN
+    CREATE UNIQUE INDEX "IX_IncidentStorySnapshots_Schedule" ON "IncidentStorySnapshots" ("ScheduleId") WHERE "ScheduleId" IS NOT NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016164002_IncidentStoryFrames') THEN
+    CREATE INDEX "IX_IncidentStorySnapshots_Taken" ON "IncidentStorySnapshots" ("TakenAtUtc");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016164002_IncidentStoryFrames') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261016164002_IncidentStoryFrames', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016181606_WorkloadFindingsClusterIdIndex') THEN
+    DROP INDEX "IX_WorkloadFindings_DigestRunning";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016181606_WorkloadFindingsClusterIdIndex') THEN
+    CREATE INDEX "IX_WorkloadFindings_Cluster_Id" ON "WorkloadFindings" ("ClusterName", "Id");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016181606_WorkloadFindingsClusterIdIndex') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261016181606_WorkloadFindingsClusterIdIndex', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "WorkloadFindingSourceReports" ADD "VendorCvss" double precision;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "WorkloadFindingSourceReports" ADD "VendorExploitable" boolean;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "WorkloadFindingSourceReports" ADD "VendorKev" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "WorkloadFindingSourceReports" ADD "VendorStateDetail" character varying(256);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "WorkloadFindingSourceReports" ADD "VendorStateUntil" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "WorkloadFindings" ADD "Suppression" character varying(16);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "WorkloadFindings" ADD "SuppressionLabel" character varying(256);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "WorkloadFindings" ADD "SuppressionUntil" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "AllowInsecureTls" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "AuthKind" character varying(24);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "BaseUrl" character varying(1024);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "CaCertPem" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "ClientCertPem" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "ClientKeyPem" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "CreatedBy" character varying(256);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "CredentialCopiedAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "DeletingSince" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "DisabledAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "InboundTokenHash" character varying(64);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "InboundTokenMintedAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "LastTestAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "LastTestMessage" character varying(512);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "LastTestOk" boolean;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "LegacyCredentialClearedAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "LinkedSetupThirdPartyId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "Project" character varying(128);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "ProxyPassword" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "ProxyUrl" character varying(1024);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "ProxyUserName" character varying(256);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "Secret" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "TokenUrl" character varying(1024);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "TrustLevel" character varying(16) NOT NULL DEFAULT 'CorroborateOnly';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "UpdatedBy" character varying(256);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "UserName" character varying(256);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "VendorOptionsJson" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedLanes" ADD "CircuitOpenUntil" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedLanes" ADD "CircuitOpenedAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedLanes" ADD "CircuitState" character varying(16) NOT NULL DEFAULT 'closed';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedLanes" ADD "DiscoveryJson" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedLanes" ADD "DroppedJson" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedLanes" ADD "LastDurationMs" integer;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedLanes" ADD "LastPartialReason" character varying(256);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedLanes" ADD "LastStatusCode" integer;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedLanes" ADD "LastTrigger" character varying(16);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedLanes" ADD "LeaseUntil" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedLanes" ADD "NextRunAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedLanes" ADD "UnmappedJson" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    ALTER TABLE "SecurityFeedLanes" ADD "Watermark" character varying(1024);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    CREATE TABLE "SecurityFeedClusterMaps" (
+        "Id" uuid NOT NULL,
+        "SourceId" uuid NOT NULL,
+        "VendorClusterKey" character varying(256) NOT NULL,
+        "VendorClusterName" character varying(256),
+        "AxeraClusterName" character varying(256),
+        "Confirmed" boolean NOT NULL,
+        "Proposed" boolean NOT NULL,
+        "ConfirmedAt" timestamp with time zone,
+        "ConfirmedBy" character varying(256),
+        "FirstSeenAt" timestamp with time zone NOT NULL,
+        "LastSeenAt" timestamp with time zone,
+        CONSTRAINT "PK_SecurityFeedClusterMaps" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_SecurityFeedClusterMaps_SecurityFeedSources_SourceId" FOREIGN KEY ("SourceId") REFERENCES "SecurityFeedSources" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    CREATE TABLE "SecurityFeedExternalRefs" (
+        "Id" uuid NOT NULL,
+        "SourceId" uuid NOT NULL,
+        "Kind" character varying(24) NOT NULL,
+        "ExternalId" character varying(512) NOT NULL,
+        "ExternalUrl" character varying(1024),
+        "VendorState" character varying(64),
+        "Label" character varying(256),
+        "VendorFirstSeenAt" timestamp with time zone,
+        "VendorLastSeenAt" timestamp with time zone,
+        "Occurrences" integer NOT NULL,
+        "IncidentId" uuid,
+        "FirstSeenAt" timestamp with time zone NOT NULL,
+        "LastSeenAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_SecurityFeedExternalRefs" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_SecurityFeedExternalRefs_Incidents_IncidentId" FOREIGN KEY ("IncidentId") REFERENCES "Incidents" ("Id") ON DELETE SET NULL,
+        CONSTRAINT "FK_SecurityFeedExternalRefs_SecurityFeedSources_SourceId" FOREIGN KEY ("SourceId") REFERENCES "SecurityFeedSources" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    CREATE TABLE "SecurityFeedRawSamples" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "LaneId" uuid NOT NULL,
+        "CapturedAt" timestamp with time zone NOT NULL,
+        "Kind" character varying(64) NOT NULL,
+        "Endpoint" character varying(512) NOT NULL,
+        "Reason" character varying(64),
+        "Truncated" boolean NOT NULL,
+        "OriginalBytes" integer NOT NULL,
+        "Body" text NOT NULL,
+        CONSTRAINT "PK_SecurityFeedRawSamples" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_SecurityFeedRawSamples_SecurityFeedLanes_LaneId" FOREIGN KEY ("LaneId") REFERENCES "SecurityFeedLanes" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    CREATE TABLE "VendorProcessSightings" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "SourceId" uuid NOT NULL,
+        "KeyHash" character varying(64) NOT NULL,
+        "ClusterName" character varying(256) NOT NULL,
+        "Namespace" character varying(256) NOT NULL,
+        "Workload" character varying(256) NOT NULL,
+        "WorkloadKind" character varying(64) NOT NULL,
+        "Container" character varying(256) NOT NULL,
+        "ImageDigest" character varying(80) NOT NULL,
+        "ExecPath" character varying(2048) NOT NULL,
+        "ProcessName" character varying(256) NOT NULL,
+        "FirstSeenAt" timestamp with time zone NOT NULL,
+        "LastSeenAt" timestamp with time zone NOT NULL,
+        "ExecCount" bigint NOT NULL,
+        "LastPullId" uuid NOT NULL,
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_VendorProcessSightings" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_VendorProcessSightings_SecurityFeedSources_SourceId" FOREIGN KEY ("SourceId") REFERENCES "SecurityFeedSources" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    CREATE TABLE "VulnerabilityOverrides" (
+        "Id" uuid NOT NULL,
+        "ClusterName" character varying(256) NOT NULL,
+        "Namespace" character varying(256) NOT NULL,
+        "Workload" character varying(256) NOT NULL,
+        "VulnId" character varying(128) NOT NULL,
+        "PackageName" character varying(512) NOT NULL,
+        "Status" character varying(16) NOT NULL,
+        "Note" character varying(2000),
+        "ExpiresAt" timestamp with time zone,
+        "CreatedAt" timestamp with time zone NOT NULL,
+        "CreatedBy" character varying(256),
+        "UpdatedAt" timestamp with time zone NOT NULL,
+        "UpdatedBy" character varying(256),
+        CONSTRAINT "PK_VulnerabilityOverrides" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    CREATE INDEX "IX_SecurityFeedSources_LinkedSetupThirdPartyId" ON "SecurityFeedSources" ("LinkedSetupThirdPartyId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    CREATE INDEX "IX_SecurityFeedLanes_Due" ON "SecurityFeedLanes" ("Enabled", "NextRunAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    CREATE INDEX "IX_SecurityFeedClusterMaps_Axera" ON "SecurityFeedClusterMaps" ("AxeraClusterName");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    CREATE UNIQUE INDEX "IX_SecurityFeedClusterMaps_Source_Key" ON "SecurityFeedClusterMaps" ("SourceId", "VendorClusterKey");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    CREATE INDEX "IX_SecurityFeedExternalRefs_Incident" ON "SecurityFeedExternalRefs" ("IncidentId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    CREATE UNIQUE INDEX "IX_SecurityFeedExternalRefs_Key" ON "SecurityFeedExternalRefs" ("SourceId", "Kind", "ExternalId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    CREATE INDEX "IX_SecurityFeedExternalRefs_LastSeen" ON "SecurityFeedExternalRefs" ("LastSeenAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    CREATE INDEX "IX_SecurityFeedRawSamples_Lane_Captured" ON "SecurityFeedRawSamples" ("LaneId", "CapturedAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    CREATE INDEX "IX_VendorProcessSightings_Container" ON "VendorProcessSightings" ("ClusterName", "Namespace", "Workload", "Container");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    CREATE UNIQUE INDEX "IX_VendorProcessSightings_Source_Key" ON "VendorProcessSightings" ("SourceId", "KeyHash");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    CREATE UNIQUE INDEX "IX_VulnerabilityOverrides_Key" ON "VulnerabilityOverrides" ("ClusterName", "Namespace", "Workload", "VulnId", "PackageName");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    SELECT gen_random_uuid(), g.role_id, 'SecurityFeed', 'Read'
+    FROM (VALUES
+        ('00000002-0000-0000-0000-000000000002'::uuid),
+        ('00000003-0000-0000-0000-000000000003'::uuid)
+    ) AS g(role_id)
+    WHERE EXISTS (SELECT 1 FROM "CustomRoles" r WHERE r."Id" = g.role_id)
+      AND NOT EXISTS (
+        SELECT 1 FROM "CustomRolePermissions" p
+        WHERE p."CustomRoleId" = g.role_id AND p."Resource" = 'SecurityFeed' AND p."Scope" = 'Read'
+      );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016193514_AddSecurityFeedFramework') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261016193514_AddSecurityFeedFramework', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016204410_KubeAuditFeedHeartbeat') THEN
+    ALTER TABLE "KubeAuditFeedWatermarks" ADD COLUMN IF NOT EXISTS "LastHeartbeatAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016204410_KubeAuditFeedHeartbeat') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261016204410_KubeAuditFeedHeartbeat', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016230555_IncidentEventClientColumns') THEN
+    ALTER TABLE "IncidentEvents" ADD "ClientKey" character varying(64);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016230555_IncidentEventClientColumns') THEN
+    ALTER TABLE "IncidentEvents" ADD "EntryRef" character varying(256);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016230555_IncidentEventClientColumns') THEN
+    CREATE INDEX "IX_IncidentEvents_ClientKey_Incident" ON "IncidentEvents" ("ClientKey", "IncidentId") WHERE "ClientKey" IS NOT NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016230555_IncidentEventClientColumns') THEN
+    CREATE INDEX "IX_IncidentEvents_EntryRef_Incident" ON "IncidentEvents" ("EntryRef", "IncidentId") WHERE "EntryRef" IS NOT NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016230555_IncidentEventClientColumns') THEN
+    UPDATE "IncidentEvents" SET "ClientKey" = btrim(substring("Payload" from '"clientKey":"([^"\\]+)"'))
+      WHERE "ClientKey" IS NULL AND "Kind" = 'detection' AND "Payload" LIKE '%"clientKey":"%'
+        AND char_length(btrim(substring("Payload" from '"clientKey":"([^"\\]+)"'))) BETWEEN 1 AND 64;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016230555_IncidentEventClientColumns') THEN
+    UPDATE "IncidentEvents" SET "EntryRef" = btrim(substring("Payload" from '"entryRef":"([^"\\]+)"'))
+      WHERE "EntryRef" IS NULL AND "Kind" = 'detection' AND "Payload" LIKE '%"entryRef":"%'
+        AND char_length(btrim(substring("Payload" from '"entryRef":"([^"\\]+)"'))) BETWEEN 1 AND 256;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261016230555_IncidentEventClientColumns') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261016230555_IncidentEventClientColumns', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SiemSettings" ADD "ForwardVendorIncidents" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "DefaultClusterName" character varying(256);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "InboundAuthHeader" character varying(64);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "InboundEnabled" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "InboundFormat" character varying(24);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "InboundHmacSecret" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "InboundHmacSecretSetAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "InboundKey" character varying(32);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "InboundPreviousTokenExpiresAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "InboundPreviousTokenHash" character varying(64);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedSources" ADD "InboundTestReceivedAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedLanes" ADD "LastReceivedAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedLanes" ADD "RefusalsJson" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedExternalRefs" ADD "Actor" character varying(256);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedExternalRefs" ADD "ClusterName" character varying(256);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedExternalRefs" ADD "ContainerName" character varying(256);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedExternalRefs" ADD "DetailClearedAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedExternalRefs" ADD "DetailJson" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedExternalRefs" ADD "Family" character varying(32);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedExternalRefs" ADD "Namespace" character varying(256);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedExternalRefs" ADD "NodeName" character varying(256);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedExternalRefs" ADD "ObjectRef" character varying(512);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedExternalRefs" ADD "Origin" character varying(8);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedExternalRefs" ADD "PodName" character varying(256);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedExternalRefs" ADD "ProcessPath" character varying(2048);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedExternalRefs" ADD "Relation" character varying(16);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedExternalRefs" ADD "Rule" character varying(256);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedExternalRefs" ADD "RuleClass" character varying(32);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedExternalRefs" ADD "RuleId" character varying(256);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedExternalRefs" ADD "Score" integer;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedExternalRefs" ADD "VendorSeverity" character varying(64);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "SecurityFeedExternalRefs" ADD "Workload" character varying(256);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    ALTER TABLE "Incidents" ADD "VendorContainable" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    CREATE TABLE "IncidentCorroborations" (
+        "Id" uuid NOT NULL,
+        "IncidentId" uuid NOT NULL,
+        "Kind" character varying(24) NOT NULL,
+        "SourceId" uuid,
+        "Vendor" character varying(32),
+        "VendorAlertId" character varying(512),
+        "VendorUrl" character varying(1024),
+        "Rule" character varying(256),
+        "RuleClass" character varying(32) NOT NULL,
+        "VendorSeverity" character varying(64),
+        "CorroboratingIncidentId" uuid,
+        "OtherDetector" character varying(64),
+        "MatchedOn" character varying(32) NOT NULL,
+        "MapVersion" integer NOT NULL,
+        "Why" character varying(512) NOT NULL,
+        "Detail" character varying(1024),
+        "VendorAt" timestamp with time zone NOT NULL,
+        "FirstLinkedAt" timestamp with time zone NOT NULL,
+        "LastLinkedAt" timestamp with time zone NOT NULL,
+        "Occurrences" integer NOT NULL,
+        "DedupKey" character varying(64) NOT NULL,
+        CONSTRAINT "PK_IncidentCorroborations" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_IncidentCorroborations_Incidents_CorroboratingIncidentId" FOREIGN KEY ("CorroboratingIncidentId") REFERENCES "Incidents" ("Id") ON DELETE SET NULL,
+        CONSTRAINT "FK_IncidentCorroborations_Incidents_IncidentId" FOREIGN KEY ("IncidentId") REFERENCES "Incidents" ("Id") ON DELETE CASCADE,
+        CONSTRAINT "FK_IncidentCorroborations_SecurityFeedSources_SourceId" FOREIGN KEY ("SourceId") REFERENCES "SecurityFeedSources" ("Id") ON DELETE SET NULL
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    CREATE UNIQUE INDEX "IX_SecurityFeedSources_InboundKey" ON "SecurityFeedSources" ("InboundKey") WHERE "InboundKey" IS NOT NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    CREATE INDEX "IX_SecurityFeedExternalRefs_AlertSubject" ON "SecurityFeedExternalRefs" ("Kind", "ClusterName", "VendorLastSeenAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    CREATE UNIQUE INDEX "IX_IncidentCorroborations_DedupKey" ON "IncidentCorroborations" ("DedupKey");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    CREATE INDEX "IX_IncidentCorroborations_Incident" ON "IncidentCorroborations" ("IncidentId", "LastLinkedAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    CREATE INDEX "IX_IncidentCorroborations_Other" ON "IncidentCorroborations" ("CorroboratingIncidentId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    CREATE INDEX "IX_IncidentCorroborations_Source" ON "IncidentCorroborations" ("SourceId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017143655_AddVendorAlertIncidents') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261017143655_AddVendorAlertIncidents', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017174851_AddImageSboms') THEN
+    ALTER TABLE "WorkloadFindings" ADD "OwnershipSource" character varying(16);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017174851_AddImageSboms') THEN
+    ALTER TABLE "WorkloadFindings" ADD "SbomId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017174851_AddImageSboms') THEN
+    CREATE TABLE "ImageSboms" (
+        "Id" uuid NOT NULL,
+        "ImageDigest" character varying(80) NOT NULL,
+        "DigestVerified" boolean NOT NULL,
+        "SbomDigests" character varying(1024),
+        "Format" character varying(32) NOT NULL,
+        "SchemaVersion" character varying(32),
+        "ToolName" character varying(64),
+        "ToolVersion" character varying(64),
+        "SourceName" character varying(512),
+        "DistroId" character varying(32),
+        "DistroVersion" character varying(64),
+        "PackageCount" integer NOT NULL,
+        "OsPackageCount" integer NOT NULL,
+        "OsPackagesWithFiles" integer NOT NULL,
+        "FileCount" integer NOT NULL,
+        "StoredFileCount" integer NOT NULL,
+        "DocumentSha256" character varying(64) NOT NULL,
+        "SizeBytes" bigint NOT NULL,
+        "UploadedBy" character varying(256) NOT NULL,
+        "UploadedAt" timestamp with time zone NOT NULL,
+        "Note" character varying(512),
+        CONSTRAINT "PK_ImageSboms" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017174851_AddImageSboms') THEN
+    CREATE TABLE "ImageSbomPackages" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "SbomId" uuid NOT NULL,
+        "Name" character varying(512) NOT NULL,
+        "Version" character varying(256) NOT NULL,
+        "Epoch" character varying(16),
+        "Type" character varying(16) NOT NULL,
+        "Purl" character varying(1024),
+        "SourcePackage" character varying(512),
+        "Arch" character varying(32),
+        "FilesListed" boolean NOT NULL,
+        "FileCount" integer NOT NULL,
+        "LoadableFileCount" integer NOT NULL,
+        CONSTRAINT "PK_ImageSbomPackages" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_ImageSbomPackages_ImageSboms_SbomId" FOREIGN KEY ("SbomId") REFERENCES "ImageSboms" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017174851_AddImageSboms') THEN
+    CREATE TABLE "ImageSbomFiles" (
+        "Id" bigint GENERATED BY DEFAULT AS IDENTITY,
+        "PackageId" bigint NOT NULL,
+        "SbomId" uuid NOT NULL,
+        "Path" character varying(1024) NOT NULL,
+        "Kind" character varying(16) NOT NULL,
+        CONSTRAINT "PK_ImageSbomFiles" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_ImageSbomFiles_ImageSbomPackages_PackageId" FOREIGN KEY ("PackageId") REFERENCES "ImageSbomPackages" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017174851_AddImageSboms') THEN
+    CREATE INDEX "IX_ImageSbomFiles_Package" ON "ImageSbomFiles" ("PackageId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017174851_AddImageSboms') THEN
+    CREATE INDEX "IX_ImageSbomFiles_Sbom_Path" ON "ImageSbomFiles" ("SbomId", "Path");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017174851_AddImageSboms') THEN
+    CREATE INDEX "IX_ImageSbomPackages_Sbom_Name" ON "ImageSbomPackages" ("SbomId", "Name");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017174851_AddImageSboms') THEN
+    CREATE UNIQUE INDEX "IX_ImageSboms_ImageDigest" ON "ImageSboms" ("ImageDigest");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017174851_AddImageSboms') THEN
+    CREATE INDEX "IX_ImageSboms_UploadedAt" ON "ImageSboms" ("UploadedAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017174851_AddImageSboms') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261017174851_AddImageSboms', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017214423_SbomPlatformAndExecutables') THEN
+    ALTER TABLE "ImageSboms" ADD "Architecture" character varying(32);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017214423_SbomPlatformAndExecutables') THEN
+    ALTER TABLE "ImageSboms" ADD "Os" character varying(32);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017214423_SbomPlatformAndExecutables') THEN
+    ALTER TABLE "ImageSboms" ADD "OsPackagesExecutablesInferred" integer NOT NULL DEFAULT 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017214423_SbomPlatformAndExecutables') THEN
+    ALTER TABLE "ImageSbomPackages" ADD "ExecutablesKnown" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017214423_SbomPlatformAndExecutables') THEN
+    ALTER TABLE "ImageSbomPackages" ADD "UntrackedModuleFileCount" integer NOT NULL DEFAULT 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017214423_SbomPlatformAndExecutables') THEN
+    UPDATE "ImageSbomPackages" SET "ExecutablesKnown" = TRUE WHERE "Type" IN ('rpm', 'apk');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017214423_SbomPlatformAndExecutables') THEN
+    UPDATE "ImageSboms" AS s SET "OsPackagesExecutablesInferred" = (SELECT count(*)::int FROM "ImageSbomPackages" AS p WHERE p."SbomId" = s."Id" AND p."FilesListed" AND NOT p."ExecutablesKnown");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017214423_SbomPlatformAndExecutables') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261017214423_SbomPlatformAndExecutables', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017215355_CountedAlertSweepIndexes') THEN
+    CREATE INDEX "IX_SecurityFeedExternalRefs_CountedAlerts_ReceiptTime" ON "SecurityFeedExternalRefs" ("LastSeenAt") WHERE "Kind" = 'alert' AND "Relation" = 'counted' AND "VendorLastSeenAt" IS NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017215355_CountedAlertSweepIndexes') THEN
+    CREATE INDEX "IX_SecurityFeedExternalRefs_CountedAlerts_VendorTime" ON "SecurityFeedExternalRefs" ("VendorLastSeenAt") WHERE "Kind" = 'alert' AND "Relation" = 'counted';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261017215355_CountedAlertSweepIndexes') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261017215355_CountedAlertSweepIndexes', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261018120821_VendorRetentionIndexes') THEN
+    CREATE INDEX "IX_Incidents_Vendor" ON "Incidents" ("Id") WHERE "Detector" IN ('vendor-runtime-alert', 'vendor-control-plane-alert');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261018120821_VendorRetentionIndexes') THEN
+    CREATE INDEX "IX_IncidentEvents_VendorMarker_Unstubbed" ON "IncidentEvents" ("At", "Id") WHERE "Kind" = 'vendor-corroboration' AND "Payload" IS NOT NULL AND "Payload" NOT LIKE '%"retained":false}';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261018120821_VendorRetentionIndexes') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261018120821_VendorRetentionIndexes', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261018150211_SbomPlatformDigestVerification') THEN
+    ALTER TABLE "ImageSboms" ADD "DigestVerifiedByPlatform" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261018150211_SbomPlatformDigestVerification') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261018150211_SbomPlatformDigestVerification', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261018182614_AddVulnerableInUseExposedToggle') THEN
+    ALTER TABLE "ThreatIntelSettings" ADD "VulnerableInUseExposedEnabled" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261018182614_AddVulnerableInUseExposedToggle') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261018182614_AddVulnerableInUseExposedToggle', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261018191110_AddKevCatalog') THEN
+    ALTER TABLE "WorkloadFindings" ADD "KevCatalogVersion" character varying(32);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261018191110_AddKevCatalog') THEN
+    ALTER TABLE "WorkloadFindings" ADD "KevListedAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261018191110_AddKevCatalog') THEN
+    CREATE TABLE "KevCatalogEntries" (
+        "CveId" character varying(32) NOT NULL,
+        "VendorProject" character varying(256) NOT NULL,
+        "Product" character varying(256) NOT NULL,
+        "VulnerabilityName" character varying(512) NOT NULL,
+        "DateAdded" timestamp with time zone NOT NULL,
+        "DueDate" timestamp with time zone,
+        "KnownRansomwareCampaignUse" character varying(16) NOT NULL,
+        "ShortDescription" character varying(1024) NOT NULL,
+        "Cwes" character varying(256),
+        "ImportId" uuid NOT NULL,
+        CONSTRAINT "PK_KevCatalogEntries" PRIMARY KEY ("CveId")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261018191110_AddKevCatalog') THEN
+    CREATE TABLE "KevCatalogImports" (
+        "Id" uuid NOT NULL,
+        "CatalogVersion" character varying(32) NOT NULL,
+        "DateReleased" timestamp with time zone,
+        "Declared" integer NOT NULL,
+        "Entries" integer NOT NULL,
+        "Skipped" integer NOT NULL,
+        "Source" character varying(16) NOT NULL,
+        "SourceDetail" character varying(512),
+        "Sha256" character varying(64) NOT NULL,
+        "Status" character varying(16) NOT NULL,
+        "Message" character varying(1000),
+        "Active" boolean NOT NULL,
+        "ImportedAt" timestamp with time zone NOT NULL,
+        "ImportedBy" character varying(256),
+        CONSTRAINT "PK_KevCatalogImports" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261018191110_AddKevCatalog') THEN
+    CREATE INDEX "IX_KevCatalogImports_Active" ON "KevCatalogImports" ("Active");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261018191110_AddKevCatalog') THEN
+    CREATE INDEX "IX_KevCatalogImports_ImportedAt" ON "KevCatalogImports" ("ImportedAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261018191110_AddKevCatalog') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261018191110_AddKevCatalog', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261019060822_AddSecurityFeedSyncMcpGate') THEN
+    ALTER TABLE "McpWriteGateSettings" ADD "AllowSecurityFeedSync" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261019060822_AddSecurityFeedSyncMcpGate') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261019060822_AddSecurityFeedSyncMcpGate', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020090000_GrantIamApproverApprovalRead') THEN
+    INSERT INTO "CustomRolePermissions" ("Id", "CustomRoleId", "Resource", "Scope")
+    SELECT gen_random_uuid(), '00000005-0000-0000-0000-000000000005', 'IamApprovals', 'Read'
+    WHERE EXISTS (SELECT 1 FROM "CustomRoles" WHERE "Id" = '00000005-0000-0000-0000-000000000005')
+      AND NOT EXISTS (
+        SELECT 1 FROM "CustomRolePermissions"
+        WHERE "CustomRoleId" = '00000005-0000-0000-0000-000000000005' AND "Resource" = 'IamApprovals' AND "Scope" = 'Read'
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020090000_GrantIamApproverApprovalRead') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261020090000_GrantIamApproverApprovalRead', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020100000_KiamReadinessRound1') THEN
+    DROP INDEX "IX_DirectoryGroupMemberships_User_Group";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020100000_KiamReadinessRound1') THEN
+    DELETE FROM "DirectoryGroupMemberships" a
+    USING "DirectoryGroupMemberships" b
+    WHERE a."UserName" = b."UserName" AND a."GroupDn" = b."GroupDn" AND a."Id" > b."Id";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020100000_KiamReadinessRound1') THEN
+    DELETE FROM "IamSettings"
+    WHERE "Id" NOT IN (SELECT "Id" FROM "IamSettings" ORDER BY "UpdatedAt" DESC, "Id" LIMIT 1);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020100000_KiamReadinessRound1') THEN
+    UPDATE "IamIdentities" t SET "DeletedAt" = now()
+    FROM (
+        SELECT "Id", row_number() OVER (PARTITION BY "ClusterName", "Type", "Name" ORDER BY "FirstSeen", "Id") AS rn
+        FROM "IamIdentities" WHERE "Namespace" IS NULL AND "DeletedAt" IS NULL
+    ) d
+    WHERE t."Id" = d."Id" AND d.rn > 1;
+
+    UPDATE "RbacRoles" t SET "DeletedAt" = now()
+    FROM (
+        SELECT "Id", row_number() OVER (PARTITION BY "ClusterName", "Kind", "Name" ORDER BY "FirstSeen", "Id") AS rn
+        FROM "RbacRoles" WHERE "Namespace" IS NULL AND "DeletedAt" IS NULL
+    ) d
+    WHERE t."Id" = d."Id" AND d.rn > 1;
+
+    UPDATE "RbacBindings" t SET "DeletedAt" = now()
+    FROM (
+        SELECT "Id", row_number() OVER (PARTITION BY "ClusterName", "Kind", "Name" ORDER BY "FirstSeen", "Id") AS rn
+        FROM "RbacBindings" WHERE "Namespace" IS NULL AND "DeletedAt" IS NULL
+    ) d
+    WHERE t."Id" = d."Id" AND d.rn > 1;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020100000_KiamReadinessRound1') THEN
+    ALTER TABLE "AttestationCampaignItems" ADD "BackupReviewerRef" character varying(512);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020100000_KiamReadinessRound1') THEN
+    ALTER TABLE "AttestationCampaignItems" ADD "BackupReviewerType" character varying(32);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020100000_KiamReadinessRound1') THEN
+    ALTER TABLE "AttestationCampaignItems" ADD "ClusterName" character varying(256);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020100000_KiamReadinessRound1') THEN
+    ALTER TABLE "AttestationCampaignItems" ADD "ReviewerType" character varying(32);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020100000_KiamReadinessRound1') THEN
+    ALTER TABLE "AttestationCampaignItems" ADD "SecondBackupReviewerRef" character varying(512);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020100000_KiamReadinessRound1') THEN
+    ALTER TABLE "AttestationCampaignItems" ADD "SecondBackupReviewerType" character varying(32);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020100000_KiamReadinessRound1') THEN
+    ALTER TABLE "AttestationCampaignItems" ADD "SecondComment" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020100000_KiamReadinessRound1') THEN
+    ALTER TABLE "AttestationCampaignItems" ADD "SecondReviewerType" character varying(32);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020100000_KiamReadinessRound1') THEN
+    ALTER TABLE "AccessRequests" ADD "DeliveryStartedAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020100000_KiamReadinessRound1') THEN
+    CREATE UNIQUE INDEX "IX_RbacRoles_ClusterScopedKey" ON "RbacRoles" ("ClusterName", "Kind", "Name") WHERE "Namespace" IS NULL AND "DeletedAt" IS NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020100000_KiamReadinessRound1') THEN
+    CREATE UNIQUE INDEX "IX_RbacBindings_ClusterScopedKey" ON "RbacBindings" ("ClusterName", "Kind", "Name") WHERE "Namespace" IS NULL AND "DeletedAt" IS NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020100000_KiamReadinessRound1') THEN
+    CREATE UNIQUE INDEX "IX_IamIdentities_ClusterScopedKey" ON "IamIdentities" ("ClusterName", "Type", "Name") WHERE "Namespace" IS NULL AND "DeletedAt" IS NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020100000_KiamReadinessRound1') THEN
+    CREATE UNIQUE INDEX "IX_DirectoryGroupMemberships_User_GroupDn" ON "DirectoryGroupMemberships" ("UserName", "GroupDn");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020100000_KiamReadinessRound1') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261020100000_KiamReadinessRound1', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020110000_KiamReadinessRound2') THEN
+    DROP INDEX "IX_EffectivePermissions_Cluster_SourceRole";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020110000_KiamReadinessRound2') THEN
+    ALTER TABLE "AttestationCampaigns" ADD "ReminderSentAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020110000_KiamReadinessRound2') THEN
+    ALTER TABLE "AttestationCampaignItems" ADD "PermissionCount" integer NOT NULL DEFAULT 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020110000_KiamReadinessRound2') THEN
+    ALTER TABLE "AttestationCampaignItems" ADD "RevokeNote" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020110000_KiamReadinessRound2') THEN
+    ALTER TABLE "AttestationCampaignItems" ADD "RevokeRequestIdsJson" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020110000_KiamReadinessRound2') THEN
+    ALTER TABLE "ApprovalSteps" ADD "DelegatedAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020110000_KiamReadinessRound2') THEN
+    ALTER TABLE "ApprovalSteps" ADD "DelegatedBy" character varying(256);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020110000_KiamReadinessRound2') THEN
+    UPDATE "AttestationCampaignItems" SET "RevokeRequestIdsJson" = json_build_array("RevokeRequestId")::text
+    WHERE "RevokeRequestId" IS NOT NULL AND "RevokeRequestIdsJson" IS NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020110000_KiamReadinessRound2') THEN
+    UPDATE "AttestationCampaignItems" SET "PermissionCount" = json_array_length("PermissionSummaryJson"::json)
+    WHERE "PermissionCount" = 0 AND "PermissionSummaryJson" ~ '^\s*\[.*\]\s*$';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020110000_KiamReadinessRound2') THEN
+    DELETE FROM "AttestationCampaigns" c
+    WHERE c."Status" = 'Draft' AND NOT EXISTS (SELECT 1 FROM "AttestationCampaignItems" i WHERE i."CampaignId" = c."Id");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020110000_KiamReadinessRound2') THEN
+    UPDATE "AttestationCampaigns" SET "ReviewerStrategy" = 'IdentityOwner' WHERE "ReviewerStrategy" IS DISTINCT FROM 'IdentityOwner';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020110000_KiamReadinessRound2') THEN
+    UPDATE "AttestationCampaignItems"
+    SET "ReviewerRef" = btrim("ReviewerRef"), "BackupReviewerRef" = btrim("BackupReviewerRef"),
+        "SecondReviewerRef" = btrim("SecondReviewerRef"), "SecondBackupReviewerRef" = btrim("SecondBackupReviewerRef"),
+        "DelegatedTo" = btrim("DelegatedTo")
+    WHERE "ReviewerRef" <> btrim("ReviewerRef") OR "BackupReviewerRef" <> btrim("BackupReviewerRef")
+       OR "SecondReviewerRef" <> btrim("SecondReviewerRef") OR "SecondBackupReviewerRef" <> btrim("SecondBackupReviewerRef")
+       OR "DelegatedTo" <> btrim("DelegatedTo");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020110000_KiamReadinessRound2') THEN
+    DELETE FROM "ScopeOwners" s
+    USING (
+        SELECT "Id", row_number() OVER (
+            PARTITION BY btrim("ClusterName", E' \t\r\n'), "Namespace"
+            ORDER BY ("ClusterName" = btrim("ClusterName", E' \t\r\n')) DESC, "AssignedAt" DESC, "Id"
+        ) AS rn
+        FROM "ScopeOwners"
+    ) d
+    WHERE s."Id" = d."Id" AND d.rn > 1;
+    UPDATE "ScopeOwners" SET "ClusterName" = btrim("ClusterName", E' \t\r\n') WHERE "ClusterName" <> btrim("ClusterName", E' \t\r\n');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020110000_KiamReadinessRound2') THEN
+    UPDATE "IdentityOwners" SET
+        "OwnerType" = CASE lower(btrim("OwnerType")) WHEN 'axerauser' THEN 'AxeraUser' WHEN 'ldapuser' THEN 'LdapUser' WHEN 'ldapgroup' THEN 'LdapGroup' ELSE "OwnerType" END,
+        "OwnerRef" = btrim("OwnerRef", E' \t\r\n'),
+        "BackupOwnerRef" = nullif(btrim("BackupOwnerRef", E' \t\r\n'), ''),
+        "BackupOwnerType" = CASE
+            WHEN nullif(btrim("BackupOwnerRef", E' \t\r\n'), '') IS NULL THEN NULL
+            WHEN lower(btrim("BackupOwnerType")) = 'axerauser' THEN 'AxeraUser'
+            WHEN lower(btrim("BackupOwnerType")) = 'ldapuser' THEN 'LdapUser'
+            WHEN lower(btrim("BackupOwnerType")) = 'ldapgroup' THEN 'LdapGroup'
+            ELSE "BackupOwnerType" END
+    WHERE (lower(btrim("OwnerType")) IN ('axerauser','ldapuser','ldapgroup') AND "OwnerType" NOT IN ('AxeraUser','LdapUser','LdapGroup'))
+       OR "OwnerRef" <> btrim("OwnerRef", E' \t\r\n')
+       OR "BackupOwnerRef" IS DISTINCT FROM nullif(btrim("BackupOwnerRef", E' \t\r\n'), '')
+       OR ("BackupOwnerType" IS NOT NULL AND nullif(btrim("BackupOwnerRef", E' \t\r\n'), '') IS NULL)
+       OR (lower(btrim("BackupOwnerType")) IN ('axerauser','ldapuser','ldapgroup') AND "BackupOwnerType" NOT IN ('AxeraUser','LdapUser','LdapGroup'));
+
+    UPDATE "ScopeOwners" SET
+        "OwnerType" = CASE lower(btrim("OwnerType")) WHEN 'axerauser' THEN 'AxeraUser' WHEN 'ldapuser' THEN 'LdapUser' WHEN 'ldapgroup' THEN 'LdapGroup' ELSE "OwnerType" END,
+        "OwnerRef" = btrim("OwnerRef", E' \t\r\n'),
+        "BackupOwnerRef" = nullif(btrim("BackupOwnerRef", E' \t\r\n'), ''),
+        "BackupOwnerType" = CASE
+            WHEN nullif(btrim("BackupOwnerRef", E' \t\r\n'), '') IS NULL THEN NULL
+            WHEN lower(btrim("BackupOwnerType")) = 'axerauser' THEN 'AxeraUser'
+            WHEN lower(btrim("BackupOwnerType")) = 'ldapuser' THEN 'LdapUser'
+            WHEN lower(btrim("BackupOwnerType")) = 'ldapgroup' THEN 'LdapGroup'
+            ELSE "BackupOwnerType" END
+    WHERE (lower(btrim("OwnerType")) IN ('axerauser','ldapuser','ldapgroup') AND "OwnerType" NOT IN ('AxeraUser','LdapUser','LdapGroup'))
+       OR "OwnerRef" <> btrim("OwnerRef", E' \t\r\n')
+       OR "BackupOwnerRef" IS DISTINCT FROM nullif(btrim("BackupOwnerRef", E' \t\r\n'), '')
+       OR ("BackupOwnerType" IS NOT NULL AND nullif(btrim("BackupOwnerRef", E' \t\r\n'), '') IS NULL)
+       OR (lower(btrim("BackupOwnerType")) IN ('axerauser','ldapuser','ldapgroup') AND "BackupOwnerType" NOT IN ('AxeraUser','LdapUser','LdapGroup'));
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020110000_KiamReadinessRound2') THEN
+    UPDATE "ApprovalSteps" SET "ApproverLabel" = 'Entitlement owner'
+    WHERE "ApproverRef" = 'EntitlementOwner' AND ("ApproverLabel" IS NULL OR "ApproverLabel" = 'EntitlementOwner');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020110000_KiamReadinessRound2') THEN
+    DELETE FROM "EffectivePermissions" p USING "IamIdentities" i WHERE p."IdentityId" = i."Id" AND i."DeletedAt" IS NOT NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020110000_KiamReadinessRound2') THEN
+    DELETE FROM "IamSettings" AS s
+    WHERE EXISTS (
+        SELECT 1 FROM "IamSettings" AS k
+        WHERE k."UpdatedAt" > s."UpdatedAt" OR (k."UpdatedAt" = s."UpdatedAt" AND k."Id" < s."Id")
+    );
+    UPDATE "IamSettings" SET "Id" = '00000000-0000-0000-0000-000000000001' WHERE "Id" <> '00000000-0000-0000-0000-000000000001';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020110000_KiamReadinessRound2') THEN
+    ALTER TABLE "IamSettings" ADD CONSTRAINT "CK_IamSettings_Singleton" CHECK ("Id" = '00000000-0000-0000-0000-000000000001');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020110000_KiamReadinessRound2') THEN
+    CREATE INDEX "IX_EffectivePermissions_Cluster_SourceRole" ON "EffectivePermissions" ("ClusterName", "SourceRoleKey", "IdentityId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020110000_KiamReadinessRound2') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261020110000_KiamReadinessRound2', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020120000_KiamReadinessRound3') THEN
+    ALTER TABLE "IamIdentities" ADD "MembersJson" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020120000_KiamReadinessRound3') THEN
+    ALTER TABLE "IamClusterSyncStates" ADD "NoticesJson" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020120000_KiamReadinessRound3') THEN
+    ALTER TABLE "AccessRequests" ADD "ExternalApprovalRef" character varying(128);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020120000_KiamReadinessRound3') THEN
+    UPDATE "IamSettings" SET "RiskRulesJson" = NULL
+    WHERE "RiskRulesJson" IS NOT NULL AND btrim("RiskRulesJson", E' \t\r\n') IN ('', 'null');
+    UPDATE "IamSettings" SET "ApprovalMatrixJson" = NULL
+    WHERE "ApprovalMatrixJson" IS NOT NULL AND btrim("ApprovalMatrixJson", E' \t\r\n') IN ('', 'null');
+    UPDATE "IamSettings" SET "DriftExemptionsJson" = NULL
+    WHERE "DriftExemptionsJson" IS NOT NULL AND btrim("DriftExemptionsJson", E' \t\r\n') IN ('', 'null');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020120000_KiamReadinessRound3') THEN
+    UPDATE "IamSettings" SET "GitRootPath" = 'rbac'
+    WHERE btrim("GitRootPath", E' \t\r\n/') = '' OR "GitRootPath" ~ '(^|/)\.{1,2}(/|$)' OR strpos("GitRootPath", E'\\') > 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020120000_KiamReadinessRound3') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261020120000_KiamReadinessRound3', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020130000_KiamReadinessRound4') THEN
+    ALTER TABLE "IamClusterSyncStates" ADD "LastSuccessfulSyncStartedAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020130000_KiamReadinessRound4') THEN
+    ALTER TABLE "IamClusterSyncStates" ADD "NamespaceOwnersJson" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020130000_KiamReadinessRound4') THEN
+    ALTER TABLE "AttestationCampaigns" ADD "OpenNoticePending" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020130000_KiamReadinessRound4') THEN
+    ALTER TABLE "ApprovalSteps" ADD "DecidedVia" character varying(32);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020130000_KiamReadinessRound4') THEN
+    ALTER TABLE "ApprovalSteps" ADD "DelegationsJson" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020130000_KiamReadinessRound4') THEN
+    UPDATE "IamClusterSyncStates" AS s
+    SET "Health" = CASE WHEN healed.rest = '' THEN 'Healthy' ELSE s."Health" END,
+        "LastError" = NULLIF(healed.rest, ''),
+        "NoticesJson" = CASE
+            WHEN s."NoticesJson" IS NULL OR btrim(s."NoticesJson") IN ('', '[]')
+                THEN '["Last sign-in signal unavailable (oauthaccesstokens not readable)"]'
+            WHEN s."NoticesJson" LIKE '%Last sign-in signal unavailable%'
+                THEN s."NoticesJson"
+            ELSE (s."NoticesJson"::jsonb || '["Last sign-in signal unavailable (oauthaccesstokens not readable)"]'::jsonb)::text
+        END
+    FROM (
+        SELECT st."Id",
+               array_to_string(
+                   ARRAY(
+                       SELECT w.part
+                       FROM unnest(string_to_array(st."LastError", ' | ')) WITH ORDINALITY AS w(part, n)
+                       WHERE w.part NOT LIKE 'OAuth access tokens are not readable % last-login data is unavailable.'
+                       ORDER BY w.n
+                   ),
+                   ' | '
+               ) AS rest
+        FROM "IamClusterSyncStates" AS st
+        WHERE st."Health" = 'Degraded'
+          AND st."LastError" LIKE '%OAuth access tokens are not readable % last-login data is unavailable.%'
+    ) AS healed
+    WHERE s."Id" = healed."Id";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020130000_KiamReadinessRound4') THEN
+    UPDATE "ApprovalSteps" AS s
+    SET "ApproverLabel" = 'Cluster owner'
+    FROM "AccessRequests" AS r
+    WHERE s."RequestId" = r."Id"
+      AND s."ApproverRef" = 'NamespaceOwner'
+      AND s."ApproverLabel" = 'Namespace owner'
+      AND (r."Namespace" IS NULL OR btrim(r."Namespace") = '');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020130000_KiamReadinessRound4') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261020130000_KiamReadinessRound4', '10.0.12');
+    END IF;
+END $EF$;
 COMMIT;
