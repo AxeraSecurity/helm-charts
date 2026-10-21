@@ -10272,3 +10272,45 @@ BEGIN
     END IF;
 END $EF$;
 COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020140000_KiamReadinessRound5') THEN
+    ALTER TABLE "RbacRoles" ADD "ReportedDrift" character varying(64);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020140000_KiamReadinessRound5') THEN
+    ALTER TABLE "RbacBindings" ADD "ReportedDrift" character varying(64);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020140000_KiamReadinessRound5') THEN
+    UPDATE "AccessRequests" AS g
+    SET "LastError" = 'Time-limited access ended: its revoke ' || r."Reference" || ' is confirmed.'
+    FROM "AccessRequests" AS r
+    WHERE r."SupersedesRequestId" = g."Id"
+      AND r."Status" = 'Applied'
+      AND g."Type" = 'TEMP_ACCESS'
+      AND g."Status" = 'Closed'
+      AND (g."LastError" IS NULL
+           OR (g."LastError" NOT LIKE 'Closed without confirmation%'
+               AND g."LastError" NOT LIKE 'Closed by %'
+               AND g."LastError" NOT LIKE 'Time-limited access ended%'));
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261020140000_KiamReadinessRound5') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261020140000_KiamReadinessRound5', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
