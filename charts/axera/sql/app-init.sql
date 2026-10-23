@@ -10314,3 +10314,85 @@ BEGIN
     END IF;
 END $EF$;
 COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022100000_AddIamOwnerSuggestions') THEN
+    CREATE TABLE "IamOwnerSuggestions" (
+        "Id" uuid NOT NULL,
+        "SubjectType" character varying(16) NOT NULL,
+        "IdentityId" uuid,
+        "RoleId" uuid,
+        "ClusterName" character varying(256) NOT NULL,
+        "Namespace" character varying(256),
+        "SubjectKind" character varying(32) NOT NULL,
+        "SubjectKey" character varying(1024) NOT NULL,
+        "OwnerType" character varying(32) NOT NULL,
+        "OwnerRef" character varying(512) NOT NULL,
+        "OwnerDisplayName" character varying(512),
+        "Confidence" integer NOT NULL,
+        "Signal" character varying(32) NOT NULL,
+        "ReasonsJson" text NOT NULL,
+        "FirstSuggestedAt" timestamp with time zone NOT NULL,
+        "ComputedAt" timestamp with time zone NOT NULL,
+        "DismissedAt" timestamp with time zone,
+        "DismissedBy" character varying(256),
+        "DismissReason" character varying(500),
+        CONSTRAINT "PK_IamOwnerSuggestions" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_IamOwnerSuggestions_IamIdentities_IdentityId" FOREIGN KEY ("IdentityId") REFERENCES "IamIdentities" ("Id") ON DELETE CASCADE,
+        CONSTRAINT "FK_IamOwnerSuggestions_RbacRoles_RoleId" FOREIGN KEY ("RoleId") REFERENCES "RbacRoles" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022100000_AddIamOwnerSuggestions') THEN
+    CREATE INDEX "IX_IamOwnerSuggestions_Cluster_Namespace" ON "IamOwnerSuggestions" ("ClusterName", "Namespace");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022100000_AddIamOwnerSuggestions') THEN
+    CREATE UNIQUE INDEX "IX_IamOwnerSuggestions_Identity_Owner" ON "IamOwnerSuggestions" ("IdentityId", "OwnerType", "OwnerRef") WHERE "IdentityId" IS NOT NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022100000_AddIamOwnerSuggestions') THEN
+    CREATE UNIQUE INDEX "IX_IamOwnerSuggestions_Role_Owner" ON "IamOwnerSuggestions" ("RoleId", "OwnerType", "OwnerRef") WHERE "RoleId" IS NOT NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022100000_AddIamOwnerSuggestions') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261022100000_AddIamOwnerSuggestions', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022110000_UpdateIamUserRoleDescription') THEN
+    UPDATE "CustomRoles"
+    SET "Description" = 'Everyday use of the Identity module: see the identities, roles and namespaces you answer for, request access to any role in any namespace, and decide the approvals routed to you as an owner.', "UpdatedAt" = now()
+    WHERE "Id" = '00000007-0000-0000-0000-000000000007' AND "Description" = 'Everyday use of the Identity module: browse the inventory and raise access requests. Approves nothing and owns nothing.';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022110000_UpdateIamUserRoleDescription') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261022110000_UpdateIamUserRoleDescription', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
