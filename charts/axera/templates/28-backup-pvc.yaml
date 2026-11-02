@@ -1,0 +1,26 @@
+{{- include "axera.init" . }}
+{{- if and .Values.backup.enabled (eq .Values.backup.storage.type "pvc") .Values.backup.storage.createPvc }}
+# Shared volume for database dumps — mounted at /backups by BOTH the API pod and the
+# pg_dump / pg_restore Jobs. Access mode backup.storage.accessMode (ReadWriteMany by default, so
+# the Job pod and the API pod can co-mount on different nodes): ReadWriteMany needs a StorageClass
+# that provides it (backup.storage.storageClass). On a single node ReadWriteOnce works (the k3s
+# profile sets it).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.backup.storage.pvcClaimName | default "axera-backups" }}
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+  # keep: `helm uninstall` leaves the dumps. Delete the claim yourself when they are not needed.
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  accessModes:
+    - {{ .Values.backup.storage.accessMode | default "ReadWriteMany" }}
+  resources:
+    requests:
+      storage: {{ .Values.backup.storage.size | default "10Gi" }}
+  {{- if .Values.backup.storage.storageClass }}
+  storageClassName: {{ .Values.backup.storage.storageClass | quote }}
+  {{- end }}
+{{- end }}

@@ -2,6 +2,78 @@ apiVersion: v1
 entries:
   axera:
   - annotations:
+      artifacthub.io/images: |
+        - name: api
+          image: quay.io/axera/microsegmentation-api:v17.2.0@sha256:3548f714775d4f9d00a59cae6c8e347e4c48479d19fb2261d5cd2d1585891121
+        - name: allowdropmonitor
+          image: quay.io/axera/microsegmentation-allowdropmonitor:v17.2.0@sha256:3d9229eb121c4b21b8bae9df225fb93353d934bcc00d76409651c2d553fee644
+        - name: radar
+          image: quay.io/axera/microsegmentation-radar:v17.2.0@sha256:e35c3d99e8d141d68a2ce7f03d257580f5415c3991e5da24d247c99bd7952cb4
+        - name: networkpolicywatcher
+          image: quay.io/axera/microsegmentation-networkpolicywatcher:v17.2.0@sha256:e2ab71d20e4fc0911a9d4c7b4ea1d540496699ab80495dcb8ac5f8a333385846
+        - name: mcp
+          image: quay.io/axera/microsegmentation-mcp:v17.2.0@sha256:3b464834f0b1d05b4c8786f1ec243f5fb33ae6579641e03f2d0176d6f26342b8
+        - name: frontend
+          image: quay.io/axera/microsegmentation-frontend:v17.2.0@sha256:2924a307583838e33622c65aecf65a77913eb716d5de00738dbf111c2e0f5791
+        - name: postgres-rhel
+          image: registry.redhat.io/rhel9/postgresql-16:9.8-1787043427@sha256:8fd1bbd8d006ae5bb892c6d633c9d92fb980caed470199effaf2343099fcdb89
+        - name: postgres-alpine
+          image: quay.io/axera/postgres:16-alpine@sha256:60b180625695e90b6e450405d5f0bcb74bc8c52c65d1cd11aeb3da46cac06dd8
+        - name: postgres-backup-rhel
+          image: registry.redhat.io/rhel9/postgresql-18:9.8-1790730421@sha256:2191ac24e592c0f7ade04f72b62b7c85f75e744c2d5e1595db8712081943f1c7
+        - name: postgres-backup-alpine
+          image: quay.io/axera/postgres:18-alpine@sha256:0752ea635cca3015e574a4a467f1c54409fdfaf7ed5ba1bc0a6d32568714ab2e
+        - name: kafka
+          image: quay.io/axera/kafka:4.0.0@sha256:821720633cf189f4852051569f0794ffbb3aeef3de9e5b47684901af81176852
+        - name: kafka-ui
+          image: quay.io/axera/kafka-ui:v0.7.2@sha256:0d8ba24237b0b6520f8218c7d3c659ee1cc0cedcf2ee7d356ba17590fdb4811f
+        - name: ai-model
+          image: quay.io/axera/microsegmentation-ollama:0.24.0@sha256:a4e95f0a14e6773d2507c593336d94dd5f73fe134fb13438ce069a5a1fefd9fe
+        - name: helm-test
+          image: registry.access.redhat.com/ubi9/ubi-minimal:9.8-1791279563@sha256:5ed244b62bbf4095080144d9d35eb8fcd3d39a9801f94aadd63b9d10978a01ae
+      charts.openshift.io/archs: amd64
+      charts.openshift.io/name: Axera Microsegmentation & NDR
+      charts.openshift.io/provider: Axera Security
+      charts.openshift.io/supportURL: https://axerasecurity.com/support
+    apiVersion: v2
+    appVersion: 17.2.0
+    created: "2026-11-02T13:51:17.233723+03:00"
+    description: Axera — Kubernetes microsegmentation and network detection & response
+      (NDR). The central platform (console, API, flow analytics, policy engine) for
+      OpenShift, k3s, RKE2 / Rancher, Anthos and vanilla Kubernetes. Maps east-west
+      and egress flows, turns observed traffic into least-privilege NetworkPolicy
+      and raises incidents. Observes first and enforces nothing until you choose.
+      Runs all-internal (PostgreSQL + Kafka in the namespace) or against your own
+      PostgreSQL and Kafka. Pair it with the axera-force chart on every monitored
+      cluster.
+    digest: 9b071746d96c8b2b11787238b91720ffd4d7faf20a9606f2fa4167aa83182c87
+    home: https://axerasecurity.com
+    icon: https://axerasecurity.github.io/helm-charts/axera-logo.svg
+    keywords:
+    - microsegmentation
+    - network-detection-and-response
+    - ndr
+    - kubernetes-network-policy
+    - zero-trust
+    - security
+    - openshift
+    - k3s
+    - rke2
+    - rancher
+    - anthos
+    kubeVersion: '>=1.25.0-0'
+    maintainers:
+    - email: support@axerasecurity.com
+      name: Axera Security
+      url: https://axerasecurity.com
+    name: axera
+    sources:
+    - https://github.com/AxeraSecurity/helm-charts
+    type: application
+    urls:
+    - https://axerasecurity.github.io/helm-charts/axera-3.0.0.tgz
+    version: 3.0.0
+  - annotations:
       charts.openshift.io/archs: amd64
       charts.openshift.io/name: Axera Microsegmentation & NDR
       charts.openshift.io/provider: Axera Security
@@ -186,4 +258,73 @@ entries:
     urls:
     - https://axerasecurity.github.io/helm-charts/axera-1.0.0.tgz
     version: 1.0.0
-generated: "2026-07-03T23:18:35.913473+03:00"
+  axera-force:
+  - annotations:
+      artifacthub.io/crds: |
+        - kind: TracingPolicy
+          version: v1alpha1
+          name: tracingpolicies.cilium.io
+          displayName: TracingPolicy
+          description: Cluster-wide process sensor policy (observe-only tcp_connect by default).
+        - kind: TracingPolicyNamespaced
+          version: v1alpha1
+          name: tracingpoliciesnamespaced.cilium.io
+          displayName: TracingPolicyNamespaced
+          description: Namespaced process sensor policy.
+        - kind: PodInfo
+          version: v1alpha1
+          name: podinfo.cilium.io
+          displayName: PodInfo
+          description: Pod metadata the process sensor keeps.
+      artifacthub.io/images: |
+        - name: flow-agent
+          image: quay.io/netobserv/netobserv-ebpf-agent:v1.11.3-community@sha256:663e616091c9cb8b0c2061fc44117876f8d50c111df16da9c255d882cc439a74
+        - name: flow-pipeline
+          image: quay.io/netobserv/flowlogs-pipeline:v1.11.5-community@sha256:d6c6a1cc9ac181689f9f317ae06f485d4dab19edc3aa3a083bc78d203b3be7b9
+        - name: process-sensor
+          image: quay.io/cilium/tetragon:v1.7.1@sha256:afc9458ba4bc3f2795da3df6b03d88ce50e175ac3903027de8036e2046b84a02
+        - name: shipper
+          image: quay.io/axera/fluent-bit:4.2.8@sha256:f8c65280140252318fb5a20450face7e6af505245546d62f4a3cc7166489f764
+          platforms:
+            - linux/amd64
+        - name: capture
+          image: quay.io/openshift/origin-network-tools:4.19.0@sha256:052dd26abfe4e7de9649ddb5b7b8514865d5b76551dd2dd126463a7e0e2fc28c
+        - name: audit-forwarder
+          image: docker.io/timberio/vector:0.40.1-debian@sha256:881a3728091fab7a39dade6ca70f1e76e14e0a308bdb57a00009dc3d0b54e74d
+    apiVersion: v2
+    appVersion: 17.2.0
+    created: "2026-11-02T13:51:17.236862+03:00"
+    description: 'Axera cluster agent for one Kubernetes cluster (OpenShift, k3s,
+      RKE2 / Rancher, Anthos, or vanilla kubeadm): one DaemonSet in namespace "axera"
+      that runs the eBPF flow agent, the flow pipeline, the process sensor and the
+      shipper, sending flow and process telemetry to a central Axera platform through
+      Kafka, with an optional packet-capture sidecar, an optional API audit forwarder,
+      and the integration ServiceAccount used to register the cluster in Axera.'
+    digest: e8c936cad440c34d643a90920cc5b59f0ee101ae505a90e659c5deeccc01ab4c
+    home: https://axerasecurity.com
+    icon: https://axerasecurity.github.io/helm-charts/axera-logo.svg
+    keywords:
+    - axera
+    - ebpf
+    - network-observability
+    - microsegmentation
+    - kubernetes-security
+    - kafka
+    - openshift
+    - k3s
+    - rke2
+    - rancher
+    - anthos
+    kubeVersion: '>=1.25.0-0'
+    maintainers:
+    - email: support@axerasecurity.com
+      name: Axera Security
+      url: https://axerasecurity.com
+    name: axera-force
+    sources:
+    - https://github.com/AxeraSecurity/helm-charts
+    type: application
+    urls:
+    - https://axerasecurity.github.io/helm-charts/axera-force-2.0.0.tgz
+    version: 2.0.0
+generated: "2026-11-02T13:51:17.228308+03:00"

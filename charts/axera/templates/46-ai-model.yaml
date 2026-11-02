@@ -1,0 +1,169 @@
+{{- include "axera.init" . }}
+{{- define "axera.aiModelPullJobSpec" -}}
+ttlSecondsAfterFinished: 86400
+backoffLimit: 20
+template:
+  metadata:
+    labels:
+      app: ollama-pull-model
+      {{- with include "axera.jobPodSidecarLabel" . }}
+      {{- . | nindent 6 }}
+      {{- end }}
+    {{- with include "axera.jobPodSidecarAnnotation" . }}
+    annotations:
+      {{- . | nindent 6 }}
+    {{- end }}
+  spec:
+    serviceAccountName: axera-sa
+    {{- with (include "axera.scheduling" (dict "component" "aiModel" "ctx" .) | trim) }}{{ . | nindent 4 }}{{- end }}
+    restartPolicy: OnFailure
+    containers:
+      - name: pull
+        image: {{ include "axera.image" (dict "img" .Values.images.aiModel "ctx" .) }}
+        imagePullPolicy: IfNotPresent
+        {{- with (.Values.resources).aiModelPull }}
+        resources: {{- toYaml . | nindent 10 }}
+        {{- end }}
+        env:
+          - { name: OLLAMA_HOST, value: "http://ollama:11434" }
+        command:
+          - /bin/sh
+          - -c
+          - |
+            set -e
+            echo "[pull] waiting for the model server Service..."
+            until ollama list >/dev/null 2>&1; do sleep 3; done
+            for m in {{ .Values.ai.model | quote }}{{- range .Values.ai.extraModels }} {{ . | quote }}{{- end }}; do
+              echo "[pull] pulling $m"
+              if ! ollama pull "$m"; then
+                echo "[pull] FATAL: could not pull '$m'." >&2
+                echo "[pull] This job reaches the PUBLIC model registry. On a disconnected" >&2
+                echo "[pull] cluster that will never succeed: set ai.modelSource=image and" >&2
+                echo "[pull] supply a mirrored weights image, or preload the PVC and set" >&2
+                echo "[pull] ai.modelSource=preloaded." >&2
+                exit 1
+              fi
+            done
+            echo "[pull] done."
+{{- end }}
+{{- if and .Values.ai.enabled (not .Values.ai.external) }}
+# =============================================================================
+# The local AI model server for the AI incident-triage assistant (ai.enabled, off by default).
+# Stateful: pulled models are cached on a PVC so restarts don't re-download. Mounted at /models
+# so an arbitrary UID with GID 0 can write it via fsGroup.
+# The StatefulSet, Service, Job and app label keep the names every earlier chart used (resource
+# names kept for compatibility): a rename would orphan the model volume on upgrade and break AI
+# settings saved with the old Service URL.
+# =============================================================================
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ollama
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: ollama
+    {{- include "axera.labels" . | nindent 4 }}
+spec:
+  serviceName: ollama
+  replicas: 1
+  selector:
+    matchLabels: { app: ollama }
+  template:
+    metadata:
+      labels: { app: ollama }
+    spec:
+      serviceAccountName: axera-sa
+      {{- with (include "axera.scheduling" (dict "component" "aiModel" "ctx" .) | trim) }}{{ . | nindent 6 }}{{- end }}
+      securityContext:
+        fsGroup: 0
+      {{- if eq .Values.ai.modelSource "image" }}
+      # Air-gapped model delivery: the weights ship as an ordinary mirrored image
+      # (images.aiModelWeights, an image whose /models-src holds the model tree) and are copied
+      # onto the PVC before the model server starts. Nothing reaches the internet at runtime.
+      initContainers:
+        - name: load-models
+          image: {{ include "axera.image" (dict "img" .Values.images.aiModelWeights "ctx" .) }}
+          imagePullPolicy: IfNotPresent
+          {{- with (.Values.resources).aiModelCopy }}
+          resources: {{- toYaml . | nindent 12 }}
+          {{- end }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              if [ ! -d /models-src ] || [ -z "$(ls -A /models-src 2>/dev/null)" ]; then
+                echo "[load-models] FATAL: image has no /models-src payload." >&2
+                echo "[load-models] Expected an image whose /models-src holds the model tree." >&2
+                exit 1
+              fi
+              echo "[load-models] copying weights onto the volume..."
+              cp -a /models-src/. /models/
+              echo "[load-models] done."
+          volumeMounts:
+            - { name: models, mountPath: /models }
+      {{- end }}
+      containers:
+        - name: ai-model
+          image: {{ include "axera.image" (dict "img" .Values.images.aiModel "ctx" .) }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - { containerPort: 11434, name: http }
+          env:
+            - { name: OLLAMA_HOST, value: "0.0.0.0:11434" }
+            - { name: OLLAMA_MODELS, value: "/models" }
+            # Memory safety on a constrained box: keep only ONE model resident at a time and serve
+            # one request at a time (smaller KV cache). Raise both only if the box has the RAM.
+            - { name: OLLAMA_MAX_LOADED_MODELS, value: "1" }
+            - { name: OLLAMA_NUM_PARALLEL, value: "1" }
+          volumeMounts:
+            - { name: models, mountPath: /models }
+          readinessProbe:
+            tcpSocket: { port: 11434 }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket: { port: 11434 }
+            initialDelaySeconds: 30
+            {{- include "axera.livenessBudget" . | nindent 12 }}
+          resources: {{- toYaml .Values.resources.aiModel | nindent 12 }}
+  volumeClaimTemplates:
+    - metadata:
+        name: models
+      spec:
+        accessModes: [ReadWriteOnce]
+        {{- if .Values.global.storageClass }}
+        storageClassName: {{ .Values.global.storageClass | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.ai.storage }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+spec:
+  selector: { app: ollama }
+  ports:
+    - { name: http, port: 11434, targetPort: 11434 }
+{{- if and .Values.ai.pullModel (eq .Values.ai.modelSource "registry") }}
+---
+# Job that pulls the configured model into the PVC. Reuses the model server image (no extra image
+# to mirror) and talks to the Service, so the model lands on the StatefulSet's volume. Idempotent.
+# Named by a hash of its own spec: a changed ai.model is a new Job.
+{{- $jobSpec := include "axera.aiModelPullJobSpec" . }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ollama-pull-model-{{ $jobSpec | sha1sum | trunc 8 }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: ollama-pull-model
+    {{- include "axera.labels" . | nindent 4 }}
+spec:
+{{ $jobSpec | indent 2 }}
+{{- end }}
+{{- end }}

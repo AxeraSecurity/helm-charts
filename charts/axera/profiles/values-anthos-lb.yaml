@@ -1,0 +1,35 @@
+# Anthos (GKE Enterprise) without a mesh front door: the UI on a LoadBalancer Service.
+#   helm upgrade --install axera axera/axera -n axera-central -f profiles/values-anthos-lb.yaml -f my-values.yaml
+#
+# The frontend pods serve plain HTTP on 3000. Users get https only when a load balancer in front
+# terminates TLS. /api/mcp is not reachable from outside (layer 4 cannot route by path).
+global:
+  distribution: anthos
+  storageClass: ""
+
+expose:
+  type: LoadBalancer
+  frontend:
+    # Optional: the DNS name that points at the load balancer (feeds CORS, the OAuth issuer and the app URL).
+    host: ""
+    # true only when a load balancer in front terminates TLS; false serves sign-in over plain HTTP.
+    tls: "<<< FILL: true (TLS terminated in front) or false, unquoted >>>"
+    servicePort: 3000
+    loadBalancerIP: ""
+    # Restrict who reaches the UI, e.g. ["10.0.0.0/8"].
+    loadBalancerSourceRanges: []
+    serviceAnnotations: {}
+    #  networking.gke.io/load-balancer-type: "Internal"
+    # Local: the client address reaches the pod unSNATed and matches the NetworkPolicy ipBlock
+    # (Dataplane V2 gives node-SNATed traffic a node identity no ipBlock matches). Needs the load
+    # balancer's node health check (healthCheckNodePort), which GKE and MetalLB handle.
+    externalTrafficPolicy: Local
+
+networkPolicies:
+  # With externalTrafficPolicy Local the client address is preserved: keep the default (any
+  # source) or list the client ranges as ipBlock peers.
+  ingressFrom: []
+  kafkaClients:
+    # Dataplane V2 matches no ipBlock for cross-node host traffic (the hostNetwork agents): Kafka is
+    # selected by no policy instead; namespaceSelector {} admitted every pod anyway.
+    unrestricted: true

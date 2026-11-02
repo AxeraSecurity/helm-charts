@@ -1,258 +1,715 @@
 # =============================================================================
-# Axera — default values
+# Axera platform — default values
 # =============================================================================
-# Out of the box these defaults deploy an all-internal ("one-box") stack:
-# Postgres x2 + Kafka + the Axera apps, with all secrets auto-generated.
-# For production, point at external Postgres / Kafka / AI — see values-production.yaml.
+# One chart for OpenShift, k3s, RKE2 / Rancher, Anthos (GKE Enterprise) and vanilla Kubernetes.
+# Out of the box it deploys an all-internal ("one-box") stack: PostgreSQL x2 + Kafka + the Axera
+# apps, every secret generated at install and kept on upgrade.
 #
-# Override at install time with:  -f my-values.yaml  or  --set key=value
+# Start from the profile of your distribution (profiles/values-<distribution>.yaml) and add your
+# own values file on top:
+#   helm upgrade --install axera axera/axera -n axera-central \
+#     -f profiles/values-k3s.yaml -f my-values.yaml
+# Keep the SAME -f files for every upgrade (see dataTier).
 
 global:
-  # Target namespace. Must match the `helm install --namespace` value.
-  namespace: axera
-  # OpenShift apps/wildcard domain, used to derive Route hostnames as
+  # Which distribution this is: auto | openshift | k3s | rke2 | anthos | vanilla.
+  #   auto → openshift when the API server serves route.openshift.io/v1 or security.openshift.io/v1;
+  #          else from a node's kubelet version (+k3s → k3s, +rke2 → rke2, -gke. → anthos);
+  #          else vanilla. A render that cannot see the cluster (helm template, --dry-run, GitOps)
+  #          resolves to vanilla and the release notes warn: set it explicitly there.
+  # It picks the defaults below that say "per distribution": SecurityContextConstraints, the front
+  # door (expose.type), the PostgreSQL image, the AllowDropMonitor, container hardening, the
+  # NetworkPolicy peers and the amd64 node selector.
+  distribution: auto
+  # DEPRECATED alias kept for older values files: openshift → distribution openshift; kubernetes →
+  # auto-detection without OpenShift; auto (same as empty). Leave empty.
+  platform: ""
+  # Target namespace. Empty → the release namespace (helm ... -n <namespace>). Recommended:
+  # axera-central. Never "axera": that is the agent namespace (axera-force chart) and the chart
+  # refuses it. A value other than the release namespace is refused unless createNamespace=true.
+  # One platform per namespace; the cluster-scoped objects carry the namespace as a suffix.
+  namespace: ""
+  # OpenShift only: wildcard apps domain used to derive Route hostnames as
   #   <route>-<namespace>.<clusterDomain>
-  # Leave EMPTY to let OpenShift auto-assign Route hostnames from the cluster's
-  # default ingress domain (recommended for portability). Set it only if you
-  # need deterministic hostnames.
+  # Empty → OpenShift assigns Route hostnames from its default ingress domain.
   clusterDomain: ""
-  # PVC StorageClass for stateful workloads (Postgres, Kafka, Ollama, dp-keys).
-  # Empty → use the cluster's default StorageClass.
+  # Cluster DNS domain (kubelet --cluster-domain), used in in-cluster FQDNs: the Kafka advertised
+  # listener and the Istio destinations. Change only if the cluster was built with another one.
+  clusterDnsDomain: cluster.local
+  # StorageClass for every ReadWriteOnce volume (PostgreSQL x2, Kafka, the AI model, dp-keys).
+  # Empty → the cluster's DEFAULT StorageClass (k3s: local-path; Anthos: standard-rwo; RKE2 ships
+  # none: mark one default or name it here). StatefulSet claims are immutable: pick it before the
+  # first install.
   storageClass: ""
-  # Image registry prefix (no trailing slash). Full path = <registry>/<repo>:<tag>
+  # Image registry prefix (no trailing slash). Image path = <registry>/<repo>@<digest>.
   imageRegistry: quay.io/axera
-  # Create the Namespace + SCC + RBAC. Disable if a cluster admin pre-creates them.
-  createNamespace: true
-  createSCC: true
-  # GID that owns the API DataProtection key-ring PVC (mounted at /var/lib/axera).
-  # Only used when createSCC=true (axera-scc uses fsGroup: RunAsAny).
+  # true → the chart creates and OWNS global.namespace (`helm uninstall` then deletes it with
+  # every volume in it). Off OpenShift it also stamps the Pod Security labels (podSecurity below)
+  # and, on anthos, istio-injection (istio.injection). Recommended: false, and create the namespace
+  # yourself with those labels (README, "Prepare the namespace"). With true, keep the release record
+  # in ANOTHER existing namespace, never pass --create-namespace and do not pre-create this one:
+  #   helm upgrade --install axera axera/axera -n <existing-ns> \
+  #     --set global.namespace=axera-central --set global.createNamespace=true ...
+  # An upgrade of a release that owns its namespace (an earlier chart created it) is refused while
+  # this is false: the upgrade would delete the namespace.
+  createNamespace: false
+  # Pod Security level stamped on the namespace when the chart creates it (off OpenShift). Every
+  # pod of this chart passes "baseline"; "restricted" is not reachable (PostgreSQL, Kafka, the AI
+  # model and the API-created backup Jobs start as root).
+  podSecurity: baseline
+  # SecurityContextConstraints axera-scc-<namespace> and its use grant for axera-sa:
+  # auto | true | false. Rendered on OpenShift only (auto and true); false if a cluster admin
+  # pre-creates them. Never gates the integration identity or the licence RBAC.
+  createSCC: auto
+  # Group of the API pod, so the dp-keys volume is writable by the image's USER 1001 (set
+  # everywhere except OpenShift with createSCC=false, where the SCC assigns one).
   dpKeysFsGroup: 1001
+  # nodeSelector kubernetes.io/arch: amd64 on every pod (the product images are built for amd64
+  # only): auto (on everywhere except OpenShift) | true | false. A nodeSelector of your own in
+  # scheduling that names kubernetes.io/arch wins.
+  archNodeSelector: auto
 
 # -----------------------------------------------------------------------------
-# Image pull secret — enable only if your registry is private.
+# Image pull secret — not needed for the public images. Enable only if you mirror them into a
+# private registry (global.imageRegistry, images.*.registry).
 # -----------------------------------------------------------------------------
 imagePullSecret:
   enabled: false
   name: axera-pull-secret
-  # base64-encoded ~/.docker/config.json. Generate with:
-  #   echo -n '{"auths":{"quay.io":{"auth":"<base64 of user:token>"}}}' | base64
-  # Or leave empty and pre-create the pull secret in the cluster, then set
-  # enabled=false and reference it via the service account.
+  # base64 of a ~/.docker/config.json. Prefer creating the Secret yourself:
+  #   kubectl -n <ns> create secret docker-registry axera-pull-secret --docker-server=<registry> ...
+  # and leaving this empty. Never commit it.
   dockerconfigjson: ""
 
 # -----------------------------------------------------------------------------
-# Container images. Tags can be overridden per-environment.
+# Secrets (templates/10-secrets.yaml)
+# -----------------------------------------------------------------------------
+# create: true (default) — the chart renders axera-db-secrets, axera-app-secret and
+#   kafka-external-secret. Every blank secret value (postgres.password, app.accessTokenSecret,
+#   app.adminPassword, app.encryptionKey, app.encryptionIV, app.internalToken) is read back from
+#   the existing Secret on upgrade, else generated. The Secrets carry
+#   helm.sh/resource-policy: keep (uninstall leaves them).
+# create: false — the chart renders NO Secret. Create them yourself with these keys:
+#   axera-db-secrets      : POSTGRES_USER, POSTGRES_PASSWORD, APP_DB_NAME, RADAR_DB_NAME,
+#                           APP_DB_CONNSTR, RADAR_DB_CONNSTR
+#   axera-app-secret      : AccessTokenSecret (64+ chars), AdminCredentials__Username,
+#                           AdminCredentials__Email, AdminCredentials__Password,
+#                           Encryption__Key (base64 of 32 bytes), Encryption__IV (base64 of 16
+#                           bytes), Secrets__EncryptionKey (base64 of 32 bytes), Internal__Token,
+#                           optionally MeshMonitoring__IngestTokens__<cluster>
+#   kafka-external-secret : KafkaServer, Kafka__BootstrapServers, Kafka__SecurityProtocol,
+#                           Kafka__SaslMechanism, Kafka__SaslUsername, Kafka__SaslPassword,
+#                           Kafka__SslCaLocation (/etc/kafka-certs/ca.crt or ""), ca.crt
+# GitOps (Argo CD renders with helm template, where lookup answers empty): use create: false or
+# existingSecrets, or every render generates new values.
+secrets:
+  create: true
+  # Name a Secret of your own (same keys as above) per kind; the chart then renders no Secret of
+  # that kind and every workload reads the named one. Empty = the chart's own Secret.
+  existingSecrets:
+    db: ""
+    app: ""
+    kafka: ""
+
+# -----------------------------------------------------------------------------
+# Data tier guard (templates/00-validate.yaml)
+# -----------------------------------------------------------------------------
+# The chart records where the data lives on its Secrets (annotations
+# platform.axerasecurity.com/postgres-tier, .../postgres-flavor and .../kafka-tier). A helm upgrade
+# whose values ask for another tier or PostgreSQL image flavour is REFUSED: the usual cause is a
+# values file left out of the command, which would start the platform on new, EMPTY databases. To
+# change it on purpose (data moved), pass --set dataTier.allowChange=true to that one command;
+# never keep it in a values file.
+dataTier:
+  allowChange: false
+
+# -----------------------------------------------------------------------------
+# Logging — Serilog minimum levels: Verbose | Debug | Information | Warning | Error | Fatal.
+# -----------------------------------------------------------------------------
+logging:
+  # Global minimum level. Raise to Information/Debug to troubleshoot. The once-a-minute ingest
+  # summaries stay at Information unless overrides name them.
+  level: Warning
+  # Per-source overrides applied on top of level. Set to {} to disable.
+  overrides:
+    Microsoft.AspNetCore: Warning
+    Microsoft.EntityFrameworkCore: Warning
+    Microsoft.EntityFrameworkCore.Database.Command: Warning
+    System.Net.Http.HttpClient: Warning
+
+# -----------------------------------------------------------------------------
+# Container images, every one pinned by digest (quay manifest-list / index digests). The axera.image
+# helper prefers `digest` over `tag`. For an air-gapped install mirror the images listed in
+# Chart.yaml (artifacthub.io/images) and set global.imageRegistry or images.<name>.registry.
 # -----------------------------------------------------------------------------
 images:
-  api:                  { repo: microsegmentation-api,                  tag: v8.3.0 }
-  proxy:                { repo: microsegmentation-proxy,                tag: v8.3.0 }
-  allowdropmonitor:     { repo: microsegmentation-allowdropmonitor,     tag: v8.3.0 }
-  radar:                { repo: microsegmentation-radar,                tag: v8.3.0 }
-  networkpolicywatcher: { repo: microsegmentation-networkpolicywatcher, tag: v8.3.0 }
-  frontend:             { repo: microsegmentation-frontend,             tag: v8.3.0 }
-  # Red Hat-certified PostgreSQL (registry.redhat.io is covered by OpenShift's
-  # cluster-wide pull secret). db-migrate jobs reuse this image for psql/pg_isready.
-  postgres:             { registry: registry.redhat.io, repo: rhel9/postgresql-16, tag: latest }
-  # Internal Kafka is a single-node dev/demo convenience (NOT Red Hat certified).
-  # For a certified / production install use external Kafka (kafka.external=true);
-  # there is no Red Hat drop-in standalone Kafka image (AMQ Streams is operator-driven).
-  kafka:                { repo: kafka,                                   tag: 4.0.0 }
-  kafkaUi:              { repo: kafka-ui,                                tag: v0.7.2 }
-  # Mirror of docker.io/ollama/ollama. Pin to the tag present in your registry.
-  ollama:               { repo: microsegmentation-ollama,               tag: 0.24.0 }
+  api:                  { repo: microsegmentation-api,                  tag: v17.2.0, digest: "sha256:3548f714775d4f9d00a59cae6c8e347e4c48479d19fb2261d5cd2d1585891121" }
+  allowdropmonitor:     { repo: microsegmentation-allowdropmonitor,     tag: v17.2.0, digest: "sha256:3d9229eb121c4b21b8bae9df225fb93353d934bcc00d76409651c2d553fee644" }
+  radar:                { repo: microsegmentation-radar,                tag: v17.2.0, digest: "sha256:e35c3d99e8d141d68a2ce7f03d257580f5415c3991e5da24d247c99bd7952cb4" }
+  networkpolicywatcher: { repo: microsegmentation-networkpolicywatcher, tag: v17.2.0, digest: "sha256:e2ab71d20e4fc0911a9d4c7b4ea1d540496699ab80495dcb8ac5f8a333385846" }
+  mcp:                  { repo: microsegmentation-mcp,                  tag: v17.2.0, digest: "sha256:3b464834f0b1d05b4c8786f1ec243f5fb33ae6579641e03f2d0176d6f26342b8" }
+  frontend:             { repo: microsegmentation-frontend,             tag: v17.2.0, digest: "sha256:2924a307583838e33622c65aecf65a77913eb716d5de00738dbf111c2e0f5791" }
+  # The in-cluster PostgreSQL. flavor: auto (rhel on OpenShift, alpine elsewhere) | rhel | alpine.
+  #   rhel   — Red Hat-certified PostgreSQL 16 (registry.redhat.io; covered by the OpenShift pull
+  #            secret). Data in /var/lib/pgsql/data, uid 26.
+  #   alpine — community PostgreSQL 16 (public mirror on quay.io/axera). Data in a PGDATA
+  #            subdirectory, uid 70.
+  # The migrate Jobs and wait containers reuse this image (psql / pg_isready). There is no in-place
+  # switch between flavours: the data-tier guard refuses one.
+  postgres:
+    flavor: auto
+    rhel:   { registry: registry.redhat.io, repo: rhel9/postgresql-16, tag: 9.8-1787043427, digest: "sha256:8fd1bbd8d006ae5bb892c6d633c9d92fb980caed470199effaf2343099fcdb89" }
+    alpine: { repo: postgres, tag: 16-alpine, digest: "sha256:60b180625695e90b6e450405d5f0bcb74bc8c52c65d1cd11aeb3da46cac06dd8" }
+  # The image of the backup / restore Jobs the API creates with an EXTERNAL PostgreSQL, per flavour
+  # (major version 18). With the in-cluster PostgreSQL the Jobs use the server's own 16 image
+  # (images.postgres): a newer pg_restore sends settings a 16 server rejects. backup.pgImage
+  # overrides both with a full image reference.
+  postgresBackup:
+    rhel:   { registry: registry.redhat.io, repo: rhel9/postgresql-18, tag: 9.8-1790730421, digest: "sha256:2191ac24e592c0f7ade04f72b62b7c85f75e744c2d5e1595db8712081943f1c7" }
+    alpine: { repo: postgres, tag: 18-alpine, digest: "sha256:0752ea635cca3015e574a4a467f1c54409fdfaf7ed5ba1bc0a6d32568714ab2e" }
+  # Internal Kafka is a single-node convenience. For production use your own Kafka (kafka.external).
+  kafka:                { repo: kafka,                                   tag: 4.0.0, digest: "sha256:821720633cf189f4852051569f0794ffbb3aeef3de9e5b47684901af81176852" }
+  kafkaUi:              { repo: kafka-ui,                                tag: v0.7.2, digest: "sha256:0d8ba24237b0b6520f8218c7d3c659ee1cc0cedcf2ee7d356ba17590fdb4811f" }
+  # The local AI model server (ai.enabled, off by default). Not versioned with the Axera images.
+  aiModel:              { repo: microsegmentation-ollama,               tag: 0.24.0, digest: "sha256:a4e95f0a14e6773d2507c593336d94dd5f73fe134fb13438ce069a5a1fefd9fe" }
+  # ai.modelSource=image only: an image whose /models-src holds the model tree (your build).
+  aiModelWeights:       { repo: "", tag: "" }
+
+# -----------------------------------------------------------------------------
+# Generation of the images above. true since the v14 images: httpGet /healthz probes, and the
+# install's own identities in AXERA_LOCAL_SERVICE_ACCOUNTS. false only for images before v13.3.0
+# (tcpSocket probes). Leave it.
+# -----------------------------------------------------------------------------
+operands:
+  v1330: true
+
+# Inert under Helm (kept for values compatibility with the operator): the operator's own
+# ServiceAccount, "<namespace>:<name>".
+operator:
+  serviceAccount: ""
+
+# Probe kind override for the product containers: "http" or "tcp". Empty follows operands.v1330.
+# liveness: the budget before the kubelet restarts a container (product containers and the
+# in-cluster PostgreSQL, Kafka and AI model). More tolerant than readiness on purpose: a node short
+# of memory slows /healthz long before a process is wedged.
+probes:
+  mode: ""
+  liveness:
+    periodSeconds: 20
+    timeoutSeconds: 10
+    failureThreshold: 15
+
+# Pod placement: default applies to every pod, a component block (api, radar, frontend,
+# allowDropMonitor, networkPolicyWatcher, mcp, postgres, kafka, aiModel, jobs) overrides it field by
+# field. Each block: nodeSelector, affinity, tolerations, priorityClassName, rendered verbatim.
+# global.archNodeSelector adds kubernetes.io/arch: amd64 to the nodeSelector off OpenShift.
+scheduling: {}
+#  default:
+#    nodeSelector: { node-role.kubernetes.io/infra: "" }
+#    tolerations: [{ key: node-role.kubernetes.io/infra, operator: Exists, effect: NoSchedule }]
+#    priorityClassName: axera-platform
+
+# -----------------------------------------------------------------------------
+# Container hardening of the product containers (api, allowdropmonitor, radar,
+# networkpolicywatcher, frontend; mcp always has it): allowPrivilegeEscalation false, drop ALL
+# capabilities, seccomp RuntimeDefault, runAsNonRoot (they run as the numeric USER 1001). The psql
+# containers of the Jobs run as the PostgreSQL image's user (alpine 70, rhel 26).
+#   auto (default) → on everywhere except OpenShift (the SCC owns these settings there)
+#   true / false   → force
+# -----------------------------------------------------------------------------
+podSecurity:
+  hardenAppContainers: auto
 
 # =============================================================================
 # POSTGRESQL — internal vs external
 # =============================================================================
 postgres:
-  # true  → use external connection strings (skip internal Postgres).
-  # false → deploy two internal Postgres StatefulSets (app, radar).
+  # true  → use external connection strings (no in-cluster PostgreSQL).
+  # false → deploy two in-cluster PostgreSQL StatefulSets (app, radar).
   external: false
 
-  # Used when external=false (internal Postgres deployment).
+  # Used when external=false. With the rhel image keep user "postgres" (the image's superuser).
+  # Empty → the one in the existing Secret, else "postgres".
   user: postgres
-  # Leave EMPTY → a strong password is generated on first install and reused
-  # (read back from the Secret) on upgrades. Set explicitly to pin it.
+  # Empty → generated on first install and kept (read back from the Secret) on upgrades.
   password: ""
   storage: 20Gi
   appDbName: MicrosegmentationDB
   radarDbName: AxeraRadarDB
 
-  # Used when external=true (full .NET-style ConnectionStrings).
+  # Used when external=true: Npgsql connection strings, e.g.
+  #   Host=<pg-host>;Port=5432;Database=MicrosegmentationDB;Username=<user>;Password=<password>;SslMode=VerifyFull
+  # The migrate Jobs read Host/Port/Database/Username/Password/SslMode and split on ';' (no ';'
+  # in the password). SslMode VerifyCA / VerifyFull checks the server certificate against
+  # postgres.caSecret, else the system CA bundle of the image. Required on the first install unless
+  # you bring the Secret (secrets.existingSecrets.db); an upgrade that leaves them empty keeps
+  # the ones in the Secret.
   appDbConnString: ""
   radarConnString: ""
+  # External PostgreSQL with a private CA: a Secret in this namespace holding the PEM CA under the
+  # key ca.crt, mounted into the migrate and trial Jobs and into api, radar, networkpolicywatcher
+  # and allowdropmonitor (PGSSLROOTCERT). Not into the backup Jobs the API creates: there the
+  # backup image's trust store applies. Empty → system CA bundle.
+  caSecret: ""
 
-  # Run EF migrations as Jobs against both databases. SQL is bundled at
-  # sql/{app,radar}-init.sql. Idempotent — safe to re-run.
+  # Run the schema migrations as Jobs against both databases (bundled sql/{app,radar}-init.sql).
+  # Idempotent — safe to re-run.
   runMigrations: true
+
+  # Server settings of the two in-cluster PostgreSQL StatefulSets (external=false), sized for the
+  # default resources.postgres memory limit (2Gi): shared_buffers a quarter of it, effective cache
+  # three quarters. Scale them with the limit. rhel: env + include file; alpine: -c arguments.
+  tuning:
+    sharedBuffers: 512MB
+    effectiveCacheSize: 1536MB
+    maxConnections: 200
+    workMem: 32MB
+    maintenanceWorkMem: 256MB
+    maxWalSize: 4GB
+    checkpointCompletionTarget: "0.9"
+    randomPageCost: "1.1"           # SSD / network block storage
+    autovacuumVacuumScaleFactor: "0.05"
+    autovacuumAnalyzeScaleFactor: "0.02"
 
 # =============================================================================
 # KAFKA — internal vs external
 # =============================================================================
 kafka:
-  # true  → use an external Kafka cluster (skip internal Kafka + Kafka-UI).
-  # false → deploy a single-node KRaft Kafka inside the namespace.
+  # true  → use your Kafka cluster (no in-cluster Kafka, no kafka-ui).
+  # false → deploy a single-node KRaft Kafka in this namespace. It is advertised on its in-cluster
+  #         DNS name in PLAINTEXT, so only agents on THIS cluster can produce to it: monitoring
+  #         other clusters needs an external Kafka (profiles/values-external-data.yaml).
   external: false
 
   # Used when external=false.
   storage: 50Gi
-  enableUI: true   # auto-disabled when external=true
+  # The KRaft cluster ID of the in-cluster broker (22 characters, base64url of 16 bytes). Empty → the
+  # one kept in ConfigMap kafka-cluster-id (helm.sh/resource-policy: keep), else the one the running
+  # broker was started with, else the fixed default every earlier chart used. The broker refuses a
+  # volume formatted with another ID: set it only to repair one.
+  clusterId: ""
+  # kafka-ui: a debugging aid with NO authentication. Off by default; never deployed with an
+  # external Kafka. When on it is a ClusterIP Service; reach it with
+  # `kubectl -n <ns> port-forward svc/kafka-ui 8080:8080`.
+  enableUI: false
+  # expose.type=Istio only: publish kafka-ui on this host through the same gateway (unsafe: no
+  # authentication). Empty = not published.
+  uiIstioHost: ""
 
-  # Used when external=true (or for the radar Kafka client in any mode).
+  # Used when external=true (the Radar Kafka client in any mode).
   bootstrapServers: ""        # host1:9093,host2:9093,host3:9093
-  securityProtocol: Plaintext # Plaintext / Ssl / SaslPlaintext / SaslSsl
-  saslMechanism: ""           # Plain / ScramSha256 / ScramSha512 / OAuthBearer / Gssapi
+  # Plaintext | Ssl | SaslPlaintext | SaslSsl. Empty: Plaintext in-cluster, SaslSsl external.
+  securityProtocol: ""
+  # Plain | ScramSha256 | ScramSha512 (required with SaslPlaintext / SaslSsl; an upgrade keeps the
+  # installed one when empty). The agents support Plain and ScramSha512 on a shared broker.
+  saslMechanism: ""
   saslUsername: ""
   saslPassword: ""
-  # Custom CA certificate (PEM). Empty → librdkafka uses the system CA bundle.
+  # Custom CA certificate (PEM). Empty → the system CA bundle.
   caCert: ""
 
-  # Flow topics consumed by Radar. Replace/extend with your own cluster topics.
+  # Flow topics consumed by Radar (explicit list). With kafka.clusters below, the per-cluster
+  # topics are derived and this list can stay as it is.
   topics:
     - { topic: external-flows, groupId: axera-radar }
-
-  # Per-cluster Tetragon process-event topics for Radar "Process Activity".
-  # Each cluster's shipper produces to its own "<cluster>-process" topic;
-  # clusterName is the authoritative identity stamped on every event.
-  # Empty → process ingestion disabled (the page still loads, with no data).
+  # Per-cluster process-sensor topics for Radar "Process Activity":
+  #   - { topic: <cluster>-process, clusterName: <cluster>, groupId: axera-process }
   processTopics: []
+  # DNS topics (opt-in per agent): - { topic: <cluster>-dns, clusterName: <cluster>, groupId: axera-dns }
+  dnsTopics: []
+  # Cross-cluster (Submariner / Globalnet) topics. Empty = single-cluster install.
+  interClusterTopics: []
+  # North-south ingress topics (normally the shared "ingress-flows"). Each entry:
+  # { topic, clusterName (only for a topic dedicated to one cluster), groupId }.
+  ingressTopics: []
+  # Radar's switch for the ingress lane. With no ingress topic the lane reports "not configured".
+  ingress:
+    enabled: true
+  # Globalnet reflector: resolves a Submariner peer's Globalnet egress IP back to its cluster and
+  # workload. Without Submariner it finds nothing and idles.
+  globalnet:
+    enabled: true
+    refreshSeconds: 300
+  # Topic catalogue by convention: the agents' cluster names (exactly as each cluster is
+  # registered in Axera). Radar derives "<c>" (flows), "<c>-process" and "<c>-dns" per cluster plus
+  # the shared topics below and merges them with the explicit lists above. Adding a cluster = one
+  # entry here + helm upgrade. Empty = exactly the explicit lists.
+  clusters: []
+  # Shared topics added with clusters (ignored without).
+  sharedTopics:
+    external: true       # external-flows
+    ingress: true        # ingress-flows
+    interCluster: true   # intercluster-flows
+  topicProvisioning:
+    # Create | Verify | Off | Strimzi. Empty: Create with the in-cluster Kafka, Verify with an
+    # external one. Create makes the missing topics with the lane profile and never alters an
+    # existing topic; Verify only reports; Strimzi renders one KafkaTopic per derived topic
+    # (strimzi.clusterName required) and Radar verifies.
+    mode: ""
+    intervalMinutes: 0       # 0 = Radar's default (10)
+    replicationFactor: 0     # 0 = min(3, brokers)
+    # Per lane (flows, external, ingress, interCluster, process, dns):
+    # { partitions, retentionHours, retentionBytes (per partition, -1 = unlimited) }.
+    # Defaults: flows 3 / 2 / 10 GiB, every other lane 1 / 2 / 2 GiB.
+    profiles: {}
+    strimzi:
+      clusterName: ""
+      namespace: ""          # empty = the Axera namespace
 
 # =============================================================================
-# AI ASSISTANT (incident triage) — internal Ollama vs external endpoint
+# AI ASSISTANT (incident triage) — local AI model vs your own endpoint. OFF by default.
 # =============================================================================
-# Provider-agnostic in the backend. Strictly additive: if the model is
-# unreachable the incident UI keeps working without AI.
+# Provider-agnostic in the backend. Strictly additive: if the model is unreachable the incident UI
+# keeps working without AI.
 ai:
-  # Master switch. false → API runs with Ai__Enabled=false, no model contacted.
-  enabled: true
-
-  # true  → point the API at a customer-provided endpoint (ai.baseUrl).
-  # false → deploy Ollama in-cluster.
+  # Master switch. false → Ai__Enabled=false, no model contacted, no model server pod.
+  enabled: false
+  # true  → point the API at your endpoint (ai.baseUrl).
+  # false → deploy the local AI model server in this namespace (requests 6Gi memory).
   external: false
-
   # Used when external=true, e.g. http://my-llm.ai-team.svc:11434
   baseUrl: ""
-
-  # Model tag the API requests and the pull-job loads. 3B is the sweet spot for
-  # CPU-only inference; use larger variants only with a GPU.
+  # Model tag the API requests and the pull / copy step supplies. Check the model's licence for
+  # redistribution before mirroring weights into your registry.
   model: "llama3.2:3b"
-  # Extra models pulled alongside `model` (idempotent). Leave [] to pull nothing.
-  extraModels:
-    - "qwen2.5-coder:3b"
-    - "qwen2.5:3b"
+  # How the model weights get onto the volume:
+  #   registry  - a Job pulls them from the PUBLIC model registry (connected clusters only).
+  #   image     - the weights ship as an image (images.aiModelWeights) copied onto the volume by
+  #               an init container: the air-gapped path.
+  #   preloaded - the volume already holds the model tree. Nothing is fetched or copied.
+  modelSource: registry
+  # Extra models pulled alongside `model`. Add a tag only after routing a feature to it in
+  # Settings > Security > AI Platform > Feature routing.
+  extraModels: []
   temperature: "0.2"
-  timeoutSeconds: "120"
-
-  # Internal-Ollama only (external=false):
+  timeoutSeconds: "300"
+  # Local AI model only (external=false):
   storage: 20Gi
   pullModel: true
-
-  # Tier-2 behavioral-anomaly advisory job (LLM egress-posture review). The
-  # values below only seed the initial DB-backed settings row on first boot;
-  # the on/off toggle and tuning live in the AI settings page afterwards.
+  # Behavioral-anomaly advisory job. These values only seed the settings on first boot; the toggle
+  # and tuning live in the AI settings page afterwards.
   advisory:
     enabled: false
-    cron: "0 */6 * * *"        # every 6h — CPU inference is slow
+    cron: "0 */6 * * *"
     lookbackHours: 24
     maxWorkloads: 30
     maxDestinationsPerWorkload: 40
-    minConfidence: 70          # only raise incidents at/above this confidence
+    minConfidence: 70
+  # Background policy-recommendation pass. Seeds only, like advisory.
+  policyAdvisory:
+    enabled: false
+    intervalHours: 24
+    maxPolicies: 60
 
 # =============================================================================
 # Application-wide secrets and config
 # =============================================================================
-# All secret values below are AUTO-GENERATED on first install when left empty,
-# and re-read from the existing Secret on upgrades (stable across upgrades).
-# Set any of them explicitly to pin a known value. NEVER commit real secrets here.
+# Every secret value below is GENERATED on first install when left empty and read back from the
+# existing Secret on upgrades. Set one only to pin a known value; NEVER commit real secrets.
 app:
-  accessTokenSecret: ""        # JWT signing key (64-char, generated if empty)
+  accessTokenSecret: ""        # JWT signing key (64+ characters)
   adminUsername: admin
   adminEmail: admin@example.com
-  adminPassword: ""            # generated if empty — retrieve from the Secret (see NOTES)
-  encryptionKey: ""            # AES-256 key, base64 (generated if empty)
-  encryptionIV: ""             # AES IV, base64 (generated if empty)
-  internalToken: ""            # pod-to-pod /api/Internal shared secret (generated if empty)
-
-  # ┌─ DataProtection key-ring: DİSKE mi (PVC) DB'ye mi yazılsın? ─────────────────┐
-  # │ FileSystem → axera-dp-keys PVC'sinde (128Mi disk). StorageClass ŞART.        │
-  # │ Database   → app DB'deki DataProtectionKeys tablosunda. STORAGE GEREKMEZ     │
-  # │              (external DB + api≥v8.3.0 + operator≥0.4.0 image şart).          │
-  # │ Cluster'da StorageClass yoksa (oc get storageclass boş) → Database seç.      │
-  # └──────────────────────────────────────────────────────────────────────────────┘
-  dpKeysStore: FileSystem        # ← SEÇ: FileSystem (PVC) | Database (DB, storage-less)
-
-  # CORS origins added to all .NET services. The frontend Route URL is appended
-  # automatically when routes.frontend.enabled=true.
-  corsOrigins:
-    - "http://localhost:3000"
-
-  # AllowDropMonitor service (OVN ACL log collector) settings.
+  adminPassword: ""            # retrieve from the Secret (see the release notes)
+  encryptionKey: ""            # AES-256 key, base64 of 32 bytes
+  encryptionIV: ""             # AES IV, base64 of 16 bytes
+  # Key of the third-party credentials stored in the database (registered clusters' tokens,
+  # integration passwords, security-feed secrets), base64 of 32 bytes: Secrets__EncryptionKey.
+  # Generated once and kept; pin it only to carry an existing database's credentials over.
+  # Changing it later leaves them unreadable until entered again.
+  secretsEncryptionKey: ""
+  internalToken: ""            # pod-to-pod /api/Internal shared secret
+  # Extra namespaces that deploy, the watcher and NDR containment must never write into
+  # (comma-separated). "axera" is where the axera-force agent runs.
+  protectedNamespaces: "axera,axera-flow,axera-process,axera-force"
+  # Further ServiceAccounts that are Axera's own (list or comma-separated string), matched EXACTLY:
+  #   "cluster/namespace:name" → Axera's own on that registered cluster only.
+  #   "namespace:name"         → on EVERY registered cluster (only for a namespace no tenant can create).
+  # The install's own axera-sa and axera-integration-sa are added automatically.
+  ownServiceAccounts: []
+  # DataProtection key-ring store for the API:
+  #   FileSystem → keys on a 128Mi RWO volume (axera-dp-keys, kept on uninstall).
+  #   Database   → keys in the app database: no volume.
+  dpKeysStore: FileSystem
+  # CORS origins added to all services. The public UI URL (Route host or expose.frontend.host) is
+  # added automatically.
+  corsOrigins: []
+  # AllowDropMonitor (OVN-Kubernetes ACL log collector; allowDropMonitor.enabled) settings.
   ovn:
     podListUrl: "/api/v1/namespaces/{{namespace}}/pods"
     namespace: openshift-ovn-kubernetes
     container: ovn-acl-logging
-    logPodLabelSelector: "app=ovn-k8s-node"
+    # The ovnkube-node pods. The pre-1.0 value "app=ovn-k8s-node" matches no pod and is mapped to
+    # this one.
+    logPodLabelSelector: "app=ovnkube-node"
     reconnectSeconds: 5
     aggIntervalMin: 1
     recordRetentionHours: 24
-
   # Radar archiver
   archiverIntervalMinutes: 60
+  # Mesh verdict ledger (Radar): live rows and the day buckets that answer "how many mesh denials
+  # last week". siemForward* turn on the "mesh-verdict" SIEM stream.
+  mesh:
+    liveRetentionDays: 7
+    dailyRetentionDays: 400
+    siemForwardEnabled: false
+    siemForwardAllows: false
+  # Flow verdict ledger: the Analytics allow / probable-drop figures, derived from the flow agent's
+  # TCP records on every monitored cluster (CNI-independent).
+  flowVerdictLedger:
+    enabled: true
+    pairHourlyRetentionDays: 3
+    retentionDays: 35
+  # Throughput and retention knobs, each rendered only when set (backend default shown):
+  # performance:
+  #   edgeTouchSeconds: 120
+  #   volumeRollupRetentionDays: 14
+  #   flowLanes: { maxBatchSize: 500, channelCapacity: 10000, eastWestWriters: 1 }
+  #   ingressBatchMaxWaitMs: 15000
+  #   ingressBatchMaxRecords: 20000
+  #   dnsFlushSeconds: 30
+  #   incidentReporterMaxConcurrentFlushes: 3
+  #   hangfireWorkerCount: 8
+  #   kafkaConsumerFetchMinBytes: 65536
+
+# Radar's process-to-pod association mode (off | shadow | on) with optional clusters / nodes
+# lists. Normally left unset (Radar's default, shadow).
+# processAssociation: { mode: shadow, clusters: [], nodes: [] }
+
+# Kerberos (SPNEGO) single sign-on for the web console. Off by default. Create a Secret with the
+# service keytab in this namespace, e.g.
+#   kubectl -n <ns> create secret generic axera-kerberos --from-file=krb5.keytab=axera.keytab
+# then enable it here. Realm, SPN and the LDAP directory are set in the console.
+kerberos:
+  enabled: false
+  keytabSecret: ""
+  keytabKey: krb5.keytab
+  realm: ""
+  # Bump after rotating the keytab Secret to roll the API pod onto the new key.
+  keytabVersion: ""
+  # Full krb5.conf to use instead of the generated one (rarely needed).
+  krb5Conf: ""
 
 # =============================================================================
 # Licensing — trial bootstrap + node count strategy
 # =============================================================================
-# When trial.enabled=true and no license exists at install time, a 15-day
-# trial is seeded. After expiry the validator HardLocks until a real license
-# is uploaded via /admin/license.
-#
-# nodeCountStrategy: HostOnly | MonitoredOnly | HostPlusMonitored
+# With trial.enabled and no licence at install time, a trial is seeded (works on every
+# distribution). Off OpenShift a licence is not bound to a cluster ID, and the worker-node count
+# uses the label node-role.kubernetes.io/worker.
 licensing:
+  # HostOnly | MonitoredOnly | HostPlusMonitored
   nodeCountStrategy: MonitoredOnly
   trial:
     enabled: true
     days: 15
     maxWorkerNodes: 999
     customer: "Trial"
+    # 0=Observe 1=Segment 2=NDR (full) 3=Mesh. The numbers are not the tier order (Observe <
+    # Segment < Mesh < NDR). Default NDR so evaluators see every module.
+    edition: 2
 
 # =============================================================================
-# Frontend (Next.js)
+# Frontend
 # =============================================================================
 frontend:
+  # URL base path of the UI ("" = served at /).
   basepath: ""
 
 # =============================================================================
-# OpenShift Routes — only the frontend is browser-facing
+# Exposure of the UI (and /api/mcp)
+# =============================================================================
+expose:
+  # auto (default) | Route | Ingress | Istio | LoadBalancer | ClusterIP
+  #   auto         → Route on openshift, Istio on anthos, Ingress on k3s, rke2 and vanilla.
+  #   Route        → OpenShift Routes (routes.* below). OpenShift only.
+  #   Ingress      → networking.k8s.io/v1 Ingress "frontend": /api/mcp → mcp (with mcp.enabled),
+  #                  / → frontend:3000.
+  #   Istio        → Istio / Cloud Service Mesh VirtualService on an ingress Gateway (istio.*).
+  #   LoadBalancer → the frontend Service becomes type LoadBalancer. The pods serve plain HTTP:
+  #                  only a load balancer that terminates TLS gives users https. /api/mcp is not
+  #                  reachable from outside (layer 4 cannot route by path).
+  #   ClusterIP    → nothing external (kubectl port-forward svc/frontend 3000:3000).
+  type: auto
+  frontend:
+    # The DNS name users browse to (Ingress, Istio; optional for LoadBalancer). Feeds CORS, the
+    # OAuth issuer and the app URL. Required for Istio; strongly recommended for Ingress.
+    host: ""
+    # true → https:// URL, the Ingress lists the host under spec.tls, the Gateway serves 443.
+    # LoadBalancer: true only when a load balancer in front terminates TLS. Unquoted boolean.
+    tls: true
+    # Front-door request timeout (Ingress, Istio): the outer step of the timeout ladder (this
+    # 180 s > frontend proxy 150 s > heavy reads and MCP upstream calls 120 s). Whole seconds,
+    # "180s" or "180". The OpenShift Route uses routes.frontend.timeout (330 s).
+    timeout: "180s"
+    # Strict-Transport-Security set by the Istio VirtualService when tls is on ("" = none).
+    # ingress-nginx sets HSTS controller-wide (its ConfigMap).
+    hstsHeader: "max-age=31536000"
+    # --- LoadBalancer only ---
+    loadBalancerIP: ""
+    loadBalancerSourceRanges: []
+    serviceAnnotations: {}
+    servicePort: 3000
+    # "" (Kubernetes default: Cluster) | Local. Local keeps the client address, so NetworkPolicy
+    # ipBlock peers match it where node-SNATed traffic matches none (GKE Dataplane V2: the anthos-lb
+    # profile sets it). Needs a load balancer that health-checks nodes (GKE, MetalLB do).
+    externalTrafficPolicy: ""
+  # Remote agents' audit forwarders post the cluster API audit stream to POST /api/Internal/Audit
+  # (token-guarded). true → that ONE exact path is published on the UI host (expose.frontend.host)
+  # through the Ingress or Istio front door; their auditForwarder.targetUri is then
+  # https://<UI host>/api/Internal/Audit. A LoadBalancer or ClusterIP front door cannot route by path
+  # (refused). OpenShift Routes: routes.api.enabled. An agent on THIS cluster posts in-cluster
+  # instead (networkPolicies.apiClients).
+  auditIngest:
+    enabled: false
+  ingress:
+    # IngressClass name (kubectl get ingressclass). Empty → traefik on k3s, nginx on rke2, the
+    # cluster's default IngressClass on vanilla (most controllers ignore a class-less Ingress when no
+    # class is marked default). Clusters created on RKE2 1.36 or newer default to Traefik: set
+    # "traefik" there. The rke2 and vanilla profiles make you choose.
+    className: ""
+    # kubernetes.io/tls Secret in this namespace for the host (create it yourself, or let
+    # cert-manager create it via annotations). Empty → the controller's default certificate.
+    tlsSecretName: ""
+    # The ingress-nginx annotations (proxy-read/send-timeout = expose.frontend.timeout,
+    # proxy-body-size 52m, ssl-redirect with TLS): auto (unless the class names Traefik) | true |
+    # false. Traefik has no per-Ingress equivalent: raise its entryPoint readTimeout to 180s with a
+    # HelmChartConfig (README, "Traefik read timeout"). With Traefik, TLS and a host the chart adds
+    # traefik.ingress.kubernetes.io/router.entrypoints: websecure.
+    nginxDefaults: auto
+    # Extra annotations, merged OVER the defaults (a key here wins), e.g.
+    #   cert-manager.io/cluster-issuer: <issuer>
+    annotations: {}
+
+# =============================================================================
+# OpenShift Routes (expose.type=Route only)
 # =============================================================================
 routes:
   frontend:
     enabled: true
-    # Empty → derived from global.clusterDomain, or auto-assigned by OpenShift
-    # when clusterDomain is also empty.
+    # Empty → frontend-<namespace>.<global.clusterDomain>, or assigned by OpenShift.
     host: ""
-    # HAProxy per-request timeout. On-demand AI triage/correlation calls flow
-    # through here; CPU LLM inference can exceed the 30s default. Keep ≥ the
-    # API's Ai timeoutSeconds.
-    timeout: "180s"
+    # HAProxy per-request timeout of the frontend and /api/mcp Routes: the outermost rung of the
+    # timeout ladder. Empty → HAProxy's 30 s default.
+    timeout: "330s"
+    # Strict-Transport-Security sent by the router on the frontend, mcp, kafka-ui and api Routes.
+    # Must satisfy any requiredHSTSPolicies on your IngressController. Empty → no header.
+    hstsHeader: "max-age=31536000"
     tls:
       termination: edge
       insecureEdgeTerminationPolicy: Redirect
   kafkaUi:
-    # Auto-disabled when kafka.external=true.
-    enabled: true
+    # OFF: kafka-ui has NO authentication. Needs kafka.enableUI and the in-cluster Kafka.
+    enabled: false
     host: ""
+    tls:
+      termination: edge
+      insecureEdgeTerminationPolicy: Redirect
+  api:
+    # Path-scoped Route so REMOTE agent audit forwarders can POST /api/Internal/Audit.
+    # Off by default; token-guarded; exposes ONLY `path`. Route only: with Ingress or Istio use
+    # expose.auditIngest.enabled.
+    enabled: false
+    host: ""
+    path: /api/Internal/Audit
     tls:
       termination: edge
       insecureEdgeTerminationPolicy: Redirect
 
 # =============================================================================
-# NetworkPolicies (defensive — namespace-internal + ingress controller access)
+# Istio / Cloud Service Mesh (Anthos)
 # =============================================================================
-networkPolicies:
-  enabled: true
+istio:
+  # istio-injection label stamped on the namespace when the chart creates it on anthos ("" = no
+  # label). Keep "disabled": Axera does not need the mesh, and the API creates backup Jobs at
+  # runtime with no sidecar opt-out (a sidecar never exits, so such a Job would hang). Label a
+  # pre-created namespace yourself, and never enrol it in ambient mode.
+  injection: "disabled"
+  # sidecar.istio.io/inject: "false" (label and annotation) on the chart's Jobs and test pod:
+  # auto (on for anthos and for expose.type Istio) | true | false.
+  disableSidecarOnJobs: auto
+  # expose.type=Istio only.
+  virtualService:
+    # Existing Gateway to bind to: "<namespace>/<name>". Required unless createGateway=true.
+    gateway: ""
+    # Create a Gateway in this namespace bound to the ingress gateway pods below.
+    createGateway: false
+    gatewayName: axera-gateway
+    gatewaySelector: { istio: ingressgateway }
+    # createGateway + expose.frontend.tls: the kubernetes.io/tls Secret name, in the ingress
+    # gateway's namespace (not this one).
+    tlsCredentialName: ""
 
 # =============================================================================
-# Resource requests/limits — modest defaults; tune per-environment.
+# STANDALONE MCP (Model Context Protocol) TOOL SERVER (templates/44a-mcp.yaml)
+# =============================================================================
+# Serves Axera's tool catalogue at <UI URL>/api/mcp (Route, Ingress or Istio front door). Every
+# tool call is forwarded with the caller's own bearer token and authorized by the API. Write tools
+# are closed by default and opened per tool at Settings > Security > MCP Access.
+mcp:
+  enabled: false
+  # Browser origins allowed besides app.corsOrigins and the UI host, e.g. "http://localhost:6274".
+  allowedOrigins: []
+  # Largest JSON-RPC request body accepted (bytes); a larger one is answered 413.
+  maxRequestBodyBytes: 1048576
+  route:
+    # OpenShift: no sticky cookie on the /api/mcp Route (a stateless bearer-token API).
+    disableCookies: true
+
+# =============================================================================
+# AllowDropMonitor — OVN-Kubernetes ACL log collector
+# =============================================================================
+# auto (OpenShift only) | true | false. It reads the OVN-Kubernetes ACL log; on other CNIs it has
+# nothing to read. The Analytics allow / drop figures come from the flow verdict ledger on every
+# distribution. Off: no Deployment, Service, ConfigMap or URL for it, and no OVN log RBAC.
+allowDropMonitor:
+  enabled: auto
+
+# =============================================================================
+# NetworkPolicies (namespace ingress segmentation; egress is not restricted)
+# =============================================================================
+networkPolicies:
+  # Keep it on: without it any pod on the cluster reaches every Axera service over plain HTTP, the
+  # /api/Internal lanes, the local AI model server and the in-cluster Kafka. Only effective where
+  # the CNI enforces NetworkPolicy.
+  enabled: true
+  # Pods (by their `app` label) the front door (OpenShift router, ingress controller, Istio
+  # gateway, load balancer) may reach. Components this release does not publish are dropped from
+  # the render. An empty list lets the front door reach nothing, the UI included.
+  routerIngressApps: [frontend, mcp, kafka-ui]
+  # Off OpenShift (or with Istio / LoadBalancer on OpenShift): the peers allowed to reach those
+  # pods, as raw NetworkPolicyPeer objects. [] → [namespaceSelector {}, ipBlock 0.0.0.0/0] on
+  # ports 3000/8080 (works on every CNI). The k3s profile narrows it to Traefik. Examples:
+  #   - namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: kube-system } }
+  #     podSelector: { matchLabels: { app.kubernetes.io/name: rke2-ingress-nginx } }
+  #   - namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: istio-system } }
+  #     podSelector: { matchLabels: { istio: ingressgateway } }
+  ingressFrom: []
+  # Producers allowed into the in-namespace Kafka (only when kafka.external=false).
+  kafkaClients:
+    # hostNetwork agents on this cluster's nodes (the axera-force agent). OpenShift: the
+    # host-network policy group. Elsewhere there is no such group: with cidrs empty the policy
+    # admits any source on 9092 (the release notes warn); list the node subnet(s) plus the
+    # cluster CIDR in cidrs to narrow it.
+    hostNetwork: true
+    # Pod-network producers in other namespaces, by namespace name.
+    namespaces: []
+    # Producer CIDRs: node subnet(s), plus the cluster (pod) CIDR on flannel / Canal (k3s and RKE2
+    # default 10.42.0.0/16).
+    cidrs: []
+    # true → Kafka is selected by NO policy. For dataplanes where cross-node host traffic matches
+    # no ipBlock (e.g. GKE Dataplane V2: the anthos profiles set it).
+    unrestricted: false
+  # In-cluster callers of the API (port 8080) from other namespaces, by namespace name. The agent's
+  # audit forwarder on THIS cluster runs in "axera" (not on the host network) and posts to
+  # http://api.<this namespace>.svc.<clusterDnsDomain>:8080/api/Internal/Audit: list "axera" here
+  # when you turn it on (examples/values-full-k3s.yaml does).
+  apiClients:
+    namespaces: []
+
+# =============================================================================
+# Resource requests/limits — tune per environment. Every container has a CPU and memory request;
+# every one has a memory limit except the AI model copy. Application pods deliberately have no CPU
+# limit (throttling only lengthens the work). {} renders no resources block.
 # =============================================================================
 resources:
   postgres:
@@ -261,8 +718,144 @@ resources:
   kafka:
     requests: { cpu: 200m, memory: 512Mi }
     limits:   { cpu: "2",  memory: 2Gi }
-  # CPU inference works for a PoC but is slow; give Ollama a GPU for production.
-  # 12Gi leaves room for the model blob + page cache (an 8Gi limit can OOM).
-  ollama:
+  # CPU inference works for a PoC but is slow; give the model server a GPU node for production.
+  aiModel:
     requests: { cpu: 500m, memory: 6Gi }
     limits:   { cpu: "4",  memory: 12Gi }
+  api:
+    requests: { cpu: 250m, memory: 768Mi }
+    limits:   { memory: 3Gi }
+  radar:
+    requests: { cpu: 500m, memory: 1536Mi }
+    limits:   { memory: 6Gi }
+  networkPolicyWatcher:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits:   { memory: 512Mi }
+  allowDropMonitor:
+    requests: { cpu: 100m, memory: 512Mi }
+    limits:   { memory: 1536Mi }
+  frontend:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits:   { memory: 768Mi }
+  mcp:
+    requests: { cpu: 100m, memory: 512Mi }
+    limits:   { memory: 2Gi }
+  # The migrate Jobs and the trial-bootstrap Job (psql).
+  jobs:
+    requests: { cpu: 50m, memory: 32Mi }
+    limits:   { memory: 256Mi }
+  # Init containers that only wait or copy a few files.
+  initContainers:
+    requests: { cpu: 10m, memory: 16Mi }
+    limits:   { memory: 128Mi }
+  kafkaUi:
+    requests: { cpu: 50m, memory: 512Mi }
+    limits:   { memory: 1Gi }
+  # The AI model pull Job (the download lands in the server pod).
+  aiModelPull:
+    requests: { cpu: 50m, memory: 64Mi }
+    limits:   { memory: 512Mi }
+  # The weights copy (ai.modelSource=image). No memory limit: the copied data passes through the
+  # page cache, which is charged to the container. If a quota forces one, set it above the model size.
+  aiModelCopy:
+    requests: { cpu: 50m, memory: 64Mi }
+  # The helm test pod (curl).
+  helmTest:
+    requests: { cpu: 10m, memory: 16Mi }
+    limits:   { memory: 64Mi }
+
+# =============================================================================
+# Backup / restore (Settings > System > Backup & Restore). The API creates pg_dump / pg_restore
+# Jobs in its own namespace and reads/writes dumps on a shared /backups volume.
+# =============================================================================
+backup:
+  enabled: true
+  # Image of the dump / restore Jobs (full reference). Empty → the in-cluster PostgreSQL image, or
+  # images.postgresBackup.<flavour> with an external database. With an external database match the
+  # server's major version: pg_dump needs a client at least as new as the server.
+  pgImage: ""
+  # Version stamped onto each backup (blank → the API's own version).
+  productVersion: ""
+  storage:
+    # pvc | nfs — what backs the shared /backups volume.
+    type: pvc
+    # false (default): no volume is created and the api pod mounts no /backups, so a cluster
+    # without a ReadWriteMany StorageClass installs cleanly. Set createPvc=true, pvcClaimName (a
+    # claim you created) or type=nfs to enable the backup volume. The created claim is kept on
+    # uninstall. The backup Jobs take their volume from the backup settings in the database: with a
+    # pvcClaimName other than axera-backups, or with NFS, enter the same claim name or NFS server
+    # and path under Settings > System > Backup & Restore.
+    createPvc: false
+    pvcClaimName: ""
+    size: 10Gi
+    # ReadWriteMany needs a StorageClass that provides it (storageClass below); k3s local-path and
+    # GKE standard-rwo do not, and a Pending claim keeps the api pod Pending. Single node:
+    # ReadWriteOnce (the k3s profile sets it).
+    accessMode: ReadWriteMany
+    storageClass: ""
+    nfs:
+      server: ""
+      path: ""
+
+# =============================================================================
+# Metrics — Radar's and the API's /metrics on port 9090 (plain HTTP, no authentication), plus a
+# ServiceMonitor and PrometheusRule when the cluster serves monitoring.coreos.com/v1.
+# =============================================================================
+monitoring:
+  enabled: true
+  # With networkPolicies.enabled, the namespaces whose Prometheus may scrape port 9090. Empty → per
+  # distribution: openshift-user-workload-monitoring (openshift), cattle-monitoring-system (rke2),
+  # gmp-system (anthos), monitoring (k3s, vanilla).
+  scrapeNamespaces: []
+
+# =============================================================================
+# INTEGRATION IDENTITY — the ONE ServiceAccount whose token is registered for a cluster
+# (templates/02-integration-rbac.yaml: axera-integration-sa, token Secret axera-sa-token)
+# =============================================================================
+# leastPrivilege: false (default) binds three ClusterRoles: axera-integration-role-<ns>,
+#   axera-integration-extended-<ns> (mesh routing writes, cluster-wide pods/log, Namespace
+#   changes) and axera-integration-agent-deploy-<ns> (flow-agent install from the UI: enough to run
+#   a privileged pod). true binds only the first: Mesh > Traffic deploy, OVN ACL logging
+#   annotation and the UI agent install then answer a refusal naming this switch.
+# namespacedRoles: how the namespaced Roles render (packet-capture exec in the agent namespace
+#   "axera"; with leastPrivilege the pods/log Roles):
+#     auto   — when Helm lookup finds the namespace (a namespace created later gets its Role on
+#              the next helm upgrade);
+#     always — without asking (helm template / Argo CD; create the agent namespace first);
+#     never  — none (packet capture answers 403 until you grant it).
+integration:
+  leastPrivilege: false
+  namespacedRoles: auto
+  # OpenShift only: let Axera APPLY the router access-logging patch to the listed
+  # IngressControllers (a Role in openshift-ingress-operator, get + patch by name).
+  ingressLoggingApply:
+    enabled: false
+    ingressControllers: [default]
+
+# =============================================================================
+# Mesh verdict ingestion (sidecar and waypoint Envoy access logs)
+# =============================================================================
+# Ambient needs nothing here. Sidecar and waypoint lanes are PUSH: the mesh sends its access logs
+# to Radar with a per-cluster token. Axera mints that token itself when sidecar monitoring is
+# switched on for a cluster (Mesh > Posture > Lanes, Sidecar monitoring); use ingestTokens only to pin tokens on
+# purpose (air-gapped, GitOps). A cluster listed here is managed here.
+meshMonitoring:
+  # Registered cluster name -> token (16+ characters, one per cluster, e.g. openssl rand -hex 32):
+  #   ingestTokens:
+  #     <cluster-name>: "<token>"
+  # Prefer --set-file or a values file kept out of git. Rendered into Secret
+  # axera-mesh-ingest-tokens (removing an entry revokes it). With secrets.create=false add
+  # MeshMonitoring__IngestTokens__<cluster> keys to your app Secret instead.
+  ingestTokens: {}
+  # Public base URL a REMOTE cluster's collector posts to. Empty = the in-cluster address (correct
+  # when the observed mesh and Axera share a cluster). Radar must be exposed first.
+  ingestPublicUrl: ""
+  # Namespace for the rendered mesh collector. Empty = Radar's own namespace.
+  collectorNamespace: ""
+
+# =============================================================================
+# helm test
+# =============================================================================
+tests:
+  # Any image with sh and curl, pinned by tag and digest; mirror it (and set this) when air-gapped.
+  image: registry.access.redhat.com/ubi9/ubi-minimal:9.8-1791279563@sha256:5ed244b62bbf4095080144d9d35eb8fcd3d39a9801f94aadd63b9d10978a01ae

@@ -1,0 +1,20 @@
+# Vanilla Kubernetes (kubeadm and similar) profile: only what differs from values.yaml. Use with your own
+# values file, which MUST set podCIDR:
+#   helm install axera-force <chart> -n axera -f profiles/values-vanilla.yaml -f my-values.yaml
+#
+# Defaults that come from global.distribution vanilla:
+#   podCIDR required: kubeadm --pod-network-cidr (Calico often 192.168.0.0/16, Flannel 10.244.0.0/16)
+#   serviceCIDR none (kubeadm default 10.96.0.0/12): set it so ClusterIPs read as in-cluster
+#   process.criSocket none (containerd is usually /run/containerd/containerd.sock: set it to enrich)
+#   pod network namespace access on; no OpenShift SCC; flow.ingress refused
+#
+# With an eBPF CNI that attaches TC programs (Calico eBPF mode and similar) set flow.tcAttachMode: tcx
+# (the chart detects only some of them, and only at helm install / upgrade; see values.yaml).
+# With Calico on 192.168.0.0/16, set localNetworkCIDR to your corporate range (the default equals it).
+global:
+  distribution: vanilla
+
+# podCIDR: 10.244.0.0/16
+# serviceCIDR: 10.96.0.0/12
+# process:
+#   criSocket: /run/containerd/containerd.sock

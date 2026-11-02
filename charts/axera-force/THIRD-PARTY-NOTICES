@@ -1,0 +1,21 @@
+Third-party content in this chart
+=================================
+
+crds/cilium.io_tracingpolicies.yaml
+crds/cilium.io_tracingpoliciesnamespaced.yaml
+crds/cilium.io_podinfo.yaml
+
+These CustomResourceDefinitions of the cilium.io API group are reproduced
+unmodified from release v1.7.1 of their upstream open-source project, the
+project whose process sensor image this chart runs
+(quay.io/cilium/tetragon:v1.7.1). That project publishes them under the Apache
+License, Version 2.0. Copyright the upstream project authors.
+
+The full text of the License is in LICENSE-APACHE-2.0 in this chart. It is
+also available at
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed
+under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+CONDITIONS OF ANY KIND, either express or implied. See the License for the
+specific language governing permissions and limitations under the License.

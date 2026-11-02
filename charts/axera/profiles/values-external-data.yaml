@@ -1,0 +1,41 @@
+# External PostgreSQL and Kafka (production, and any install whose agents run on OTHER clusters).
+# Layer it on top of a distribution profile:
+#   helm upgrade --install axera axera/axera -n axera-central \
+#     -f axera/profiles/values-<distribution>.yaml -f axera/profiles/values-external-data.yaml -f my-values.yaml
+#
+# Credentials: rather than writing them here, create the Secrets yourself and name them in
+# secrets.existingSecrets (keys: README, "Secrets"); then blank the connection strings and the
+# SASL fields below. The chart never deploys PostgreSQL, Kafka or kafka-ui in this mode.
+postgres:
+  external: true
+  # Two databases (they can live on one server). Npgsql format; no ';' in the password.
+  appDbConnString: "<<< FILL: Host=<pg-host>;Port=5432;Database=MicrosegmentationDB;Username=<user>;Password=<password>;SslMode=Require >>>"
+  radarConnString: "<<< FILL: Host=<pg-host>;Port=5432;Database=AxeraRadarDB;Username=<user>;Password=<password>;SslMode=Require >>>"
+  # SslMode=VerifyCA / VerifyFull with a private CA: a Secret in this namespace with the PEM CA under
+  # ca.crt (trusted by the migrate and trial Jobs and the api, radar, networkpolicywatcher and
+  # allowdropmonitor pods).
+  caSecret: ""
+
+kafka:
+  external: true
+  bootstrapServers: "<<< FILL: broker1:9093,broker2:9093,broker3:9093 >>>"
+  securityProtocol: SaslSsl
+  saslMechanism: ScramSha512
+  saslUsername: "<<< FILL: SASL user >>>"
+  saslPassword: "<<< FILL: SASL password (prefer secrets.existingSecrets.kafka) >>>"
+  # PEM of the broker CA; empty → the system CA bundle.
+  caCert: ""
+  # Every agent cluster, by its registered name: Radar derives and consumes their topics.
+  clusters: []
+  #  - cluster-a
+  #  - cluster-b
+
+app:
+  # No volume for the DataProtection key ring: the keys live in the app database.
+  dpKeysStore: Database
+
+secrets:
+  existingSecrets:
+    db: ""
+    app: ""
+    kafka: ""

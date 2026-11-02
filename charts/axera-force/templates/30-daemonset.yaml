@@ -1,0 +1,467 @@
+{{- $sasl := include "axeraforce.sasl" . -}}
+{{- $hasCA := include "axeraforce.useCA" . -}}
+{{- $metrics := include "axeraforce.metrics" . | fromJson -}}
+{{- $netns := include "axeraforce.podNetns" . | fromJson -}}
+{{- $platform := include "axeraforce.platform" . | fromJson -}}
+{{- $apparmorField := and (not $platform.openshift) (include "axeraforce.appArmorField" .) -}}
+{{- $apparmorAnnotations := and (not $platform.openshift) (not $apparmorField) -}}
+# THE single agent DaemonSet: the flow agent and the flow pipeline, the process sensor and the shipper,
+# and the capture sidecar, in one pod per node sharing the host network and PID namespaces. The
+# DaemonSet name, its app=axera-agent label and the container names are what the Axera API looks for.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: axera-agent
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: axera-agent
+    {{- include "axeraforce.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: axera-agent
+  {{- $us := .Values.updateStrategy | default dict }}
+  updateStrategy:
+    {{- if eq (toString (dig "type" "RollingUpdate" $us)) "OnDelete" }}
+    # updateStrategy.type OnDelete (a canary): a node's pod is replaced only when it is deleted.
+    type: OnDelete
+    {{- else }}
+    type: RollingUpdate
+    rollingUpdate:
+      {{- $mu := dig "maxUnavailable" 1 $us }}
+      # An integer, or a percentage of the nodes ("10%"; Kubernetes rounds it up to at least one pod).
+      maxUnavailable: {{ if kindIs "string" $mu }}{{ $mu | quote }}{{ else }}{{ $mu | int }}{{ end }}
+      # Never a surge pod: it would collide with the old one on the node ports (hostNetwork).
+      maxSurge: 0
+    {{- end }}
+  template:
+    metadata:
+      labels:
+        app: axera-agent
+        {{- include "axeraforce.podLabels" . | nindent 8 }}
+      annotations:
+        # The flow pipeline, the process sensor and the shipper read their config only at start, so a
+        # ConfigMap-only change never reaches running pods; hashing the rendered config into the pod
+        # template rolls the pods when the config changes (its data only: a label or chart-version
+        # change rolls nothing).
+        checksum/flp-config: {{ include "axeraforce.dataChecksum" (list $ "20-configmap-flow-pipeline.yaml") }}
+        checksum/tetragon-config: {{ include "axeraforce.dataChecksum" (list $ "21-configmap-process-sensor.yaml") }}
+        checksum/shipper-config: {{ include "axeraforce.dataChecksum" (list $ "22-configmap-shipper.yaml") }}
+        # The same for the Kafka credentials and CA (kafka-sasl, kafka-ca): read at start, so a rotated
+        # password must roll the pods. Bring-your-own Secrets are read from the cluster at install /
+        # upgrade time only; after rotating one, run kubectl -n axera rollout restart daemonset/axera-agent.
+        checksum/kafka-secret: {{ include "axeraforce.kafkaSecretChecksum" . }}
+        {{- if $apparmorAnnotations }}
+        # Off OpenShift an AppArmor host (Ubuntu, Debian, SUSE) gives every non-privileged container the
+        # runtime's default profile, which denies writes under /sys/fs/bpf and ptrace-read access to other
+        # profiles' /proc entries: the process sensor could not pin its programs or read host processes, and
+        # the capture sidecar could not find a pod's process. These three stay unconfined by AppArmor.
+        # Kubernetes 1.30 and later get securityContext.appArmorProfile instead (rendered below).
+        container.apparmor.security.beta.kubernetes.io/ebpf-agent: unconfined
+        container.apparmor.security.beta.kubernetes.io/tetragon: unconfined
+        {{- if .Values.capture.enabled }}
+        container.apparmor.security.beta.kubernetes.io/pcap-capture: unconfined
+        {{- end }}
+        {{- end }}
+    spec:
+      serviceAccountName: axera-agent
+      hostNetwork: true
+      hostPID: true
+      dnsPolicy: ClusterFirstWithHostNet
+      terminationGracePeriodSeconds: 10
+      {{- with include "axeraforce.imagePullSecrets" . }}
+      imagePullSecrets: {{- . | trim | nindent 8 }}
+      {{- end }}
+      # Linux nodes only (the process sensor and the flow agent are Linux eBPF programs), and amd64 nodes only
+      # while requireAmd64 is true (the shipper and capture images are built for amd64 alone). nodeSelector is
+      # merged in and wins on the same key.
+      nodeSelector: {{- include "axeraforce.nodeSelector" . | nindent 8 }}
+      tolerations:
+        {{- if .Values.tolerations }}
+        {{- toYaml .Values.tolerations | nindent 8 }}
+        {{- else }}
+        - operator: Exists
+        {{- end }}
+      {{- with .Values.affinity }}
+      affinity: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.priorityClassName }}
+      priorityClassName: {{ . | quote }}
+      {{- end }}
+      initContainers:
+        - name: btf-check
+          image: {{ .Values.images.processSensor | quote }}
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              if [ -f /sys/kernel/btf/vmlinux ]; then
+                echo "BTF present: /sys/kernel/btf/vmlinux"; exit 0
+              else
+                echo "ERROR: /sys/kernel/btf/vmlinux not found: the flow agent and the process sensor need kernel BTF (CONFIG_DEBUG_INFO_BTF=y, kernel 5.8 or later) and will not start on this node. See the README prerequisites."; exit 0
+              fi
+          # Reads /sys/kernel/btf/vmlinux through the container's own read-only sysfs: no host mount, no
+          # capability, not root.
+          securityContext:
+            runAsUser: 65534
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+            seccompProfile: { type: RuntimeDefault }
+          {{- with include "axeraforce.resources" (list . "btfCheck") | fromJson }}
+          resources: {{- toYaml . | nindent 12 }}
+          {{- end }}
+      containers:
+        # ---- FLOW: the flow agent (container name kept for compatibility) ----
+        - name: ebpf-agent
+          image: {{ .Values.images.flowAgent | quote }}
+          imagePullPolicy: IfNotPresent
+          # Not privileged: three capabilities, each with a job (each one's absence stops the agent). BPF:
+          # bpf() for the programs and the flow maps. PERFMON: the tracepoint, kprobe and fentry programs
+          # (RTT, DNS and drops ride on them). NET_ADMIN: TC/TCX hooks on the node's interfaces. SYS_ADMIN only
+          # with flow.podNetnsAttach (setns into each pod's netns). No SYS_RESOURCE on OpenShift: eBPF memory is
+          # charged to the memory cgroup (kernel 5.11+). Elsewhere a 5.8-5.10 kernel still counts it against
+          # RLIMIT_MEMLOCK, so SYS_RESOURCE is added there.
+          securityContext:
+            privileged: false
+            # The image runs as non-root. Kubernetes and the runtime never set ambient capabilities, so a
+            # non-root process gets none of the capabilities added here and every bpf() call fails with EPERM.
+            # Root, with only the capabilities below.
+            runAsUser: 0
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+              add: ["BPF", "PERFMON", "NET_ADMIN"{{ if $netns.flow }}, "SYS_ADMIN"{{ end }}{{ if not $platform.openshift }}, "SYS_RESOURCE"{{ end }}]
+            # Unconfined without SYS_ADMIN, deliberately: the runtime's default seccomp profile allows bpf() and
+            # perf_event_open() only to a holder of CAP_SYS_ADMIN on many runtimes. Granting SYS_ADMIN to satisfy
+            # the profile would be the wider privilege, so the flow agent runs without a profile and with three
+            # capabilities. With flow.podNetnsAttach it holds SYS_ADMIN anyway, and then runs under the default.
+            seccompProfile: { type: {{ if $netns.flow }}RuntimeDefault{{ else }}Unconfined{{ end }} }
+            # spc_t: container_t has no bpf or perf_event permission on SELinux hosts.
+            seLinuxOptions: { type: spc_t }
+            {{- if $apparmorField }}
+            appArmorProfile: { type: Unconfined }
+            {{- end }}
+          env:
+            - { name: EXPORT, value: "grpc" }
+            - { name: TARGET_HOST, value: "127.0.0.1" }
+            - { name: TARGET_PORT, value: "2055" }
+            - { name: LOG_LEVEL, value: "info" }
+            - { name: DIRECTION, value: {{ .Values.flow.direction | quote }} }
+            - { name: EXCLUDE_INTERFACES, value: {{ .Values.flow.excludeInterfaces | quote }} }
+            - { name: ENABLE_DNS_TRACKING, value: {{ .Values.flow.enableDnsTracking | quote }} }
+            - { name: ENABLE_PKT_TRANSLATION, value: {{ .Values.flow.enablePktTranslation | quote }} }
+            - { name: ENABLE_RTT, value: {{ .Values.flow.enableRtt | quote }} }
+            # flow.tcAttachMode: how the flow agent hooks each interface. tcx (kernel 6.6+) attaches beside any
+            # other TC program; tc is the legacy clsact qdisc; any tries tcx and falls back to tc. Empty: tcx on
+            # anthos, any elsewhere.
+            - { name: TC_ATTACH_MODE, value: {{ include "axeraforce.tcAttachMode" . | quote }} }
+            {{- if (.Values.flow).enablePktDrops }}
+            # Opt-in (flow.enablePktDrops): skb:kfree_skb tracepoint, kernel 5.14+.
+            - { name: ENABLE_PKT_DROPS, value: "true" }
+            {{- end }}
+            # The node's own IP: the flow pipeline stamps agent_ip with exactly the value of
+            # src_host_ip / dst_host_ip, so Axera can tell the source node's record of a cross-node
+            # connection from the destination node's copy and count it once.
+            - name: AGENT_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            {{- if $metrics.enabled }}
+            # The flow agent's Prometheus endpoint, on the node's IP only.
+            - { name: METRICS_ENABLE, value: "true" }
+            - { name: METRICS_SERVER_ADDRESS, value: "$(AGENT_IP)" }
+            - { name: METRICS_SERVER_PORT, value: {{ $metrics.flowAgentPort | quote }} }
+            {{- end }}
+          {{- if $metrics.enabled }}
+          ports:
+            - { name: flow-metrics, containerPort: {{ $metrics.flowAgentPort }}, protocol: TCP }
+          {{- end }}
+          {{- with include "axeraforce.resources" (list . "flowAgent") | fromJson }}
+          resources: {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if or (.Values.flow).enablePktDrops $netns.flow }}
+          # Nothing else from the host: the agent pins nothing (no bpffs), needs no cgroup or module tree, and
+          # reads BTF through the container's own sysfs.
+          volumeMounts:
+            {{- if (.Values.flow).enablePktDrops }}
+            # The skb:kfree_skb tracepoint's id (packet drops only).
+            - { name: tracefs, mountPath: /sys/kernel/tracing, readOnly: true }
+            {{- end }}
+            {{- if $netns.flow }}
+            # flow.podNetnsAttach: the pod network namespaces, with the mounts the runtime adds after the agent
+            # started (HostToContainer), so a pod created later is attached too.
+            - { name: netns, mountPath: /var/run/netns, readOnly: true, mountPropagation: HostToContainer }
+            {{- end }}
+          {{- end }}
+        # ---- FLOW: the flow pipeline (container name kept for compatibility) ----
+        - name: flowlogs-pipeline
+          image: {{ .Values.images.flowPipeline | quote }}
+          imagePullPolicy: IfNotPresent
+          # No privilege at all: it receives flows on a TCP port and writes to Kafka.
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+            seccompProfile: { type: RuntimeDefault }
+          args:
+            - "--config"
+            - /etc/flp/flp.yaml
+            - "--log-level"
+            - info
+            - "--health.address"
+            - 0.0.0.0
+            # hostNetwork, so this is the NODE's port. 8080 is busy on many hosts, and a foreign listener there
+            # would satisfy the tcpSocket probes below while the pipeline itself never bound anything (its
+            # health server logs the bind error and retries instead of exiting). 28080 is nobody's default.
+            - "--health.port"
+            - "28080"
+            {{- if $metrics.enabled }}
+            # The pipeline's operational metrics on the node's IP. A flag, not the config file: the address
+            # differs per node. noPanic: a taken port loses the endpoint, never the pipeline.
+            - '--metricsSettings={"address":"$(NODE_IP)","port":{{ $metrics.flowPipelinePort }},"prefix":"flp_","noPanic":true}'
+            {{- end }}
+          {{- if $metrics.enabled }}
+          env:
+            - name: NODE_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+          {{- end }}
+          ports:
+            - { name: grpc, containerPort: 2055, protocol: TCP }
+            - { name: health, containerPort: 28080, protocol: TCP }
+            {{- if $metrics.enabled }}
+            - { name: flp-metrics, containerPort: {{ $metrics.flowPipelinePort }}, protocol: TCP }
+            {{- end }}
+          {{- with include "axeraforce.resources" (list . "flowPipeline") | fromJson }}
+          resources: {{- toYaml . | nindent 12 }}
+          {{- end }}
+          startupProbe:
+            tcpSocket: { port: 28080 }
+            periodSeconds: 2
+            failureThreshold: 30
+          readinessProbe:
+            tcpSocket: { port: 28080 }
+            initialDelaySeconds: 2
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket: { port: 28080 }
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          volumeMounts:
+            - { name: flp-config, mountPath: /etc/flp, readOnly: true }
+            {{- if $hasCA }}
+            - { name: kafka-certs, mountPath: /etc/kafka-certs, readOnly: true }
+            {{- end }}
+            {{- if $sasl }}
+            - { name: kafka-sasl, mountPath: /etc/kafka-sasl, readOnly: true }
+            {{- end }}
+        # ---- PROCESS: the process sensor (container name kept for compatibility) ----
+        - name: tetragon
+          image: {{ .Values.images.processSensor | quote }}
+          imagePullPolicy: IfNotPresent
+          # Not privileged: six capabilities, each with a job.
+          #   BPF, PERFMON   load the programs and attach kprobes / tracepoints
+          #   SYS_ADMIN      the policy filter: every namespaced or podSelector policy (process enforcement, NDR
+          #                  containment) matches through it
+          #   SYS_PTRACE     read other users' /procRoot/<pid> (ns, exe, cgroup): host procfs check, cgroup tracking
+          #   DAC_OVERRIDE   the sensor creates its bpffs pin directories with mode 0000
+          #   SYSLOG         /proc/kallsyms addresses for every kprobe (kptr_restrict)
+          #   SYS_RESOURCE   off OpenShift only: RLIMIT_MEMLOCK on 5.8-5.10 kernels (no memory-cgroup accounting)
+          securityContext:
+            privileged: false
+            runAsUser: 0
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+              add: ["BPF", "PERFMON", "SYS_ADMIN", "SYS_PTRACE", "DAC_OVERRIDE", "SYSLOG"{{ if not $platform.openshift }}, "SYS_RESOURCE"{{ end }}]
+            seccompProfile: { type: RuntimeDefault }
+            seLinuxOptions: { type: spc_t }
+            {{- if $apparmorField }}
+            appArmorProfile: { type: Unconfined }
+            {{- end }}
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            {{- if $metrics.enabled }}
+            - name: NODE_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            {{- end }}
+          {{- $cri := include "axeraforce.criHint" . | fromJson }}
+          {{- if eq $cri.state "configured" }}
+          # The CRI socket hint (process.criSocket, or the distribution's usual socket), decided on each node
+          # when the sensor starts: the runtime is asked (enable-cri, cri-endpoint, and enable-cgidmap unless a
+          # policy podSelector is set) only when the path, seen through the host's root, is a socket. Elsewhere
+          # the sensor starts without it and keeps its cgroup-name association. Either way the node writes its
+          # answer ("present" | "missing") next to the export file, and the shipper reports it in the
+          # association_health record. Nothing waits on the socket: the pod always starts.
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              s={{ $cri.path | quote }}
+              state=/var/run/cilium/tetragon/axera-runtime-socket
+              if [ -S "$s" ]; then
+                echo present > "$state" || true
+                exec /usr/bin/tetragon "$@" --enable-cri --cri-endpoint="unix://$s"{{ if $cri.cgidmap }} --enable-cgidmap{{ end }}
+              fi
+              echo "process.criSocket: $s is not a socket on this node; the sensor starts without the container runtime" >&2
+              echo missing > "$state" || true
+              exec /usr/bin/tetragon "$@"
+            - tetragon
+          {{- else }}
+          args:
+          {{- end }}
+            - --config-dir=/etc/tetragon/tetragon.conf.d/
+            - --bpf-lib=/var/lib/tetragon/
+            - --export-filename=/var/run/cilium/tetragon/tetragon.log
+            - --enable-k8s-api
+            - --procfs=/procRoot
+            # The sensor's Prometheus endpoint on the node's IP, port metrics.sensorPort (or process.metricsPort).
+            # With metrics.enabled false only process.metricsPort opens it, on every address.
+            {{- if $metrics.enabled }}
+            - --metrics-server=$(NODE_IP):{{ $metrics.sensorPort }}
+            {{- else if (.Values.process).metricsPort }}
+            - --metrics-server=:{{ .Values.process.metricsPort | int }}
+            {{- end }}
+          {{- if $metrics.enabled }}
+          ports:
+            - { name: sensor-metrics, containerPort: {{ $metrics.sensorPort }}, protocol: TCP }
+          {{- else if (.Values.process).metricsPort }}
+          ports:
+            - { name: metrics, containerPort: {{ .Values.process.metricsPort | int }}, protocol: TCP }
+          {{- end }}
+          {{- with include "axeraforce.resources" (list . "processSensor") | fromJson }}
+          resources: {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - { name: bpffs, mountPath: /sys/fs/bpf }
+            - { name: cgroup, mountPath: /sys/fs/cgroup, readOnly: true }
+            # Tracepoint ids and the kprobe PMU; BTF comes from the container's own read-only sysfs, and no module
+            # tree is needed with BTF.
+            - { name: tracefs, mountPath: /sys/kernel/tracing, readOnly: true }
+            - { name: procfs, mountPath: /procRoot, readOnly: true }
+            - { name: tetragon-config, mountPath: /etc/tetragon/tetragon.conf.d/ }
+            - { name: export-logs, mountPath: /var/run/cilium/tetragon }
+        # ---- PROCESS: the shipper ----
+        - name: shipper
+          image: {{ .Values.images.shipper | quote }}
+          imagePullPolicy: IfNotPresent
+          args: ["-c", "/fluent-bit/etc/fluent-bit.conf"]
+          # No capability. Root only to read the sensor's export file (written by root) and keep its read
+          # offset next to it; the pod association reads world-readable /proc/<pid>/stat and /proc/<pid>/cgroup
+          # through the shared host PID namespace.
+          securityContext:
+            runAsUser: 0
+            allowPrivilegeEscalation: false
+            capabilities: { drop: ["ALL"] }
+            seccompProfile: { type: RuntimeDefault }
+            seLinuxOptions: { type: spc_t }
+          env:
+            # The node the association_health record names (association.lua).
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            {{- if $metrics.enabled }}
+            # The shipper's metrics listener, on the node's IP only.
+            - name: NODE_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            {{- end }}
+            {{- if $sasl }}
+            - name: KAFKA_SASL_USERNAME
+              valueFrom:
+                secretKeyRef: { name: kafka-sasl, key: username }
+            - name: KAFKA_SASL_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: kafka-sasl, key: password }
+            {{- end }}
+          {{- if $metrics.enabled }}
+          ports:
+            - { name: shipper-metrics, containerPort: {{ $metrics.shipperPort }}, protocol: TCP }
+          {{- end }}
+          {{- with include "axeraforce.resources" (list . "shipper") | fromJson }}
+          resources: {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - { name: export-logs, mountPath: /var/run/cilium/tetragon }
+            - { name: shipper-config, mountPath: /fluent-bit/etc/fluent-bit.conf, subPath: fluent-bit.conf, readOnly: true }
+            - { name: shipper-config, mountPath: /fluent-bit/etc/parsers.conf, subPath: parsers.conf, readOnly: true }
+            - { name: shipper-config, mountPath: /fluent-bit/etc/axera-process-filter.lua, subPath: axera-process-filter.lua, readOnly: true }
+            {{- if $hasCA }}
+            - { name: kafka-certs, mountPath: /etc/kafka-certs, readOnly: true }
+            {{- end }}
+        {{- if .Values.capture.enabled }}
+        # ---- CAPTURE: on-demand tcpdump sidecar ----
+        # Idle until the Axera API execs `tcpdump` in it for a bounded, BPF-scoped capture. Because the pod is
+        # hostNetwork, `tcpdump -i any` here sees the node's traffic; the server-side BPF filter (built from the
+        # Graph edge or incident) narrows each capture to the requested endpoints.
+        - name: pcap-capture
+          image: {{ .Values.images.capture | quote }}
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/bash", "-c"]
+          args: ["trap : TERM INT; echo 'axera pcap-capture ready'; sleep infinity & wait"]
+          securityContext:
+            # Not privileged. NET_RAW: tcpdump's AF_PACKET socket (`-i any` needs no promiscuous mode, so no
+            # NET_ADMIN). SETUID + SETGID: tcpdump drops from root to user "tcpdump" once the capture is open and
+            # exits if it cannot, so these two exist to GIVE UP privilege. KILL: `timeout` (uid 0) ends tcpdump
+            # at the capture's duration after that drop. Root so the image default cannot drop the capabilities.
+            privileged: false
+            runAsUser: 0
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+              add: ["NET_RAW", "SETUID", "SETGID", "KILL"{{ if $netns.capture }}, "SYS_ADMIN", "SYS_PTRACE"{{ end }}]
+              # SYS_ADMIN + SYS_PTRACE only with capture.podNetns (unset: off on OpenShift's OVN-Kubernetes or
+              # OpenShiftSDN, on elsewhere): the capture then runs INSIDE the source pod's network namespace
+              # (nsenter --net=/proc/<pid>/ns/net), because on CNIs with an eBPF fast path the node never sees
+              # same-node pod-to-pod traffic. setns needs SYS_ADMIN; /proc/<pid>/ns of a non-root pod needs
+              # SYS_PTRACE. Without them the API captures on the node's interfaces.
+            seccompProfile: { type: RuntimeDefault }
+            seLinuxOptions: { type: spc_t }
+            {{- if $apparmorField }}
+            appArmorProfile: { type: Unconfined }
+            {{- end }}
+          {{- with include "axeraforce.resources" (list . "capture") | fromJson }}
+          resources: {{- toYaml . | nindent 12 }}
+          {{- end }}
+        {{- end }}
+      volumes:
+        # Host paths, all narrow: no /sys, /var/run, /lib/modules or host root. Writable: bpffs and the export dir.
+        - { name: bpffs, hostPath: { path: /sys/fs/bpf, type: DirectoryOrCreate } }
+        - { name: tracefs, hostPath: { path: /sys/kernel/tracing } }
+        - { name: procfs, hostPath: { path: /proc } }
+        - { name: cgroup, hostPath: { path: /sys/fs/cgroup } }
+        {{- if $netns.flow }}
+        - { name: netns, hostPath: { path: /var/run/netns, type: DirectoryOrCreate } }
+        {{- end }}
+        - { name: export-logs, hostPath: { path: /var/run/cilium/tetragon, type: DirectoryOrCreate } }
+        - name: flp-config
+          configMap:
+            name: axera-flp
+            defaultMode: 420
+        - name: tetragon-config
+          configMap:
+            name: axera-tetragon-config
+        - name: shipper-config
+          configMap:
+            name: axera-shipper
+        {{- if $hasCA }}
+        - name: kafka-certs
+          secret:
+            secretName: kafka-ca
+        {{- end }}
+        {{- if $sasl }}
+        - name: kafka-sasl
+          secret:
+            secretName: kafka-sasl
+        {{- end }}

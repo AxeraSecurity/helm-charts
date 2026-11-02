@@ -1,0 +1,875 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "axera-force values",
+  "type": "object",
+  "required": [
+    "clusterName",
+    "kafka"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "global": {
+      "type": "object",
+      "properties": {
+        "distribution": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "openshift",
+            "k3s",
+            "rke2",
+            "anthos",
+            "vanilla"
+          ],
+          "description": "auto | openshift | k3s | rke2 | anthos | vanilla. auto detects it at helm install / upgrade; renders that cannot see the cluster fall back to vanilla."
+        }
+      }
+    },
+    "clusterName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 241,
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$",
+      "description": "Name this cluster is registered under in Axera; also its Kafka flow topic (process topic <clusterName>-process, DNS topic <clusterName>-dns). Kafka-legal characters, at most 241."
+    },
+    "podCIDR": {
+      "type": "string",
+      "pattern": "^$|^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])/([0-9]|[12][0-9]|3[0-2])$",
+      "description": "Pod network CIDR. Empty only on a live helm install / upgrade: OpenShift reads it from the Network object, k3s / RKE2 take 10.42.0.0/16 and refuse a node whose pod range lies outside. Required on Anthos, vanilla and every offline render."
+    },
+    "serviceCIDR": {
+      "type": "string",
+      "pattern": "^$|^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])/([0-9]|[12][0-9]|3[0-2])$",
+      "description": "Service (ClusterIP) CIDR. Empty = on a live OpenShift install the Network object's serviceNetwork, else the distribution's default (OpenShift 172.30.0.0/16, k3s / RKE2 10.43.0.0/16), none elsewhere."
+    },
+    "extraPodCIDRs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])/([0-9]|[12][0-9]|3[0-2])$"
+      },
+      "description": "More in-cluster ranges labelled ClusterSubnet."
+    },
+    "localNetworkCIDR": {
+      "type": "string",
+      "pattern": "^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])/([0-9]|[12][0-9]|3[0-2])$",
+      "description": "Corporate / on-prem range labelled LocalNetwork. Must not equal or lie inside the pod or Service CIDR."
+    },
+    "extraLocalNetworkCIDRs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])/([0-9]|[12][0-9]|3[0-2])$"
+      },
+      "description": "More LocalNetwork ranges."
+    },
+    "clusterPublicIP": {
+      "type": "string",
+      "pattern": "^$|^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])/32$",
+      "description": "This cluster's own egress IP as a /32 (cross-cluster attribution). Empty for a single cluster."
+    },
+    "multiCluster": {
+      "type": "object",
+      "properties": {
+        "cidr": {
+          "type": "string",
+          "pattern": "^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])/([0-9]|[12][0-9]|3[0-2])$",
+          "description": "Shared egress range of the cluster group."
+        },
+        "peers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "publicIP": {
+                "type": "string",
+                "pattern": "^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])/([0-9]|[12][0-9]|3[0-2])$"
+              },
+              "globalCidr": {
+                "type": "string",
+                "pattern": "^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])/([0-9]|[12][0-9]|3[0-2])$"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "publicIP"
+            ]
+          }
+        }
+      },
+      "additionalProperties": false,
+      "description": "Cross-cluster egress attribution. Empty for a single cluster."
+    },
+    "submariner": {
+      "type": "object",
+      "properties": {
+        "topic": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9._-]{1,249}$",
+          "description": "Intercluster flow topic (default intercluster-flows)."
+        },
+        "globalCidr": {
+          "type": "string",
+          "pattern": "^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])/([0-9]|[12][0-9]|3[0-2])$",
+          "description": "Globalnet range (default 242.0.0.0/8)."
+        },
+        "clusterGlobalCidr": {
+          "type": "string",
+          "pattern": "^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])/([0-9]|[12][0-9]|3[0-2])$",
+          "description": "This cluster's Globalnet slice."
+        }
+      },
+      "additionalProperties": false,
+      "description": "Submariner Globalnet intercluster lane. Empty unless Submariner is installed."
+    },
+    "kafka": {
+      "type": "object",
+      "properties": {
+        "bootstrapServers": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(\\[[0-9a-fA-F:.]+\\]|[A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?):[0-9]{1,5}(,\\s*(\\[[0-9a-fA-F:.]+\\]|[A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?):[0-9]{1,5})*$",
+          "description": "host:port of the central Kafka listener (or a comma-separated list: the flow pipeline uses only the first entry)."
+        },
+        "securityProtocol": {
+          "type": "string",
+          "enum": [
+            "Plaintext",
+            "Ssl",
+            "SaslPlaintext",
+            "SaslSsl"
+          ]
+        },
+        "saslMechanism": {
+          "type": "string",
+          "enum": [
+            "Plain",
+            "ScramSha512",
+            "ScramSha256"
+          ],
+          "description": "ScramSha512 | Plain. ScramSha256 is refused by the chart (the flow pipeline cannot log in with it)."
+        },
+        "createSecret": {
+          "type": "boolean",
+          "description": "false (default): create Secrets kafka-ca (ca.crt) and kafka-sasl (username, password) yourself. true: the chart creates them from the values below."
+        },
+        "saslUsername": {
+          "type": "string",
+          "description": "createSecret: true only.",
+          "not": {
+            "pattern": "<<<|>>>"
+          }
+        },
+        "saslPassword": {
+          "type": "string",
+          "description": "createSecret: true only.",
+          "not": {
+            "pattern": "<<<|>>>"
+          }
+        },
+        "caCert": {
+          "type": "string",
+          "description": "PEM of the broker CA (createSecret: true only).",
+          "not": {
+            "pattern": "<<<|>>>"
+          }
+        },
+        "systemTrustStore": {
+          "type": "boolean",
+          "description": "true: the broker certificate chains to a public CA the images trust; no kafka-ca is mounted."
+        },
+        "insecureSkipVerify": {
+          "type": "boolean",
+          "description": "Skip broker certificate verification (test only)."
+        },
+        "compression": {
+          "type": "string",
+          "enum": [
+            "",
+            "none",
+            "gzip",
+            "snappy",
+            "lz4",
+            "zstd"
+          ],
+          "description": "none | gzip | snappy | lz4 | zstd; empty = lz4."
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "bootstrapServers"
+      ]
+    },
+    "flow": {
+      "type": "object",
+      "properties": {
+        "topic": {
+          "type": "string",
+          "pattern": "^$|^[a-zA-Z0-9._-]{1,249}$",
+          "description": "Empty or equal to clusterName (anything else is refused)."
+        },
+        "externalTopic": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9._-]{1,249}$"
+        },
+        "direction": {
+          "type": "string",
+          "enum": [
+            "ingress",
+            "egress",
+            "both"
+          ]
+        },
+        "excludeInterfaces": {
+          "type": "string"
+        },
+        "enableDnsTracking": {
+          "type": "boolean"
+        },
+        "enablePktTranslation": {
+          "type": "boolean"
+        },
+        "enableRtt": {
+          "type": "boolean"
+        },
+        "enablePktDrops": {
+          "type": "boolean",
+          "description": "Packet-drop tracking; kernel 5.14+ on every node."
+        },
+        "tcAttachMode": {
+          "type": "string",
+          "enum": [
+            "",
+            "any",
+            "tcx",
+            "tc"
+          ],
+          "description": "Empty (tcx on anthos, any elsewhere) | any | tcx | tc. tc (and any on a kernel without TCX) replaces an interface's clsact qdisc; use tcx with an eBPF CNI."
+        },
+        "podNetnsAttach": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "Attach inside every pod's netns. null = off on OpenShift OVN-Kubernetes / OpenShiftSDN, on elsewhere."
+        },
+        "udp": {
+          "type": "boolean"
+        },
+        "dnsVisibility": {
+          "type": "boolean"
+        },
+        "dnsTopic": {
+          "type": "string",
+          "pattern": "^$|^[a-zA-Z0-9._-]{1,249}$",
+          "description": "Defaults to <clusterName>-dns. Needs enableDnsTracking with dnsVisibility; must differ from every other lane's topic."
+        },
+        "ingress": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "OpenShift only."
+            },
+            "topic": {
+              "type": "string",
+              "pattern": "^$|^[a-zA-Z0-9._-]{1,249}$"
+            }
+          },
+          "additionalProperties": false
+        },
+        "ingressVipCIDRs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])/([0-9]|[12][0-9]|3[0-2])$"
+          },
+          "description": "Load-balancer VIPs for the ingress lane."
+        }
+      },
+      "additionalProperties": false
+    },
+    "process": {
+      "type": "object",
+      "properties": {
+        "topic": {
+          "type": "string",
+          "pattern": "^$|^[a-zA-Z0-9._-]{1,249}$",
+          "description": "Empty, or exactly <clusterName>-process."
+        },
+        "installTracingPolicy": {
+          "type": "boolean"
+        },
+        "tracingPolicyPodSelector": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "Empty = every process on the node. matchLabels / matchExpressions = matching pods only."
+        },
+        "execExport": {
+          "type": "boolean",
+          "description": "Also ship process exec events."
+        },
+        "shipperQueueMaxKbytes": {
+          "type": "integer",
+          "minimum": 1024,
+          "description": "Shipper Kafka producer queue cap in KiB (default 16384)."
+        },
+        "usePerfRingBuffer": {
+          "type": "boolean"
+        },
+        "sensorConfig": {
+          "type": "object",
+          "description": "Extra process sensor runtime keys.",
+          "additionalProperties": {
+            "type": [
+              "string",
+              "number",
+              "boolean"
+            ]
+          }
+        },
+        "criSocket": {
+          "type": "string",
+          "pattern": "^$|^none$|^/",
+          "description": "CRI socket hint. Empty = the distribution's default; \"none\" = off.",
+          "not": {
+            "pattern": "<<<|>>>"
+          }
+        },
+        "association": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "shadow",
+                "on"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "metricsPort": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "observe": {
+          "type": "object",
+          "properties": {
+            "hostProcesses": {
+              "type": "boolean"
+            },
+            "openshiftNamespaces": {
+              "type": "boolean"
+            },
+            "kubeNamespaces": {
+              "type": "boolean"
+            },
+            "excludeNamespaces": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "execFollowsScope": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "dedupeWindowSeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "0 ships every connect."
+        }
+      },
+      "additionalProperties": false
+    },
+    "images": {
+      "type": "object",
+      "properties": {
+        "flowAgent": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Flow agent image."
+        },
+        "flowPipeline": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Flow pipeline image."
+        },
+        "processSensor": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Process sensor image (also the btf-check init container)."
+        },
+        "shipper": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Shipper image (amd64 only)."
+        },
+        "capture": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Capture sidecar image."
+        },
+        "auditForwarder": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Audit forwarder image."
+        }
+      },
+      "additionalProperties": false
+    },
+    "imagePullSecrets": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string",
+            "minLength": 1
+          },
+          {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "name"
+            ]
+          }
+        ]
+      }
+    },
+    "requireAmd64": {
+      "type": "boolean",
+      "description": "Schedule on amd64 nodes only (the shipper image is amd64-only)."
+    },
+    "capture": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "integrationNamespaces": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+          }
+        },
+        "podNetns": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "integration": {
+      "type": "object",
+      "properties": {
+        "create": {
+          "type": "boolean",
+          "description": "true on a cluster that does not host the central Axera platform."
+        },
+        "leastPrivilege": {
+          "type": "boolean"
+        },
+        "namespacedRoles": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "always",
+            "never"
+          ],
+          "description": "How the namespaced Roles render (pods/log with leastPrivilege, ingressLoggingApply): auto | always | never."
+        },
+        "podLogsNamespaces": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+          }
+        },
+        "ingressLoggingApply": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "OpenShift, opt-in: lets Axera patch the router access logging of the listed IngressControllers (Apply from Axera)."
+            },
+            "ingressControllers": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9]([-a-z0-9.]*[a-z0-9])?$"
+              },
+              "description": "IngressController names in openshift-ingress-operator (default [default])."
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "createSCC": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string",
+          "enum": [
+            "auto",
+            "true",
+            "false"
+          ]
+        }
+      ],
+      "description": "auto (OpenShift only) | true | false"
+    },
+    "tolerations": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "nodeSelector": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "affinity": {
+      "type": "object"
+    },
+    "priorityClassName": {
+      "type": "string"
+    },
+    "updateStrategy": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "RollingUpdate",
+            "OnDelete"
+          ]
+        },
+        "maxUnavailable": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "string",
+              "pattern": "^([1-9][0-9]?|100)%$"
+            }
+          ],
+          "description": "An integer (at least 1) or a percentage from 1% to 100%. Default 1."
+        }
+      },
+      "additionalProperties": false
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "flowAgentPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "flowPipelinePort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "Flow pipeline metrics port."
+        },
+        "sensorPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "shipperPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        }
+      },
+      "additionalProperties": false
+    },
+    "resources": {
+      "type": "object",
+      "properties": {
+        "flowAgent": {
+          "type": "object",
+          "description": "Kubernetes ResourceRequirements (requests, limits).",
+          "properties": {
+            "requests": {
+              "type": "object"
+            },
+            "limits": {
+              "type": "object"
+            },
+            "claims": {
+              "type": "array"
+            }
+          },
+          "additionalProperties": false
+        },
+        "flowPipeline": {
+          "type": "object",
+          "description": "Kubernetes ResourceRequirements (requests, limits).",
+          "properties": {
+            "requests": {
+              "type": "object"
+            },
+            "limits": {
+              "type": "object"
+            },
+            "claims": {
+              "type": "array"
+            }
+          },
+          "additionalProperties": false
+        },
+        "processSensor": {
+          "type": "object",
+          "description": "Kubernetes ResourceRequirements (requests, limits).",
+          "properties": {
+            "requests": {
+              "type": "object"
+            },
+            "limits": {
+              "type": "object"
+            },
+            "claims": {
+              "type": "array"
+            }
+          },
+          "additionalProperties": false
+        },
+        "btfCheck": {
+          "type": "object",
+          "description": "Kubernetes ResourceRequirements (requests, limits).",
+          "properties": {
+            "requests": {
+              "type": "object"
+            },
+            "limits": {
+              "type": "object"
+            },
+            "claims": {
+              "type": "array"
+            }
+          },
+          "additionalProperties": false
+        },
+        "shipper": {
+          "type": "object",
+          "description": "Kubernetes ResourceRequirements (requests, limits).",
+          "properties": {
+            "requests": {
+              "type": "object"
+            },
+            "limits": {
+              "type": "object"
+            },
+            "claims": {
+              "type": "array"
+            }
+          },
+          "additionalProperties": false
+        },
+        "capture": {
+          "type": "object",
+          "description": "Kubernetes ResourceRequirements (requests, limits).",
+          "properties": {
+            "requests": {
+              "type": "object"
+            },
+            "limits": {
+              "type": "object"
+            },
+            "claims": {
+              "type": "array"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false,
+      "description": "Per-container overrides; a block replaces that container's default whole."
+    },
+    "resourceDefaults": {
+      "type": "object",
+      "properties": {
+        "flowAgent": {
+          "type": "object",
+          "description": "Kubernetes ResourceRequirements (requests, limits).",
+          "properties": {
+            "requests": {
+              "type": "object"
+            },
+            "limits": {
+              "type": "object"
+            },
+            "claims": {
+              "type": "array"
+            }
+          },
+          "additionalProperties": false
+        },
+        "flowPipeline": {
+          "type": "object",
+          "description": "Kubernetes ResourceRequirements (requests, limits).",
+          "properties": {
+            "requests": {
+              "type": "object"
+            },
+            "limits": {
+              "type": "object"
+            },
+            "claims": {
+              "type": "array"
+            }
+          },
+          "additionalProperties": false
+        },
+        "processSensor": {
+          "type": "object",
+          "description": "Kubernetes ResourceRequirements (requests, limits).",
+          "properties": {
+            "requests": {
+              "type": "object"
+            },
+            "limits": {
+              "type": "object"
+            },
+            "claims": {
+              "type": "array"
+            }
+          },
+          "additionalProperties": false
+        },
+        "btfCheck": {
+          "type": "object",
+          "description": "Kubernetes ResourceRequirements (requests, limits).",
+          "properties": {
+            "requests": {
+              "type": "object"
+            },
+            "limits": {
+              "type": "object"
+            },
+            "claims": {
+              "type": "array"
+            }
+          },
+          "additionalProperties": false
+        },
+        "shipper": {
+          "type": "object",
+          "description": "Kubernetes ResourceRequirements (requests, limits).",
+          "properties": {
+            "requests": {
+              "type": "object"
+            },
+            "limits": {
+              "type": "object"
+            },
+            "claims": {
+              "type": "array"
+            }
+          },
+          "additionalProperties": false
+        },
+        "capture": {
+          "type": "object",
+          "description": "Kubernetes ResourceRequirements (requests, limits).",
+          "properties": {
+            "requests": {
+              "type": "object"
+            },
+            "limits": {
+              "type": "object"
+            },
+            "claims": {
+              "type": "array"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "auditForwarder": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Not supported on Anthos."
+        },
+        "targetUri": {
+          "type": "string",
+          "pattern": "^$|^https?://",
+          "description": "https://<host that reaches the central api Service>/api/Internal/Audit (not the console host, which answers 404 to /api/Internal/*).",
+          "not": {
+            "pattern": "<<<|>>>"
+          }
+        },
+        "internalToken": {
+          "type": "string",
+          "description": "The central platform's internal token.",
+          "not": {
+            "pattern": "<<<|>>>"
+          }
+        },
+        "caCert": {
+          "type": "string"
+        },
+        "insecureSkipVerify": {
+          "type": "boolean"
+        },
+        "logDir": {
+          "type": "string",
+          "pattern": "^$|^/",
+          "description": "Host directory with audit.log. Empty = /var/log/kube-apiserver on OpenShift; required elsewhere.",
+          "not": {
+            "pattern": "<<<|>>>"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "_axeraforceDistribution": {
+      "type": "object",
+      "description": "Internal: set by the chart while rendering."
+    },
+    "_axeraforcePlatform": {
+      "type": "object",
+      "description": "Internal: set by the chart while rendering."
+    }
+  }
+}

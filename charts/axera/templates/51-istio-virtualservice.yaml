@@ -1,0 +1,152 @@
+{{- include "axera.init" . }}
+{{- /*
+  Istio exposure (expose.type=Istio, the default on anthos): Cloud Service Mesh / Anthos Service
+  Mesh or OSS Istio.
+  The frontend Service stays ClusterIP and an Istio VirtualService binds the UI host to an
+  ingress Gateway. The Axera pods themselves are NOT in the mesh (istio.injection: disabled);
+  the ingress gateway reaches them as plain in-cluster HTTP, like any ingress controller.
+
+  Bind to an EXISTING shared Gateway (the usual ASM/Istio setup):
+      expose.type: Istio
+      expose.frontend: { host: axera.example.com, tls: true }
+      istio.virtualService.gateway: "<gateway-namespace>/<gateway-name>"
+    The Gateway's servers[].hosts must include the host (or a matching wildcard) and its
+    certificate must cover it.
+
+  …or let the chart create a Gateway bound to the default ingress gateway pods:
+      istio.virtualService: { createGateway: true, tlsCredentialName: <tls-secret-name> }
+    It listens on 443 (TLS SIMPLE with that credential) and redirects 80 to https. The
+    credentialName Secret (kubernetes.io/tls) must live in the namespace of the ingress gateway
+    DEPLOYMENT (for example istio-system or your gateway namespace), not in the Axera namespace.
+
+  http routes, both with timeout expose.frontend.timeout (180 s, the outer step of the timeout
+  ladder) and, with TLS, the Strict-Transport-Security response header (expose.frontend.hstsHeader):
+    1. /api/Internal/Audit (exact) → api:8080 (only with expose.auditIngest.enabled): remote
+       agents' audit forwarders; the console refuses /api/Internal/* on purpose.
+    2. /api/mcp → mcp:8080 (only with mcp.enabled): the tool server serves api/mcp itself; the
+       frontend proxies /api/* to the API, which has no api/mcp endpoint.
+    3. everything else → frontend:3000.
+  networking.istio.io/v1beta1 is served by every Istio from 1.6 and by ASM.
+*/}}
+{{- if eq (include "axera.exposeType" .) "Istio" }}
+{{- $fe := .Values.expose.frontend | default dict }}
+{{- $vs := .Values.istio.virtualService | default dict }}
+{{- if not $fe.host }}
+{{- fail "expose.type=Istio (the default on anthos) requires expose.frontend.host (the DNS name your Istio ingress Gateway serves). Or choose another front door: expose.type=LoadBalancer (profiles/values-anthos-lb.yaml), Ingress or ClusterIP." }}
+{{- end }}
+{{- if and (not $vs.gateway) (not $vs.createGateway) }}
+{{- fail "expose.type=Istio (the default on anthos) requires istio.virtualService.gateway (an existing '<namespace>/<name>' Gateway) OR istio.virtualService.createGateway=true. Or choose another front door: expose.type=LoadBalancer, Ingress or ClusterIP." }}
+{{- end }}
+{{- if and $vs.createGateway $fe.tls (not $vs.tlsCredentialName) }}
+{{- fail "istio.virtualService.createGateway=true with expose.frontend.tls=true requires istio.virtualService.tlsCredentialName (a kubernetes.io/tls Secret in the ingress gateway's namespace); otherwise the Gateway would serve plain HTTP while CORS and the app URL say https://. Set the credential, or set expose.frontend.tls=false." }}
+{{- end }}
+{{- $dns := include "axera.clusterDnsDomain" . }}
+{{- $ns := .Values.global.namespace }}
+{{- $timeout := include "axera.frontDoorTimeout" . }}
+{{- $kafkaUiHost := "" }}
+{{- if include "axera.kafkaUiExposed" . }}
+{{- $kafkaUiHost = .Values.kafka.uiIstioHost }}
+{{- end }}
+{{- if $vs.createGateway }}
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: {{ include "axera.gatewayName" . }}
+  namespace: {{ $ns }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+spec:
+  selector: {{- toYaml $vs.gatewaySelector | nindent 4 }}
+  servers:
+    {{- if $fe.tls }}
+    - port: { number: 443, name: https, protocol: HTTPS }
+      tls:
+        mode: SIMPLE
+        credentialName: {{ $vs.tlsCredentialName | quote }}
+      hosts:
+        - {{ $fe.host | quote }}
+        {{- with $kafkaUiHost }}
+        - {{ . | quote }}
+        {{- end }}
+    # Plain HTTP only redirects to https.
+    - port: { number: 80, name: http, protocol: HTTP }
+      tls:
+        httpsRedirect: true
+      hosts:
+        - {{ $fe.host | quote }}
+        {{- with $kafkaUiHost }}
+        - {{ . | quote }}
+        {{- end }}
+    {{- else }}
+    - port: { number: 80, name: http, protocol: HTTP }
+      hosts:
+        - {{ $fe.host | quote }}
+        {{- with $kafkaUiHost }}
+        - {{ . | quote }}
+        {{- end }}
+    {{- end }}
+---
+{{- end }}
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: frontend
+  namespace: {{ $ns }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+spec:
+  hosts:
+    - {{ $fe.host | quote }}
+  gateways:
+    - {{ include "axera.gatewayRef" . | quote }}
+  http:
+    {{- if include "axera.auditIngestExposed" . }}
+    - name: audit
+      match:
+        - uri:
+            exact: /api/Internal/Audit
+      route:
+        - destination:
+            host: api.{{ $ns }}.svc.{{ $dns }}
+            port:
+              number: 8080
+      timeout: {{ $timeout | quote }}
+      {{- if and $fe.tls $fe.hstsHeader }}
+      headers:
+        response:
+          set:
+            Strict-Transport-Security: {{ $fe.hstsHeader | quote }}
+      {{- end }}
+    {{- end }}
+    {{- if .Values.mcp.enabled }}
+    - name: mcp
+      match:
+        - uri:
+            exact: /api/mcp
+        - uri:
+            prefix: /api/mcp/
+      route:
+        - destination:
+            host: mcp.{{ $ns }}.svc.{{ $dns }}
+            port:
+              number: 8080
+      timeout: {{ $timeout | quote }}
+      {{- if and $fe.tls $fe.hstsHeader }}
+      headers:
+        response:
+          set:
+            Strict-Transport-Security: {{ $fe.hstsHeader | quote }}
+      {{- end }}
+    {{- end }}
+    - name: frontend
+      route:
+        - destination:
+            host: frontend.{{ $ns }}.svc.{{ $dns }}
+            port:
+              number: 3000
+      timeout: {{ $timeout | quote }}
+      {{- if and $fe.tls $fe.hstsHeader }}
+      headers:
+        response:
+          set:
+            Strict-Transport-Security: {{ $fe.hstsHeader | quote }}
+      {{- end }}
+{{- end }}

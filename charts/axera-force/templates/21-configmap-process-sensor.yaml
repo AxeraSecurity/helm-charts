@@ -1,0 +1,78 @@
+# Process sensor runtime config. enable-policy-filter is a FIXED "true" (a false silently
+# leaves every podSelector policy in load_error). The ConfigMap name is kept for compatibility.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: axera-tetragon-config
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "axeraforce.labels" . | nindent 4 }}
+data:
+  export-filename: "/var/run/cilium/tetragon/tetragon.log"
+  export-file-max-size-mb: "50"
+  export-file-max-backups: "3"
+  # Exec visibility (runtime-exec detection: sudo/nsenter/crictl/... execs, and tools that run
+  # without opening a connection, e.g. pip3 --version) is opt-in: set process.execExport: true.
+  # That adds PROCESS_EXEC here AND its INCLUDE field-filter below. Do not edit this ConfigMap by
+  # hand: helm upgrade re-renders it. Off by default: the highest-volume stream; Process Activity
+  # states when exec visibility is off.
+  export-allowlist: |
+{{- if (.Values.process).execExport }}
+    {"event_set": ["PROCESS_KPROBE", "PROCESS_EXEC"]}
+{{- else }}
+    {"event_set": ["PROCESS_KPROBE"]}
+{{- end }}
+  {{- $deny := include "axeraforce.processNamespaceDenyRegex" . | fromJsonArray }}
+  {{- if $deny }}
+  # process.observe: connects from these namespaces are not exported, and their execs too when
+  # observe.execFollowsScope is on. A pod-less event never matches namespace_regex: host processes are
+  # left out on the node by the shipper (observe.hostProcesses), by container id (process.docker).
+  {{- $obs := include "axeraforce.processObserve" . | fromJson }}
+  export-denylist: |
+    {"event_set":{{ if $obs.execFollowsScope }}["PROCESS_KPROBE","PROCESS_EXEC"]{{ else }}["PROCESS_KPROBE"]{{ end }},"namespace_regex":{{ toJson $deny }}}
+  {{- end }}
+  enable-process-cred: "false"
+  enable-process-ns: "false"
+  enable-policy-filter: "true"
+  # The sensor's gRPC API (which can add tracing policies) listens on a unix socket inside the container, not on
+  # the node's loopback (reachable by every process on the node, because the pod is hostNetwork); the sensor's
+  # own CLI reaches it through `kubectl exec` into the sensor container.
+  # No health server (by default :6789 on every node address): nothing probes it.
+  server-address: "unix:///var/run/tetragon/tetragon.sock"
+  health-server-address: ""
+  {{- /* process.criSocket (an optional enrichment hint; the distribution may supply one) is not rendered here:
+         enable-cri, cri-endpoint and enable-cgidmap are flags the sensor container adds at start on a node where
+         the path is a socket (30-daemonset.yaml). This ConfigMap is the same on every node, and the cgroup id map
+         without a runtime that answers is worse than none: the sensor then names a container for no new exec. */}}
+  {{- /* process.sensorConfig: extra runtime keys for the sensor. The keys the chart renders itself above and
+         below are never overridden. */ -}}
+  {{- $owned := list "export-filename" "export-file-max-size-mb" "export-file-max-backups" "export-allowlist" "export-denylist" "enable-process-cred" "enable-process-ns" "enable-policy-filter" "field-filters" "use-perf-ring-buffer" "server-address" "health-server-address" }}
+  {{- if include "axeraforce.criSocket" . }}{{ $owned = concat $owned (list "enable-cri" "cri-endpoint" "enable-cgidmap") }}{{ end }}
+  {{- if (.Values.process).tracingPolicyPodSelector }}{{ $owned = concat $owned (list "enable-cgidmap") }}{{ end }}
+  {{- range $k, $v := ((.Values.process).sensorConfig | default dict) }}
+  {{- if not (has $k $owned) }}
+  {{ $k }}: {{ $v | toString | quote }}
+  {{- end }}
+  {{- end }}
+  {{- if (.Values.process).usePerfRingBuffer }}
+  # process.usePerfRingBuffer: the perf ring buffer instead of the BPF ring buffer. A fallback for event
+  # loss or memory growth; rendered only when on, so the data (and the pod checksum) of an install that
+  # leaves it off is unchanged.
+  use-perf-ring-buffer: "true"
+  {{- end }}
+  # One JSON object per LINE, never a JSON array: the sensor decodes this option object by object, and an
+  # array is read as zero filters, so every event would go out whole (~2.4 KB; ~1.1 KB trimmed). The
+  # INCLUDE lists are exactly what Axera reads plus what the shipper's Lua filter keys on: the process, its
+  # pod narrowed to namespace/name/workload/kind and the container's name, image, pid, start time and
+  # exec-probe guess, the parent's pid and, for a kprobe, the call and its policy.
+  # The parent's exec id feeds the association's ancestry step (the shipper's files/association.lua): a
+  # process that exited before its own cgroup was read names its pod through its parent's. The parent's
+  # binary, container id and pod (narrowed the same way) serve older Axera releases only; the shipper never
+  # decides by them. The filter cannot ask for them only on pod-less events, so they come on every event
+  # (~245 B each); the shipper cuts the parent of an event the sensor attributed back to its pid before
+  # Kafka. Dropping a field Axera reads degrades it silently (no in_init_tree: every session "Unknown").
+{{- $parent := "parent.pid,parent.exec_id,parent.binary,parent.docker,parent.pod.namespace,parent.pod.name,parent.pod.workload,parent.pod.workload_kind,parent.pod.container.name,parent.pod.container.image" }}
+  field-filters: |
+    {"event_set":["PROCESS_KPROBE"],"fields":"process.binary,process.arguments,process.pid,process.uid,process.exec_id,process.docker,process.in_init_tree,process.flags,process.pod.namespace,process.pod.name,process.pod.workload,process.pod.workload_kind,process.pod.container.name,process.pod.container.image,process.pod.container.pid,process.pod.container.start_time,process.pod.container.maybe_exec_probe,{{ $parent }},function_name,args,policy_name,action","action":"INCLUDE"}
+{{- if (.Values.process).execExport }}
+    {"event_set":["PROCESS_EXEC"],"fields":"process.binary,process.arguments,process.pid,process.uid,process.exec_id,process.docker,process.in_init_tree,process.flags,process.pod.namespace,process.pod.name,process.pod.workload,process.pod.workload_kind,process.pod.container.name,process.pod.container.image,process.pod.container.pid,process.pod.container.start_time,process.pod.container.maybe_exec_probe,{{ $parent }}","action":"INCLUDE"}
+{{- end }}

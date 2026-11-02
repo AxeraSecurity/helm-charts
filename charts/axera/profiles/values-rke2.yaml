@@ -1,0 +1,38 @@
+# RKE2 / Rancher profile: only what differs from values.yaml. Use with your own values file:
+#   helm upgrade --install axera axera/axera -n axera-central -f profiles/values-rke2.yaml -f my-values.yaml
+#
+# What distribution rke2 turns on by default: an Ingress on the class you name below (with nginx,
+# the ingress-nginx annotations: timeouts, body size), the community PostgreSQL image (alpine), hardened product
+# containers, the amd64 nodeSelector, the cattle-monitoring-system scrape namespace and no
+# OpenShift objects.
+global:
+  distribution: rke2
+  # RKE2 ships NO default StorageClass: name one (Longhorn, a CSI driver, local-path, ...), or mark
+  # one default and leave this empty. StatefulSet claims are immutable: decide before installing.
+  storageClass: "<<< FILL: StorageClass name, e.g. longhorn >>>"
+
+expose:
+  type: Ingress
+  frontend:
+    host: "<<< FILL: UI host name, e.g. axera.example.com >>>"
+    tls: true
+  ingress:
+    # rke2-ingress-nginx (clusters created before RKE2 1.36, including ones upgraded since): nginx.
+    # Clusters created on RKE2 1.36 or newer get Traefik instead: traefik, and raise its read timeout
+    # (README, "Traefik read timeout"). kubectl get ingressclass shows which one you have.
+    className: "<<< FILL: nginx (rke2-ingress-nginx) or traefik (clusters created on RKE2 1.36+) >>>"
+    # kubernetes.io/tls Secret in this namespace for the host; empty → the controller's default certificate.
+    tlsSecretName: ""
+    annotations: {}
+    #  cert-manager.io/cluster-issuer: <issuer>
+
+networkPolicies:
+  # Default: any source on the UI ports. Narrow it to the ingress controller pods, e.g.:
+  # ingressFrom:
+  #   - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: kube-system}}
+  #     podSelector: {matchLabels: {app.kubernetes.io/name: rke2-ingress-nginx}}
+  ingressFrom: []
+  kafkaClients:
+    # Node subnet(s) plus the RKE2 cluster CIDR (Canal default 10.42.0.0/16), e.g.:
+    # cidrs: ["10.0.0.0/24", "10.42.0.0/16"]
+    cidrs: []

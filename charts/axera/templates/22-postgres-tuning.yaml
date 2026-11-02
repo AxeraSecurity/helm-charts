@@ -1,0 +1,25 @@
+{{- include "axera.init" . }}
+{{- if and (not .Values.postgres.external) (eq (include "axera.pgFlavor" .) "rhel") }}
+# Extra server settings for the two internal PostgreSQL StatefulSets. The Red Hat postgresql image
+# includes every *.conf under /opt/app-root/src/postgresql-cfg/ into postgresql.conf at start
+# (sclorg "extending the image"); shared_buffers, effective_cache_size and max_connections go
+# through the image's own env variables (20-/21-postgres-*.yaml). Values: postgres.tuning.
+# rhel flavour only: the alpine image takes the same settings as -c arguments.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-tuning
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+data:
+  axera-tuning.conf: |
+    # Rendered by the Axera chart (postgres.tuning); do not edit by hand.
+    work_mem = {{ .Values.postgres.tuning.workMem }}
+    maintenance_work_mem = {{ .Values.postgres.tuning.maintenanceWorkMem }}
+    max_wal_size = {{ .Values.postgres.tuning.maxWalSize }}
+    checkpoint_completion_target = {{ .Values.postgres.tuning.checkpointCompletionTarget }}
+    random_page_cost = {{ .Values.postgres.tuning.randomPageCost }}
+    autovacuum_vacuum_scale_factor = {{ .Values.postgres.tuning.autovacuumVacuumScaleFactor }}
+    autovacuum_analyze_scale_factor = {{ .Values.postgres.tuning.autovacuumAnalyzeScaleFactor }}
+    shared_preload_libraries = 'pg_stat_statements'
+{{- end }}

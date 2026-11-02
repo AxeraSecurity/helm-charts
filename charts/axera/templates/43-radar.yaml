@@ -1,3 +1,4 @@
+{{- include "axera.init" . }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -8,13 +9,27 @@ metadata:
     {{- include "axera.labels" . | nindent 4 }}
 spec:
   replicas: 1
+  # Singleton background work (consumers, watchers, schedulers) and no leader election: Recreate
+  # stops the old pod before the new one starts, so two never run side by side during a rollout.
+  # rollingUpdate: null states that no rolling-update block applies.
+  strategy:
+    type: Recreate
+    rollingUpdate: null
   selector:
     matchLabels: { app: radar }
   template:
     metadata:
       labels: { app: radar }
+      annotations:
+        # Rolls the pod when a ConfigMap it reads through envFrom changes (see axera.configMapChecksum).
+        checksum/config: {{ include "axera.configMapChecksum" (dict "ctx" $ "names" (list "axera-app-config" "radar-app-config")) }}
+        # Rolls the pod when a secret value set through values changes (axera.secretValuesChecksum).
+        checksum/secret: {{ include "axera.secretValuesChecksum" . }}
     spec:
       serviceAccountName: axera-sa
+      # Uses its ServiceAccount token and namespace file (axera-sa itself mounts no token).
+      automountServiceAccountToken: true
+      {{- with (include "axera.scheduling" (dict "component" "radar" "ctx" .) | trim) }}{{ . | nindent 6 }}{{- end }}
       {{- $waited := include "axera.waitForRadarDb" . }}
       {{- if $waited }}
       initContainers:
@@ -24,30 +39,72 @@ spec:
         - name: radar
           image: {{ include "axera.image" (dict "img" .Values.images.radar "ctx" .) }}
           imagePullPolicy: Always
+          {{- with include "axera.appContainerSecurityContext" . }}
+          {{- . | nindent 10 }}
+          {{- end }}
           ports:
             - { containerPort: 8080 }
+            {{- if include "axera.metricsEnabled" . }}
+            # /metrics: plain HTTP, no authentication, scraped through the Service's metrics
+            # port by the ServiceMonitor in templates/47-monitoring.yaml; never behind a Route.
+            - { name: metrics, containerPort: 9090 }
+            {{- end }}
           envFrom:
             - configMapRef: { name: axera-app-config }
             - configMapRef: { name: radar-app-config }
-            - secretRef: { name: axera-app-secret }
+            - secretRef: { name: {{ include "axera.appSecretName" . }} }
             # Kafka client config (KafkaServer + SecurityProtocol + SASL/SSL)
-            - secretRef: { name: kafka-external-secret }
+            - secretRef: { name: {{ include "axera.kafkaSecretName" . }} }
+            # Pinned mesh ingest tokens (meshMonitoring.ingestTokens); absent when none is pinned.
+            - secretRef: { name: axera-mesh-ingest-tokens, optional: true }
           env:
             - { name: ASPNETCORE_ENVIRONMENT, value: Production }
             - { name: ASPNETCORE_URLS, value: "http://+:8080" }
+            # The metrics endpoint: the process adds the 9090 listener itself, next to the
+            # URLs above; Metrics__Enabled false serves nothing there.
+            {{- include "axera.metricsEnv" . | nindent 12 }}
+            # Radar renders the mesh collector manifest for each cluster, and that manifest has to
+            # name the address a collector posts to: radar.<this namespace>.svc.<cluster domain>.
+            # Without this the code falls back to a hard-coded namespace, which is right for one
+            # install and silently wrong for every other — and the failure surfaces as a lane that
+            # never delivers, not as a bad value on screen.
+            - name: POD_NAMESPACE
+              valueFrom: { fieldRef: { fieldPath: metadata.namespace } }
+            # Axera's own ServiceAccounts, matched EXACTLY (namespace:name). The mesh-policy-tamper
+            # and rbac-escalation detectors, Mesh > Policies > Hygiene (write authority) and NetworkPolicy "who modified"
+            # treat a write by one of these as Axera's own; any other identity, including a tenant
+            # ServiceAccount whose name merely contains "axera", is a tenant write. The identity each
+            # cluster is registered with is recognised from its token without being listed here.
+            # operands.v1330 decides the shape (axera.ownServiceAccountEnv in _helpers.tpl).
+            {{- include "axera.ownServiceAccountEnv" . | nindent 12 }}
             # Radar appsettings: ConnectionStrings.DefaultConnection = AxeraRadarDB,
             #                    ConnectionStrings.API = MicrosegmentationDB.
             - name: ConnectionStrings__DefaultConnection
-              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: RADAR_DB_CONNSTR } }
+              valueFrom: { secretKeyRef: { name: {{ include "axera.dbSecretName" . }}, key: RADAR_DB_CONNSTR } }
             - name: ConnectionStrings__API
-              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: APP_DB_CONNSTR } }
+              valueFrom: { secretKeyRef: { name: {{ include "axera.dbSecretName" . }}, key: APP_DB_CONNSTR } }
+            {{- include "axera.pgCaAppEnv" . | nindent 12 }}
+          # Startup, readiness and liveness probes with 5 s timeouts. operands.v1330 picks
+          # httpGet /healthz (the first middleware: ahead of CORS, auth, the licence check and the
+          # database, so a probe sees a hung or starved process and never a dependency outage) or,
+          # for the v13.0.0 images, which serve no /healthz, tcpSocket on the same port.
+          # Startup allows 5 min of seeding/startup work; liveness restarts after ~2 min unanswered.
+          {{- include "axera.healthProbes" (dict "port" 8080 "path" "/healthz" "ctx" .) | nindent 10 }}
+          # Without a limit, 16 concurrent Mesh/Traffic readers grew radar from 1.6 to 5.6 GiB and
+          # concurrent heavy /flows reads added 50-180 MiB each; Server GC sizes its heap to this
+          # limit (resources.radar in values.yaml).
+          resources: {{- toYaml .Values.resources.radar | nindent 12 }}
           volumeMounts:
             # Optional CA certificate (used only when kafka.caCert is set in values)
             - { name: kafka-certs, mountPath: /etc/kafka-certs, readOnly: true }
+            {{- include "axera.pgCaAppMount" . | nindent 12 }}
       volumes:
+        {{- include "axera.pgCaAppVolume" . | nindent 8 }}
         - name: kafka-certs
           secret:
-            secretName: kafka-external-secret
+            secretName: {{ include "axera.kafkaSecretName" . }}
+            # optional: a Secret of your own (secrets.existingSecrets.kafka) may carry no ca.crt.
+            optional: true
             items:
               - { key: ca.crt, path: ca.crt }
 ---
@@ -56,8 +113,14 @@ kind: Service
 metadata:
   name: radar
   namespace: {{ .Values.global.namespace }}
-  labels: {{- include "axera.labels" . | nindent 4 }}
+  labels:
+    # The ServiceMonitor (templates/47-monitoring.yaml) selects the Services by this label.
+    app: radar
+    {{- include "axera.labels" . | nindent 4 }}
 spec:
   selector: { app: radar }
   ports:
     - { name: http, port: 8080, targetPort: 8080 }
+    {{- if include "axera.metricsEnabled" . }}
+    - { name: metrics, port: 9090, targetPort: metrics }
+    {{- end }}

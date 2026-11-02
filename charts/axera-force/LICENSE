@@ -1,0 +1,26 @@
+Copyright (c) 2026 Axera Security. All rights reserved.
+
+This Helm chart ("the Chart") is provided to install and configure the Axera
+agent on Kubernetes / OpenShift.
+
+Permission is granted to use, copy, and redistribute the Chart for the sole
+purpose of deploying the Axera agent. The container images the Chart references
+are licensed separately. The images the Chart runs are open-source software,
+including the open-source components Axera Security builds and publishes under
+its own registry namespace (for example the shipper image), and remain under
+their respective open-source licenses. Axera Security's own software, which
+this agent reports to, is licensed under the Axera end-user license agreement.
+Nothing in this Chart grants any right to the software in those images beyond
+those licenses.
+
+The files in the crds/ directory are third-party content reproduced unmodified;
+see THIRD-PARTY-NOTICES.
+
+THE CHART IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY ARISING FROM, OUT OF OR IN CONNECTION WITH THE CHART OR THE USE OR
+OTHER DEALINGS IN THE CHART.
+
+For licensing of Axera software, contact: support@axerasecurity.com

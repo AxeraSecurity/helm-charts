@@ -1,0 +1,187 @@
+{{- include "axera.init" . }}
+{{- /*
+  Ingress exposure (expose.type=Ingress: the default on k3s, rke2 and vanilla). One Ingress, one host, one
+  request chain, like the OpenShift Route pair it replaces:
+    /api/mcp → Service mcp:8080      (only with mcp.enabled; the tool server serves api/mcp itself,
+                                      so no rewrite. The frontend proxies /api/* to the API, which
+                                      has no api/mcp endpoint, so this path rule is the only way in.)
+    /        → Service frontend:3000 (the UI; it proxies every other /api/* call same-origin)
+  Path matching takes the longest prefix, so the order of the two rules does not matter.
+
+  IngressClass: expose.ingress.className, else traefik on k3s, nginx on rke2, and none (the
+  cluster's default IngressClass) on vanilla.
+
+  Defaults for ingress-nginx (expose.ingress.nginxDefaults: auto renders them unless the
+  IngressClass names Traefik; true / false force):
+    proxy-read-timeout / proxy-send-timeout = expose.frontend.timeout (180 s). The outer step of
+      the timeout ladder: this 180 s > the frontend proxy's 150 s > heavy reads and MCP upstream
+      calls at 120 s. ingress-nginx's own default is 60 s, which cuts the slow reads into a bare
+      504 before the product can answer.
+    proxy-body-size = 52m. Matches the frontend proxy's 52 MB limit (pcap import 51 MiB, Jira
+      attachments 50 MB, NP-flow generate 32 MB, the policy workbook 20 MB). nginx's 1m default
+      would refuse them with 413.
+    ssl-redirect = true when TLS is on.
+  expose.ingress.annotations are merged OVER these (a key you set wins).
+  HSTS: ingress-nginx has no per-Ingress HSTS annotation; the controller adds it on TLS hosts
+  from its own ConfigMap (hsts: "true" by default). routes.frontend.hstsHeader does not apply.
+  Traefik (k3s, and rke2-traefik on newer RKE2) gets none of them: it has no per-Ingress timeout or
+  body limit. Its entryPoint readTimeout (60 s by default in Traefik 3, and it covers reading the
+  whole request body) must be raised to at least 180 s with a HelmChartConfig (README, "Traefik
+  read timeout"; values.yaml expose.ingress). Traefik also serves a TLS Ingress on its plain-HTTP entryPoint (web)
+  unless told otherwise, so for a className that names Traefik, with TLS and a host, the chart
+  sets traefik.ingress.kubernetes.io/router.entrypoints: websecure: http:// then answers 404
+  instead of serving the UI unencrypted. Override it through expose.ingress.annotations (another
+  entryPoint name, or "web,websecure" with a redirect of your own).
+
+  TLS: with expose.frontend.tls and a host, the Ingress lists the host under spec.tls. Name a
+  kubernetes.io/tls Secret in the Axera namespace with expose.ingress.tlsSecretName (or let
+  cert-manager create it through an annotation); empty uses the controller's default
+  certificate.
+  No host (expose.frontend.host ""): a catch-all rule. It works, since browser calls are
+  same-origin, but CORS then lists no public origin and the controller's default certificate
+  cannot match a name; set the host for anything but a lab.
+
+  OpenShift (expose.type=Ingress there): the router turns the Ingress into Routes and copies its
+  annotations, so the nginx ones would do nothing. It gets the router's instead: the request
+  timeout (haproxy.router.openshift.io/timeout = expose.frontend.timeout; HAProxy's own 30 s would
+  cut slow reads into a 504), edge TLS termination and the HSTS header (expose.frontend.hstsHeader).
+
+  Audit ingest (expose.auditIngest.enabled): a second Ingress, api-audit, on the same host, class
+  and TLS, with ONE exact path, /api/Internal/Audit → Service api:8080, for remote agents' audit
+  forwarders (token-guarded by the API). The UI path cannot carry it: the console refuses
+  /api/Internal/* on purpose.
+*/}}
+{{- if eq (include "axera.exposeType" .) "Ingress" }}
+{{- $fe := .Values.expose.frontend | default dict }}
+{{- $ing := .Values.expose.ingress | default dict }}
+{{- $host := $fe.host | default "" }}
+{{- $ann := dict }}
+{{- $nginxMode := "auto" }}
+{{- if kindIs "bool" $ing.nginxDefaults }}{{ $nginxMode = toString $ing.nginxDefaults }}{{ else if $ing.nginxDefaults }}{{ $nginxMode = lower (toString $ing.nginxDefaults) }}{{ end }}
+{{- if not (has $nginxMode (list "auto" "true" "false")) }}
+{{- fail (printf "expose.ingress.nginxDefaults must be auto, true or false, not %q" $nginxMode) }}
+{{- end }}
+{{- $className := include "axera.ingressClassName" . }}
+{{- $traefik := contains "traefik" (lower $className) }}
+{{- $isOpenShift := include "axera.isOpenShift" . }}
+{{- $nginx := or (eq $nginxMode "true") (and (eq $nginxMode "auto") (not $traefik) (not $isOpenShift)) }}
+{{- $timeout := include "axera.frontDoorTimeout" . }}
+{{- if $isOpenShift }}
+{{- $_ := set $ann "haproxy.router.openshift.io/timeout" $timeout }}
+{{- if and $fe.tls $host }}
+{{- $_ := set $ann "route.openshift.io/termination" "edge" }}
+{{- with $fe.hstsHeader }}
+{{- $_ := set $ann "haproxy.router.openshift.io/hsts_header" (toString .) }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- if and $traefik $fe.tls $host }}
+{{- $_ := set $ann "traefik.ingress.kubernetes.io/router.entrypoints" "websecure" }}
+{{- end }}
+{{- if $nginx }}
+{{- $secs := trimSuffix "s" $timeout }}
+{{- $_ := set $ann "nginx.ingress.kubernetes.io/proxy-read-timeout" $secs }}
+{{- $_ := set $ann "nginx.ingress.kubernetes.io/proxy-send-timeout" $secs }}
+{{- $_ := set $ann "nginx.ingress.kubernetes.io/proxy-body-size" "52m" }}
+{{- if and $fe.tls $host }}
+{{- $_ := set $ann "nginx.ingress.kubernetes.io/ssl-redirect" "true" }}
+{{- end }}
+{{- end }}
+{{- $ann = merge (deepCopy ($ing.annotations | default dict)) $ann }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: frontend
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+  {{- with $ann }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with $className }}
+  ingressClassName: {{ . | quote }}
+  {{- end }}
+  {{- if and $fe.tls $host }}
+  tls:
+    - hosts:
+        - {{ $host | quote }}
+      {{- with $ing.tlsSecretName }}
+      secretName: {{ . | quote }}
+      {{- end }}
+  {{- end }}
+  rules:
+    {{- if $host }}
+    - host: {{ $host | quote }}
+      http:
+    {{- else }}
+    - http:
+    {{- end }}
+        paths:
+          {{- if .Values.mcp.enabled }}
+          - path: /api/mcp
+            pathType: Prefix
+            backend:
+              service:
+                name: mcp
+                port:
+                  number: 8080
+          {{- end }}
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 3000
+{{- if include "axera.auditIngestExposed" . }}
+{{- $auditAnn := dict }}
+{{- if and $traefik $fe.tls $host }}
+{{- $_ := set $auditAnn "traefik.ingress.kubernetes.io/router.entrypoints" "websecure" }}
+{{- end }}
+{{- if $isOpenShift }}
+{{- if and $fe.tls $host }}
+{{- $_ := set $auditAnn "route.openshift.io/termination" "edge" }}
+{{- end }}
+{{- end }}
+---
+# Audit ingest for remote agents' audit forwarders (expose.auditIngest.enabled): one exact path on
+# the UI host. No user annotations here on purpose (a certificate annotation would make a second
+# certificate request for the same Secret); the TLS Secret is shared with the frontend Ingress.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-audit
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+  {{- with $auditAnn }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with $className }}
+  ingressClassName: {{ . | quote }}
+  {{- end }}
+  {{- if and $fe.tls $host }}
+  tls:
+    - hosts:
+        - {{ $host | quote }}
+      {{- with $ing.tlsSecretName }}
+      secretName: {{ . | quote }}
+      {{- end }}
+  {{- end }}
+  rules:
+    {{- if $host }}
+    - host: {{ $host | quote }}
+      http:
+    {{- else }}
+    - http:
+    {{- end }}
+        paths:
+          - path: /api/Internal/Audit
+            pathType: Exact
+            backend:
+              service:
+                name: api
+                port:
+                  number: 8080
+{{- end }}
+{{- end }}

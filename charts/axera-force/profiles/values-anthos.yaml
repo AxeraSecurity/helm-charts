@@ -1,0 +1,25 @@
+# Anthos (GKE on VMware / bare metal, Google Distributed Cloud) profile: only what differs from
+# values.yaml. Use with your own values file, which MUST set podCIDR:
+#   helm install axera-force <chart> -n axera -f profiles/values-anthos.yaml -f my-values.yaml
+#
+# Defaults that come from global.distribution anthos:
+#   podCIDR required (usually 192.168.0.0/16): read it from the user cluster configuration
+#   serviceCIDR none (usually 10.96.0.0/20): set it so ClusterIPs read as in-cluster
+#   process.criSocket /run/containerd/containerd.sock (a hint; checked on each node)
+#   pod network namespace access on; no OpenShift SCC; flow.ingress and auditForwarder refused
+#   flow.tcAttachMode tcx (tc and any are refused on anthos, offline renders included)
+#
+# localNetworkCIDR: the chart default 192.168.0.0/16 is Anthos' usual pod CIDR, and the chart refuses a
+# LocalNetwork range inside the pod CIDR. Set your corporate range(s) in your values file.
+global:
+  distribution: anthos
+
+flow:
+  # Dataplane V2 attaches its own TC programs to the node's interfaces; tcx attaches beside them.
+  # Nodes whose kernel has no TCX (older than 6.6) then capture no flows, but pod networking is
+  # never touched. The chart refuses tc and any here.
+  tcAttachMode: tcx
+
+# podCIDR: 192.168.0.0/16
+# serviceCIDR: 10.96.0.0/20
+# localNetworkCIDR: 10.0.0.0/8

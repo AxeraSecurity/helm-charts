@@ -1,7 +1,9 @@
+{{- include "axera.init" . }}
 {{- /*
   Helm test: verifies the API Service answers on its cluster-internal port.
   Run after install/upgrade with:  helm test <release> -n <namespace>
-  Satisfies the chart-verifier "contains-test" requirement.
+  The image is tests.image (any image with sh and curl; mirror it for air-gapped installs);
+  resources: resources.helmTest.
 */ -}}
 apiVersion: v1
 kind: Pod
@@ -11,33 +13,54 @@ metadata:
   labels:
     app: axera-test
     {{- include "axera.labels" . | nindent 4 }}
+    {{- with include "axera.jobPodSidecarLabel" . }}
+    {{- . | nindent 4 }}
+    {{- end }}
   annotations:
     "helm.sh/hook": test
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
-    # Pin the built-in restricted-v2 SCC (OCP 4.14+). Without this, a cluster that
-    # has a higher-priority permissive SCC (e.g. a leftover eBPF/flow-agent SCC with
-    # RunAsAny) can capture the default ServiceAccount and leave the ubi-minimal image
-    # running as root, which the kubelet rejects (runAsNonRoot). restricted-v2 uses
-    # MustRunAsRange and injects a valid non-root UID from the namespace range.
+    "helm.sh/hook-delete-policy": before-hook-creation
+    # Pin the built-in restricted-v2 SCC (OpenShift 4.14+): a higher-priority permissive SCC could
+    # otherwise capture the default ServiceAccount and run the image as root, which runAsNonRoot
+    # rejects. Ignored on every other distribution.
     "openshift.io/required-scc": "restricted-v2"
+    {{- with include "axera.jobPodSidecarAnnotation" . }}
+    {{- . | nindent 4 }}
+    {{- end }}
 spec:
-  # Use the namespace default ServiceAccount (not axera-sa): the test only needs
-  # network reach to the api Service, no RBAC. On OpenShift the default SA maps to
-  # the restricted-v2 SCC, which injects a non-root UID from the namespace range so
-  # runAsNonRoot below is satisfied. Binding axera-sa (RunAsAny SCC) would leave the
-  # ubi-minimal image running as root and the kubelet would reject the pod.
+  # The namespace default ServiceAccount: the test only needs network reach to the api Service.
   automountServiceAccountToken: false
   restartPolicy: Never
+  {{- if not (include "axera.isOpenShift" .) }}
+  # Off OpenShift nothing injects a UID and the image defaults to root: pin a non-root one.
+  securityContext:
+    runAsUser: 1001
+    runAsGroup: 0
+  {{- end }}
+  {{- if .Values.imagePullSecret.enabled }}
+  imagePullSecrets:
+    - name: {{ .Values.imagePullSecret.name }}
+  {{- end }}
   containers:
     - name: connection-test
-      image: registry.access.redhat.com/ubi9/ubi-minimal:latest
+      image: {{ (.Values.tests).image | quote }}
+      {{- with (.Values.resources).helmTest }}
+      resources: {{- toYaml . | nindent 8 }}
+      {{- end }}
       command: ["/bin/sh", "-c"]
       args:
         - |
-          set -e
           echo "Checking API service at http://api:8080 ..."
-          curl --silent --show-error --output /dev/null --max-time 15 \
-               --retry 5 --retry-delay 5 --retry-connrefused http://api:8080
+          # A new pod's address can take a few seconds to be admitted by the network policy agent:
+          # retry quietly, then let the last attempt print curl's own error.
+          for i in 1 2 3 4 5 6; do
+            if curl --silent --output /dev/null --max-time 15 http://api:8080; then
+              echo "OK: api service is reachable."
+              exit 0
+            fi
+            echo "attempt $i: not reachable yet, retrying in 5s"
+            sleep 5
+          done
+          curl --silent --show-error --output /dev/null --max-time 15 http://api:8080 || exit 1
           echo "OK: api service is reachable."
       securityContext:
         allowPrivilegeEscalation: false

@@ -1,0 +1,63 @@
+# FULL shape on one k3s cluster: the platform (this chart, namespace axera-central) and the
+# axera-force agent (namespace axera) on the same nodes, with the in-cluster PostgreSQL and Kafka.
+# A lab / proof-of-concept layout: the in-cluster Kafka is single-node PLAINTEXT and only agents on
+# THIS cluster can reach it.
+#
+# 0. Charts and namespaces (README, "Prepare the namespace"):
+#      helm repo add axera https://axerasecurity.github.io/helm-charts && helm repo update
+#      helm pull axera/axera --untar          # gives axera/profiles and axera/examples
+#      helm pull axera/axera-force --untar    # gives axera-force/profiles
+#      kubectl create namespace axera-central
+#      kubectl label namespace axera-central pod-security.kubernetes.io/enforce=baseline \
+#        pod-security.kubernetes.io/audit=baseline pod-security.kubernetes.io/warn=baseline
+#      kubectl create namespace axera       # the agent: its node sensors need privileged
+#      kubectl label namespace axera pod-security.kubernetes.io/enforce=privileged \
+#        pod-security.kubernetes.io/audit=privileged pod-security.kubernetes.io/warn=privileged
+#
+# 1. Platform (from a copy of this file, edited: cp axera/examples/values-full-k3s.yaml my-full.yaml):
+#      helm upgrade --install axera axera/axera -n axera-central --wait --timeout 15m \
+#        -f axera/profiles/values-k3s.yaml -f my-full.yaml
+#
+# 2. Agent, same cluster (the platform already created the integration identity, so the agent chart
+#    must not create a second one; it grants packet capture to the platform's identity instead):
+#      helm upgrade --install axera-force axera/axera-force -n axera \
+#        -f axera-force/profiles/values-k3s.yaml \
+#        --set clusterName=k3s-lab \
+#        --set kafka.bootstrapServers=kafka.axera-central.svc.cluster.local:9092 \
+#        --set kafka.securityProtocol=Plaintext \
+#        --set integration.create=false \
+#        --set 'capture.integrationNamespaces={axera-central}'
+#    (no --create-namespace: step 0 created it with its labels)
+#    Audit stream (optional): add to the agent's values
+#        auditForwarder:
+#          enabled: true
+#          targetUri: http://api.axera-central.svc.cluster.local:8080/api/Internal/Audit
+#    and pass the platform's internal token with --set-file auditForwarder.internalToken=<file>, the
+#    file holding key Internal__Token of axera-central/axera-app-secret:
+#        kubectl -n axera-central get secret axera-app-secret \
+#          -o jsonpath='{.data.Internal__Token}' | base64 -d > internal-token
+#    networkPolicies.apiClients below lets the forwarder reach the api Service in-cluster.
+#
+# 3. Register the cluster in the UI with the token of axera-central/axera-integration-sa (the
+#    release notes print the command) under the SAME name as clusterName and kafka.clusters below.
+#    The agent namespace existed before step 1, so the platform's packet-capture Role is already
+#    in it (created later, it would need one more helm upgrade of the platform).
+global:
+  distribution: k3s
+
+expose:
+  frontend:
+    host: axera.example.com      # a DNS name (or /etc/hosts entry) that points at a node IP
+
+kafka:
+  # The agent's cluster name: Radar derives "k3s-lab" (flows), "k3s-lab-process" and "k3s-lab-dns".
+  clusters:
+    - k3s-lab
+
+networkPolicies:
+  kafkaClients:
+    # The node subnet plus the k3s cluster CIDR; adjust to your network.
+    cidrs: ["192.168.0.0/16", "10.42.0.0/16"]
+  apiClients:
+    # Namespaces whose pods may reach the api Service on 8080 (the agent's audit forwarder).
+    namespaces: [axera]

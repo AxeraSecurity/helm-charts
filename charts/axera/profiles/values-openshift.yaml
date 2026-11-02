@@ -1,0 +1,20 @@
+# OpenShift profile (4.12 or newer): only what differs from values.yaml. Use with your own values file:
+#   helm upgrade --install axera axera/axera -n axera-central -f profiles/values-openshift.yaml -f my-values.yaml
+#
+# What distribution openshift turns on by default: SecurityContextConstraints axera-scc-<namespace>
+# (global.createSCC), Routes for the UI and /api/mcp (expose.type Route), the Red Hat PostgreSQL
+# image (images.postgres.flavor rhel, pulled from registry.redhat.io with the cluster pull secret),
+# the AllowDropMonitor (OVN-Kubernetes ACL log), the OpenShift router and host-network NetworkPolicy
+# peers and the user-workload-monitoring scrape namespace. No amd64 nodeSelector is added.
+global:
+  distribution: openshift
+  # Route hostnames: <route>-<namespace>.<clusterDomain>. Empty lets OpenShift assign them from the
+  # default ingress domain (apps.<cluster>.<base domain>).
+  clusterDomain: ""
+  # Empty → the default StorageClass.
+  storageClass: ""
+
+routes:
+  frontend:
+    # A fixed UI host (empty = derived as above). It also feeds CORS and the OAuth issuer.
+    host: ""

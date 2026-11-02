@@ -1,0 +1,19 @@
+# RKE2 / Rancher profile: only what differs from values.yaml. Use with your own values file:
+#   helm install axera-force <chart> -n axera -f profiles/values-rke2.yaml -f my-values.yaml
+#
+# Defaults that come from global.distribution rke2 (set them here only if your cluster differs):
+#   podCIDR 10.42.0.0/16 and serviceCIDR 10.43.0.0/16 (RKE2 cluster-cidr / service-cidr); with podCIDR
+#   empty the install refuses a node whose pod range lies outside 10.42.0.0/16, and an offline render
+#   (helm template, GitOps) must set podCIDR
+#   process.criSocket /run/k3s/containerd/containerd.sock (RKE2's embedded containerd; a hint)
+#   pod network namespace access on (flow.podNetnsAttach, capture.podNetns)
+#   no OpenShift SCC; flow.ingress refused
+# With RKE2's CIS profile every namespace enforces Pod Security "restricted": label namespace axera
+# privileged (or add it to the PSA exemptions) before installing.
+global:
+  distribution: rke2
+
+# Only used with auditForwarder.enabled: true. RKE2 writes the audit log on server nodes only when
+# profile: cis or audit-policy-file is set, and its default policy logs nothing (see the README).
+auditForwarder:
+  logDir: /var/lib/rancher/rke2/server/logs

@@ -1,9 +1,31 @@
+{{- include "axera.init" . }}
+{{- /*
+  Namespace. Recommended: create it yourself with its Pod Security labels, then install into it
+  (README, "Prepare the namespace"). With global.createNamespace=true the chart creates and OWNS
+  global.namespace, so `helm uninstall` deletes it together with every PVC in it; off OpenShift it
+  then also stamps the Pod Security labels (global.podSecurity, default baseline) and, on anthos,
+  istio-injection (istio.injection, default disabled).
+  `helm install --create-namespace` creates the namespace without Pod Security labels, so the
+  cluster default applies; on a cluster that enforces restricted by default, label it baseline.
+*/}}
 {{- if .Values.global.createNamespace }}
+{{- $isOpenShift := include "axera.isOpenShift" . }}
+{{- $psa := .Values.global.podSecurity | default "baseline" }}
 apiVersion: v1
 kind: Namespace
 metadata:
   name: {{ .Values.global.namespace }}
   labels:
     name: {{ .Values.global.namespace }}
+    {{- if not $isOpenShift }}
+    pod-security.kubernetes.io/enforce: {{ $psa | quote }}
+    pod-security.kubernetes.io/audit: {{ $psa | quote }}
+    pod-security.kubernetes.io/warn: {{ $psa | quote }}
+    {{- if eq (include "axera.distribution" .) "anthos" }}
+    {{- with .Values.istio.injection }}
+    istio-injection: {{ . | quote }}
+    {{- end }}
+    {{- end }}
+    {{- end }}
     {{- include "axera.labels" . | nindent 4 }}
 {{- end }}

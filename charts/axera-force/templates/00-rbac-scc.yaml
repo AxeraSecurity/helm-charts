@@ -1,0 +1,171 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: axera-agent
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "axeraforce.labels" . | nindent 4 }}
+---
+# The agent's read-only cluster view: the flow pipeline's Kubernetes enrichment and the process
+# sensor's pod and policy watches.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: axera-agent-{{ .Release.Namespace }}
+  labels: {{- include "axeraforce.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: [pods, namespaces, nodes, services, endpoints]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: [deployments, replicasets, daemonsets, statefulsets]
+    verbs: ["get", "list", "watch"]
+  # Read-only: the process sensor watches its policies and never writes one (Helm applies this
+  # chart's policy, the Axera API applies its own with the registered integration identity).
+  - apiGroups: ["cilium.io"]
+    resources: [tracingpolicies, tracingpoliciesnamespaced, podinfo]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apiextensions.k8s.io"]
+    resources: [customresourcedefinitions]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: axera-agent-{{ .Release.Namespace }}
+  labels: {{- include "axeraforce.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: axera-agent-{{ .Release.Namespace }}
+subjects:
+  - kind: ServiceAccount
+    name: axera-agent
+    namespace: {{ .Release.Namespace }}
+{{- if include "axeraforce.createSCC" . }}
+{{- $platform := include "axeraforce.platform" . | fromJson }}
+---
+# OpenShift: the agent's SCC. Host namespaces and narrow host paths, but NO privileged container.
+# Every container drops ALL capabilities and adds back only its own (30-daemonset.yaml says why for
+# each one). allowedCapabilities stays a superset of every container's `capabilities.add`, including
+# the opt-in SYS_ADMIN / SYS_PTRACE of flow.podNetnsAttach and capture.podNetns: an SCC that omits a
+# capability a container adds refuses the WHOLE agent pod at admission, so the SCC is the same
+# whatever those switches are.
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: axera-ebpf-{{ .Release.Namespace }}
+  labels: {{- include "axeraforce.labels" . | nindent 4 }}
+allowPrivilegedContainer: false
+allowPrivilegeEscalation: false
+defaultAllowPrivilegeEscalation: false
+allowHostNetwork: true          # the flow agent hooks the node's own interfaces
+allowHostPID: true              # pod association and capture find host processes by PID
+allowHostIPC: false
+allowHostPorts: true            # a hostNetwork pod's containerPorts are node ports (metrics, health, gRPC)
+allowHostDirVolumePlugin: true  # bpffs, tracefs, cgroupfs, /proc, the export dir (+ /var/run/netns opt-in)
+requiredDropCapabilities:
+  - ALL
+allowedCapabilities:
+  - BPF            # flow agent, process sensor: load eBPF programs and maps
+  - PERFMON        # flow agent, process sensor: attach tracepoints / kprobes
+  - NET_ADMIN      # flow agent: TC/TCX hooks on the node's interfaces
+  - SYS_ADMIN      # process sensor: the per-pod policy filter (+ flow.podNetnsAttach, capture.podNetns: setns)
+  - SYS_PTRACE     # process sensor: other users' /proc entries (+ capture.podNetns: /proc/<pid>/ns)
+  - DAC_OVERRIDE   # process sensor: its bpffs pin directories are created with mode 0000
+  - SYSLOG         # process sensor: kernel symbol addresses for kprobes
+  - NET_RAW        # capture: tcpdump's packet socket
+  - SETUID         # capture: tcpdump drops from root to its own user
+  - SETGID         # capture: the same drop (initgroups / setgid)
+  - KILL           # capture: `timeout` ends tcpdump, which runs as another user after the drop
+  {{- if not $platform.openshift }}
+  - SYS_RESOURCE   # createSCC: true off OpenShift: RLIMIT_MEMLOCK on 5.8-5.10 kernels
+  {{- end }}
+# The first entry is the default. The flow agent alone asks for unconfined (30-daemonset.yaml says why).
+seccompProfiles:
+  - runtime/default
+  - unconfined
+readOnlyRootFilesystem: false
+seLinuxContext: { type: RunAsAny }   # the eBPF containers ask for spc_t explicitly
+runAsUser: { type: RunAsAny }
+fsGroup: { type: RunAsAny }
+supplementalGroups: { type: RunAsAny }
+volumes:
+  - configMap
+  - hostPath
+  - projected
+  - secret
+users:
+  - system:serviceaccount:{{ .Release.Namespace }}:axera-agent
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: axera-use-scc
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "axeraforce.labels" . | nindent 4 }}
+rules:
+  - apiGroups: ["security.openshift.io"]
+    resources: ["securitycontextconstraints"]
+    resourceNames: ["axera-ebpf-{{ .Release.Namespace }}"]
+    verbs: ["use"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: axera-use-scc
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "axeraforce.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: axera-use-scc
+subjects:
+  - kind: ServiceAccount
+    name: axera-agent
+    namespace: {{ .Release.Namespace }}
+{{- end }}
+{{- if .Values.capture.enabled }}
+---
+# Packet capture: lets the Axera API exec `tcpdump` into the pcap-capture sidecar for a bounded
+# capture of a Graph edge or an incident. The exec identity is the ServiceAccount whose token was
+# REGISTERED for this cluster in Axera, not the API pod's own. Exactly these subjects are bound:
+# axera-integration-sa of this namespace (created by integration.create, or by hand from the static
+# integration manifest) and axera-integration-sa of every namespace in capture.integrationNamespaces
+# (the platform namespace when the central Axera platform runs on this same cluster). Never the
+# agent's own ServiceAccount: the agent never execs, and its token is mounted in every agent container.
+# Kubernetes 1.30 and later authorize the WebSocket exec as `create`; `get` covers the older SPDY path.
+# RBAC cannot narrow exec to one container, so this reaches every pod in this namespace, including the
+# root process sensor container: whoever holds the registered token is root on every node. Run nothing
+# else in this namespace.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: axera-capture-exec-agent
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "axeraforce.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create", "get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: axera-capture-exec-agent
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "axeraforce.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: axera-capture-exec-agent
+subjects:
+  - { kind: ServiceAccount, name: axera-integration-sa, namespace: {{ .Release.Namespace }} }
+  {{- range $ns := ((.Values.capture).integrationNamespaces | default list) | uniq }}
+  {{- if and $ns (ne $ns $.Release.Namespace) }}
+  - { kind: ServiceAccount, name: axera-integration-sa, namespace: {{ $ns }} }
+  {{- end }}
+  {{- end }}
+{{- end }}

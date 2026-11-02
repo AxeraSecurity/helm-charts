@@ -1,0 +1,393 @@
+{{- /*
+The integration identity Axera uses for THIS cluster: ServiceAccount axera-integration-sa, its
+long-lived token Secret axera-sa-token and the integration ClusterRoles. The rules are those of
+Axera's standard integration manifest; only the object names carry the "-<namespace>" suffix
+(axera-integration-role-axera, ...), the names Axera's over-privilege check recognises as shipped.
+The pods/exec grant for packet capture is Role axera-capture-exec-agent (00-rbac-scc.yaml).
+
+integration.create: true on a cluster that does NOT host the central Axera platform; false on the
+cluster that hosts it (the platform already created <platform ns>/axera-integration-sa: register that
+token and set capture.integrationNamespaces to the platform namespace).
+
+Register the cluster in Axera with its DIRECT API server URL and this token (NOTES prints the commands).
+*/ -}}
+{{- if (.Values.integration).create }}
+{{- $ns := .Release.Namespace }}
+{{- $labels := include "axeraforce.labelsFor" (list . "integration") }}
+{{- $platform := include "axeraforce.platform" . | fromJson }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: axera-integration-sa
+  namespace: {{ $ns }}
+  labels: {{- $labels | nindent 4 }}
+  annotations:
+    # Survives helm uninstall: a re-created ServiceAccount gets a new UID, and every token issued
+    # for the old one (the token registered in Axera) stops working.
+    helm.sh/resource-policy: keep
+---
+# Long-lived token for registration. Survives helm uninstall with the ServiceAccount. Rotate it:
+# delete this Secret, run helm upgrade, re-register the new token in Axera.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: axera-sa-token
+  namespace: {{ $ns }}
+  labels: {{- $labels | nindent 4 }}
+  annotations:
+    kubernetes.io/service-account.name: axera-integration-sa
+    helm.sh/resource-policy: keep
+type: kubernetes.io/service-account-token
+---
+# Every cluster-wide grant Axera uses except the switchable ones in axera-integration-extended and
+# axera-integration-agent-deploy. Never secrets, pods/exec, escalate, bind or a wildcard, and no
+# write on a Namespace, workload, ServiceAccount, role or SCC. Rules for API groups this cluster
+# does not serve (service mesh, Gateway API, AdminNetworkPolicy, CNI policy kinds, Submariner,
+# OpenShift) are inert.
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: axera-integration-role-{{ $ns }}
+  labels: {{- $labels | nindent 4 }}
+rules:
+  # API discovery + self-review (normally via system:discovery / system:basic-user; explicit here)
+  - nonResourceURLs: ["/api", "/api/*", "/apis", "/apis/*", "/version"]
+    verbs: ["get"]
+  - apiGroups: ["authorization.k8s.io"]
+    resources: ["selfsubjectaccessreviews"]
+    verbs: ["create"]
+  - apiGroups: ["authentication.k8s.io"]
+    resources: ["selfsubjectreviews"]
+    verbs: ["create"]
+  # Graph and Radar inventory, the licensing node count, the namespace list of every screen.
+  - apiGroups: [""]
+    resources: ["pods", "nodes", "namespaces"]
+    verbs: ["get", "list", "watch"]
+  # services: the NDR destination probe (a block on a Service VIP never matches after DNAT).
+  # serviceaccounts: the Mesh Identity Register reads names only, never a token. configmaps list:
+  # the meshConfig in whichever control-plane namespace is found.
+  - apiGroups: [""]
+    resources: ["services", "serviceaccounts", "configmaps"]
+    verbs: ["get", "list", "watch"]
+  # Workload owners for the graph; daemonsets also for the agent status card.
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets", "statefulsets", "daemonsets"]
+    verbs: ["get", "list", "watch"]
+  # Folds every per-run Job / CronJob pod out of the graph.
+  - apiGroups: ["batch"]
+    resources: ["jobs", "cronjobs"]
+    verbs: ["get", "list", "watch"]
+  # The waypoint single-point-of-failure report.
+  - apiGroups: ["policy"]
+    resources: ["poddisruptionbudgets"]
+    verbs: ["get", "list", "watch"]
+  # CRD names only: the mesh flavor and which policy APIs this cluster serves.
+  - apiGroups: ["apiextensions.k8s.io"]
+    resources: ["customresourcedefinitions"]
+    verbs: ["get", "list", "watch"]
+  # NetworkPolicy deploy, rollback, drift restore and NDR containment.
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["networkpolicies"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  # Ingress Traffic's entry-point index: Kubernetes Ingresses (their hosts and backends).
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "list", "watch"]
+  # Ingress setup vendor hints: an IngressClass's spec.controller names the device it drives. Read only.
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingressclasses"]
+    verbs: ["get", "list", "watch"]
+  # NDR containment's priority-deny AdminNetworkPolicy. The egress-baseline probe reads both tiers:
+  # kube-apiserver authorizes before it routes, so without the read an ANP-less cluster answers 403,
+  # not 404, and containment fails on every plane.
+  - apiGroups: ["policy.networking.k8s.io"]
+    resources: ["adminnetworkpolicies"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["policy.networking.k8s.io"]
+    resources: ["baselineadminnetworkpolicies"]
+    verbs: ["get", "list", "watch"]
+  # OVN EgressIP (the Policy Monitoring via-address) and EgressFirewall (the egress rules view).
+  - apiGroups: ["k8s.ovn.org"]
+    resources: ["egressips", "egressfirewalls"]
+    verbs: ["get", "list", "watch"]
+  # The egress-baseline probe's CNI tier: where the CNI's own policy kinds own the baseline, Axera
+  # refuses the L3/L4 plane instead of deploying a block that does nothing. Names only.
+  - apiGroups: ["cilium.io"]
+    resources: ["ciliumnetworkpolicies", "ciliumclusterwidenetworkpolicies"]
+    verbs: ["get", "list", "watch"]
+  # Process policies: observe, enforce, rollback, retire, NDR process containment.
+  - apiGroups: ["cilium.io"]
+    resources: ["tracingpoliciesnamespaced", "tracingpolicies"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["projectcalico.org", "crd.projectcalico.org"]
+    resources: ["networkpolicies", "globalnetworkpolicies"]
+    verbs: ["get", "list", "watch"]
+  # Submariner Globalnet: the only record of the workload behind a cross-cluster global IP. The
+  # SENDING cluster allocates it, so this has to be granted on every federated cluster.
+  - apiGroups: ["submariner.io"]
+    resources: ["globalegressips", "clusterglobalegressips", "globalingressips", "clusters"]
+    verbs: ["get", "list", "watch"]
+  # Mesh Policies apply / rollback and NDR mesh containment write AuthorizationPolicies; the
+  # tamper lane watches all three kinds (watch is the stream, not decoration).
+  - apiGroups: ["security.istio.io"]
+    resources: ["authorizationpolicies"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["security.istio.io"]
+    resources: ["peerauthentications", "requestauthentications"]
+    verbs: ["get", "list", "watch"]
+  # Mesh > Traffic, Migration pre-flight, STRICT readiness, egress identity and the routing watch.
+  # Reads only: the VirtualService / DestinationRule writes are axera-integration-extended.
+  - apiGroups: ["networking.istio.io"]
+    resources: ["virtualservices", "destinationrules", "serviceentries", "sidecars", "gateways", "envoyfilters", "workloadentries", "workloadgroups"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["telemetry.istio.io"]
+    resources: ["telemetries"]
+    verbs: ["get", "list", "watch"]
+  # Waypoints and the two front doors (Gateway API routes, OpenShift Routes); OSSM v2 membership.
+  - apiGroups: ["gateway.networking.k8s.io"]
+    resources: ["gateways", "gatewayclasses", "httproutes", "grpcroutes", "tcproutes", "tlsroutes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["route.openshift.io"]
+    resources: ["routes"]
+    verbs: ["get", "list", "watch"]
+  # Ingress Traffic's entry-point index on OpenShift: how each IngressController publishes the router
+  # and the installer-provisioned ingress VIPs of the Infrastructure object. Reads only.
+  - apiGroups: ["operator.openshift.io"]
+    resources: ["ingresscontrollers"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["config.openshift.io"]
+    resources: ["infrastructures"]
+    verbs: ["get", "list", "watch"]
+  # Block an address: the pod and Service ranges of the Network config object "cluster", so an
+  # in-cluster address is refused honestly instead of being "blocked" by a rule that never sees it.
+  - apiGroups: ["config.openshift.io"]
+    resources: ["networks"]
+    verbs: ["get"]
+  # Ingress & Load Balancers setup: reads an operator-managed agent's ingress lane settings. Reads only.
+  - apiGroups: ["platform.axerasecurity.com"]
+    resources: ["axeraforces"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["maistra.io"]
+    resources: ["servicemeshmemberrolls", "servicemeshmembers"]
+    verbs: ["get", "list", "watch"]
+  # Workload Intel: Trivy Operator's VulnerabilityReports. Reads only; without trivy-operator the
+  # lane reads "not installed".
+  - apiGroups: ["aquasecurity.github.io"]
+    resources: ["vulnerabilityreports"]
+    verbs: ["get", "list", "watch"]
+  # RBAC escalation detection watches the bindings (get/list without watch reads once and misses
+  # every later change); the mesh write-authority cross-check reads the roles. Reads only.
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["roles", "clusterroles", "rolebindings", "clusterrolebindings"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: axera-integration-binding-{{ $ns }}
+  labels: {{- $labels | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: axera-integration-role-{{ $ns }}
+subjects:
+  - kind: ServiceAccount
+    name: axera-integration-sa
+    namespace: {{ $ns }}
+{{- if not (.Values.integration).leastPrivilege }}
+---
+# axera-integration-extended: three grants on objects Axera does not own, none of them watched by
+# an Axera detector. Left out by integration.leastPrivilege: true.
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: axera-integration-extended-{{ $ns }}
+  labels: {{- $labels | nindent 4 }}
+rules:
+  # Mesh > Traffic deploys, deletes and rolls back VirtualServices / DestinationRules. Axera's own
+  # writes are audited and stamped app.kubernetes.io/managed-by=axera.
+  # Without it: deploy answers failed, naming this grant.
+  - apiGroups: ["networking.istio.io"]
+    resources: ["virtualservices", "destinationrules"]
+    verbs: ["create", "update", "patch", "delete"]
+  # Every pod's stdout, cluster-wide: the ztunnel verdict stream wherever ztunnel runs and the OVN
+  # ACL log. Without it: Roles in those namespaces only (integration.podLogsNamespaces).
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  # Change or delete ANY Namespace. patch: the OVN k8s.ovn.org/acl-logging annotation on the
+  # namespaces policy-hit Analytics measures (RBAC cannot narrow it to one annotation, so it also
+  # reaches Pod Security labels). update/delete: AxeraFlow in a namespace other than axera-flow.
+  # Without it: the Analytics scope and deploy receipts say to annotate the namespace by hand.
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: axera-integration-extended-{{ $ns }}
+  labels: {{- $labels | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: axera-integration-extended-{{ $ns }}
+subjects:
+  - kind: ServiceAccount
+    name: axera-integration-sa
+    namespace: {{ $ns }}
+---
+# AxeraFlow install and uninstall from the UI. SCC create + use and DaemonSet create are enough to
+# run a privileged pod, i.e. root on a node. A create request carries no name RBAC could match, so
+# creates are unrestricted; every update, delete and use names the one object AxeraFlow writes.
+# Left out by integration.leastPrivilege: true (this chart already installs the agent).
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: axera-integration-agent-deploy-{{ $ns }}
+  labels: {{- $labels | nindent 4 }}
+rules:
+  # AxeraFlow's agent ClusterRole grants endpoints, and without escalate only a holder of every
+  # rule in a role may create that role.
+  - apiGroups: [""]
+    resources: ["endpoints"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["namespaces", "serviceaccounts", "services", "configmaps"]
+    verbs: ["create"]
+  # Only AxeraFlow's default namespace; another one needs axera-integration-extended as well.
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    resourceNames: ["axera-flow"]
+    verbs: ["update", "delete"]
+  - apiGroups: [""]
+    resources: ["serviceaccounts"]
+    resourceNames: ["axera-flow-agent"]
+    verbs: ["update"]
+  - apiGroups: [""]
+    resources: ["services", "configmaps"]
+    resourceNames: ["axera-flow-flp"]
+    verbs: ["update"]
+  - apiGroups: ["apps"]
+    resources: ["daemonsets"]
+    verbs: ["create"]
+  - apiGroups: ["apps"]
+    resources: ["daemonsets"]
+    resourceNames: ["axera-flow-agent"]
+    verbs: ["update"]
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["roles", "clusterroles", "rolebindings", "clusterrolebindings"]
+    verbs: ["create"]
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["clusterroles", "clusterrolebindings"]
+    resourceNames: ["axera-flow-agent"]
+    verbs: ["update", "delete"]
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["roles", "rolebindings"]
+    resourceNames: ["axera-flow-use-scc"]
+    verbs: ["update"]
+  - apiGroups: ["security.openshift.io"]
+    resources: ["securitycontextconstraints"]
+    verbs: ["create"]
+  # use: the axera-flow-use-scc Role grants it, so the creator must hold it (no escalate).
+  - apiGroups: ["security.openshift.io"]
+    resources: ["securitycontextconstraints"]
+    resourceNames: ["axera-flow-ebpf"]
+    verbs: ["delete", "use"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: axera-integration-agent-deploy-{{ $ns }}
+  labels: {{- $labels | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: axera-integration-agent-deploy-{{ $ns }}
+subjects:
+  - kind: ServiceAccount
+    name: axera-integration-sa
+    namespace: {{ $ns }}
+{{- else }}
+{{- /*
+leastPrivilege: no cluster-wide pods/log. Axera reads pod logs (the ztunnel verdict stream; the OVN
+ACL log on OpenShift) only through Role axera-integration-pod-logs-<ns> in each listed namespace,
+rendered as integration.namespacedRoles says: always = every listed namespace (it must exist),
+auto = those that exist at helm install / upgrade (helm template sees none), never = none.
+*/ -}}
+{{- $nr := (.Values.integration).namespacedRoles | default "auto" | toString }}
+{{- $logNs := (.Values.integration).podLogsNamespaces | default list }}
+{{- if $platform.openshift }}{{- $logNs = append $logNs "openshift-ovn-kubernetes" }}{{- end }}
+{{- range $lns := ($logNs | uniq) }}
+{{- if or (eq $nr "always") (and (eq $nr "auto") (lookup "v1" "Namespace" "" $lns)) }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: axera-integration-pod-logs-{{ $ns }}
+  namespace: {{ $lns }}
+  labels: {{- $labels | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: axera-integration-pod-logs-{{ $ns }}
+  namespace: {{ $lns }}
+  labels: {{- $labels | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: axera-integration-pod-logs-{{ $ns }}
+subjects:
+  - kind: ServiceAccount
+    name: axera-integration-sa
+    namespace: {{ $ns }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- /*
+OpenShift, opt-in: "Apply from Axera" in Settings > Integrations > Ingress & Load Balancers. get + patch
+on the listed IngressControllers in openshift-ingress-operator, so Axera can apply the router
+access-logging patch it renders (spec.logging only). OFF by default: integration.ingressLoggingApply.enabled
+renders it, limited by resourceNames to integration.ingressLoggingApply.ingressControllers (default
+[default]), as integration.namespacedRoles allows: auto = when openshift-ingress-operator exists at helm
+install / upgrade (helm template sees none), always = without asking, never = not at all. Without it
+Axera shows the patch to copy and apply yourself.
+*/ -}}
+{{- $loggingApply := dig "ingressLoggingApply" dict (.Values.integration | default dict) | default dict }}
+{{- $loggingControllers := dig "ingressControllers" (list "default") $loggingApply | default (list "default") }}
+{{- $nrLogging := (.Values.integration).namespacedRoles | default "auto" | toString }}
+{{- if and (dig "enabled" false $loggingApply) (or (eq $nrLogging "always") (and (eq $nrLogging "auto") (lookup "v1" "Namespace" "" "openshift-ingress-operator"))) }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: axera-integration-ingress-logging-{{ $ns }}
+  namespace: openshift-ingress-operator
+  labels: {{- $labels | nindent 4 }}
+rules:
+  - apiGroups: ["operator.openshift.io"]
+    resources: ["ingresscontrollers"]
+    resourceNames: {{ toJson $loggingControllers }}
+    verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: axera-integration-ingress-logging-{{ $ns }}
+  namespace: openshift-ingress-operator
+  labels: {{- $labels | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: axera-integration-ingress-logging-{{ $ns }}
+subjects:
+  - kind: ServiceAccount
+    name: axera-integration-sa
+    namespace: {{ $ns }}
+{{- end }}
+{{- end }}

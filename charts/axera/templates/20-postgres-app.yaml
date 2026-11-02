@@ -1,48 +1,119 @@
-{{- if not .Values.postgres.external }}
+{{- include "axera.init" . }}
+{{- /* =========================================================================
+     The two in-cluster PostgreSQL StatefulSets (postgres-app, postgres-radar), rendered from one
+     definition. images.postgres.flavor picks the image and its conventions:
+       rhel   (default on OpenShift) — Red Hat sclorg image. Apps and migrate Jobs connect as the
+              'postgres' superuser (password = POSTGRESQL_ADMIN_PASSWORD); the required
+              non-superuser account owns the auto-created database. Data in /var/lib/pgsql/data;
+              extra settings from the postgres-tuning ConfigMap (22-postgres-tuning.yaml).
+       alpine (default elsewhere) — community image: POSTGRES_USER is the superuser, PGDATA a
+              subdirectory of the volume (a fresh filesystem's lost+found at its root would stop
+              initdb), settings as -c arguments. The entrypoint prepares the data directory and
+              then runs as the image's postgres user (uid 70).
+     Usage: include "axera.postgresStatefulSet" (dict "name" "postgres-app" "dbKey" "APP_DB_NAME" "ctx" .)
+========================================================================= */}}
+{{- define "axera.postgresStatefulSet" -}}
+{{- $ctx := .ctx -}}
+{{- $flavor := include "axera.pgFlavor" $ctx -}}
+{{- $t := $ctx.Values.postgres.tuning -}}
+{{- $dbSecret := include "axera.dbSecretName" $ctx -}}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: postgres-app
-  namespace: {{ .Values.global.namespace }}
+  name: {{ .name }}
+  namespace: {{ $ctx.Values.global.namespace }}
   labels:
-    app: postgres-app
-    {{- include "axera.labels" . | nindent 4 }}
+    app: {{ .name }}
+    {{- include "axera.labels" $ctx | nindent 4 }}
 spec:
-  serviceName: postgres-app
+  serviceName: {{ .name }}
   replicas: 1
   selector:
-    matchLabels: { app: postgres-app }
+    matchLabels: { app: {{ .name }} }
   template:
     metadata:
-      labels: { app: postgres-app }
+      labels: { app: {{ .name }} }
     spec:
       serviceAccountName: axera-sa
-      {{- if .Values.global.createSCC }}
+      {{- with (include "axera.scheduling" (dict "component" "postgres" "ctx" $ctx) | trim) }}{{ . | nindent 6 }}{{- end }}
+      {{- if and (eq $flavor "rhel") (include "axera.createSCC" $ctx) }}
       # axera-scc uses fsGroup: RunAsAny, so OpenShift won't auto-assign one — set it
       # explicitly so the Red Hat postgresql image (arbitrary UID) can write the data
       # PVC. Under the default restricted SCC (createSCC=false), fsGroup is MustRunAs
       # and OpenShift assigns an in-range GID, so we omit it there.
       securityContext:
         fsGroup: 26
+      {{- else if and (eq $flavor "rhel") (not (include "axera.isOpenShift" $ctx)) }}
+      # The rhel image off OpenShift: run as its postgres user and let the volume follow.
+      securityContext:
+        runAsUser: 26
+        runAsGroup: 26
+        fsGroup: 26
+        fsGroupChangePolicy: OnRootMismatch
       {{- end }}
       containers:
         - name: postgres
-          image: {{ include "axera.image" (dict "img" .Values.images.postgres "ctx" .) }}
+          image: {{ include "axera.postgresImage" $ctx }}
+          {{- if eq $flavor "alpine" }}
+          args:
+            - -c
+            - shared_buffers={{ $t.sharedBuffers }}
+            - -c
+            - effective_cache_size={{ $t.effectiveCacheSize }}
+            - -c
+            - max_connections={{ $t.maxConnections }}
+            - -c
+            - work_mem={{ $t.workMem }}
+            - -c
+            - maintenance_work_mem={{ $t.maintenanceWorkMem }}
+            - -c
+            - max_wal_size={{ $t.maxWalSize }}
+            - -c
+            - checkpoint_completion_target={{ $t.checkpointCompletionTarget }}
+            - -c
+            - random_page_cost={{ $t.randomPageCost }}
+            - -c
+            - autovacuum_vacuum_scale_factor={{ $t.autovacuumVacuumScaleFactor }}
+            - -c
+            - autovacuum_analyze_scale_factor={{ $t.autovacuumAnalyzeScaleFactor }}
+            - -c
+            - shared_preload_libraries=pg_stat_statements
+          {{- end }}
           ports:
             - { containerPort: 5432, name: postgres }
           env:
+            {{- if eq $flavor "rhel" }}
             # Red Hat sclorg postgresql image conventions. Apps + migrate jobs connect
             # as the 'postgres' superuser (password = ADMIN_PASSWORD); the required
             # non-superuser account owns the auto-created database.
             - name: POSTGRESQL_DATABASE
-              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: APP_DB_NAME } }
+              valueFrom: { secretKeyRef: { name: {{ $dbSecret }}, key: {{ .dbKey }} } }
             - { name: POSTGRESQL_USER, value: axera_app }
             - name: POSTGRESQL_PASSWORD
-              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: POSTGRES_PASSWORD } }
+              valueFrom: { secretKeyRef: { name: {{ $dbSecret }}, key: POSTGRES_PASSWORD } }
             - name: POSTGRESQL_ADMIN_PASSWORD
-              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: POSTGRES_PASSWORD } }
+              valueFrom: { secretKeyRef: { name: {{ $dbSecret }}, key: POSTGRES_PASSWORD } }
+            # Server sizing (postgres.tuning); the rest of the settings come from the mounted
+            # postgres-tuning ConfigMap (22-postgres-tuning.yaml).
+            - { name: POSTGRESQL_SHARED_BUFFERS, value: {{ $t.sharedBuffers | quote }} }
+            - { name: POSTGRESQL_EFFECTIVE_CACHE_SIZE, value: {{ $t.effectiveCacheSize | quote }} }
+            - { name: POSTGRESQL_MAX_CONNECTIONS, value: {{ $t.maxConnections | quote }} }
+            {{- else }}
+            - name: POSTGRES_USER
+              valueFrom: { secretKeyRef: { name: {{ $dbSecret }}, key: POSTGRES_USER } }
+            - name: POSTGRES_PASSWORD
+              valueFrom: { secretKeyRef: { name: {{ $dbSecret }}, key: POSTGRES_PASSWORD } }
+            - name: POSTGRES_DB
+              valueFrom: { secretKeyRef: { name: {{ $dbSecret }}, key: {{ .dbKey }} } }
+            - { name: PGDATA, value: /var/lib/postgresql/data/pgdata }
+            {{- end }}
           volumeMounts:
+            {{- if eq $flavor "rhel" }}
             - { name: data, mountPath: /var/lib/pgsql/data }
+            - { name: tuning, mountPath: /opt/app-root/src/postgresql-cfg, readOnly: true }
+            {{- else }}
+            - { name: data, mountPath: /var/lib/postgresql/data }
+            {{- end }}
           readinessProbe:
             exec: { command: ["pg_isready", "-U", "postgres"] }
             initialDelaySeconds: 10
@@ -50,28 +121,36 @@ spec:
           livenessProbe:
             exec: { command: ["pg_isready", "-U", "postgres"] }
             initialDelaySeconds: 30
-            periodSeconds: 20
-          resources: {{- toYaml .Values.resources.postgres | nindent 12 }}
+            {{- include "axera.livenessBudget" $ctx | nindent 12 }}
+          resources: {{- toYaml $ctx.Values.resources.postgres | nindent 12 }}
+      {{- if eq $flavor "rhel" }}
+      volumes:
+        - name: tuning
+          configMap: { name: postgres-tuning }
+      {{- end }}
   volumeClaimTemplates:
     - metadata:
         name: data
       spec:
         accessModes: [ReadWriteOnce]
-        {{- if .Values.global.storageClass }}
-        storageClassName: {{ .Values.global.storageClass }}
+        {{- if $ctx.Values.global.storageClass }}
+        storageClassName: {{ $ctx.Values.global.storageClass | quote }}
         {{- end }}
         resources:
           requests:
-            storage: {{ .Values.postgres.storage }}
+            storage: {{ $ctx.Values.postgres.storage }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: postgres-app
-  namespace: {{ .Values.global.namespace }}
-  labels: {{- include "axera.labels" . | nindent 4 }}
+  name: {{ .name }}
+  namespace: {{ $ctx.Values.global.namespace }}
+  labels: {{- include "axera.labels" $ctx | nindent 4 }}
 spec:
-  selector: { app: postgres-app }
+  selector: { app: {{ .name }} }
   ports:
     - { name: postgres, port: 5432, targetPort: 5432 }
+{{- end }}
+{{- if not .Values.postgres.external }}
+{{ include "axera.postgresStatefulSet" (dict "name" "postgres-app" "dbKey" "APP_DB_NAME" "ctx" .) }}
 {{- end }}

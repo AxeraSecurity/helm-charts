@@ -1,45 +1,218 @@
+{{- include "axera.init" . }}
+{{- $ns := .Values.global.namespace }}
+{{- $dist := include "axera.distribution" . }}
+{{- $isOpenShift := include "axera.isOpenShift" . }}
+{{- $exposeType := include "axera.exposeType" . }}
+{{- $publicUrl := include "axera.publicUrl" . -}}
+Axera {{ .Chart.AppVersion }} has been deployed to namespace "{{ $ns }}" (release "{{ .Release.Name }}").
+Distribution: {{ $dist }}{{ if eq .Values.global._axeraDetectedBy "apis" }} (detected from the OpenShift APIs){{ else if eq .Values.global._axeraDetectedBy "nodes" }} (detected from the node kubelet version){{ end }}. Front door: {{ $exposeType }}. PostgreSQL image: {{ if .Values.postgres.external }}external database{{ else }}{{ include "axera.pgFlavor" . }}{{ end }}.
+{{- if eq .Values.global._axeraDetectedBy "none" }}
 
-Axera has been deployed to namespace "{{ .Values.global.namespace }}" (release "{{ .Release.Name }}").
+WARNING: global.distribution=auto could not see the cluster (helm template, --dry-run, a GitOps
+         render, or no permission to list Nodes), so this render assumed "vanilla". Set
+         global.distribution explicitly (openshift, k3s, rke2, anthos or vanilla), or use the
+         matching profiles/values-<distribution>.yaml.
+{{- end }}
 
-1. Watch the workloads come up:
-     oc get pods -n {{ .Values.global.namespace }} -w
+1. Watch the rollout (the database migration Jobs run first; the first start takes a few minutes):
+     kubectl -n {{ $ns }} get pods -w
 
-   First boot runs database migration Jobs{{ if not .Values.ai.external }} and (if AI is enabled) an Ollama model-pull Job{{ end }}; give it a few minutes.
-
-2. Open the console (frontend Route):
-{{- $fhost := include "axera.frontendHost" . }}
-{{- if $fhost }}
-     https://{{ $fhost }}
+2. Open the UI:
+{{- if $publicUrl }}
+     {{ $publicUrl }}
+{{- else if eq $exposeType "LoadBalancer" }}
+     kubectl -n {{ $ns }} get svc frontend    (EXTERNAL-IP, port {{ .Values.expose.frontend.servicePort | default 3000 }})
+   The pods serve plain HTTP: terminate TLS on the load balancer in front of this Service.
+{{- else if eq $exposeType "ClusterIP" }}
+     kubectl -n {{ $ns }} port-forward svc/frontend 3000:3000    then http://localhost:3000
+{{- else if eq $exposeType "Route" }}
+     kubectl -n {{ $ns }} get route frontend -o jsonpath='{.spec.host}{"\n"}'    (OpenShift assigned the host)
 {{- else }}
-     oc get route frontend -n {{ .Values.global.namespace }} -o jsonpath='{.spec.host}{"\n"}'
-   (OpenShift auto-assigned the hostname from its default domain.)
+     No host is set (expose.frontend.host): the {{ $exposeType }} rule is a catch-all. Set the host.
+{{- end }}
+{{- if and (has $exposeType (list "LoadBalancer" "Ingress" "Istio")) (not ((.Values.expose).frontend).tls) }}
+
+WARNING: expose.frontend.tls=false: the UI is served over PLAIN HTTP, so sign-in passwords and
+         session tokens cross the network unencrypted.
+{{- if eq $exposeType "LoadBalancer" }} Terminate TLS on a load balancer in front of the
+         Service, then set expose.frontend.tls=true so the generated URLs use https (the pods
+         themselves always serve plain HTTP).
+{{- else }} Set expose.frontend.tls=true with a certificate, or put
+         a load balancer that terminates TLS in front.
+{{- end }}
+{{- end }}
+{{- if eq $exposeType "Ingress" }}
+{{- $classes := (lookup "networking.k8s.io/v1" "IngressClass" "" "").items | default list }}
+{{- if $classes }}
+{{- $want := include "axera.ingressClassName" . }}
+{{- $names := list }}
+{{- $default := "" }}
+{{- range $classes }}
+{{- $names = append $names .metadata.name }}
+{{- if eq (index (.metadata.annotations | default dict) "ingressclass.kubernetes.io/is-default-class" | default "") "true" }}{{ $default = .metadata.name }}{{ end }}
+{{- end }}
+{{- if and $want (not (has $want $names)) }}
+
+WARNING: the Ingress names IngressClass "{{ $want }}", which this cluster does not have
+         ({{ join ", " $names }}{{ if $default }}; default: {{ $default }}{{ end }}). It will not be admitted and the UI
+         stays unreachable: set expose.ingress.className.
+{{- else if and (not $want) (not $default) (not $isOpenShift) }}
+
+WARNING: the Ingress names no IngressClass and this cluster marks none as default
+         ({{ join ", " $names }}). Most controllers then ignore it and the UI stays unreachable:
+         set expose.ingress.className.
+{{- end }}
+{{- end }}
+{{- end }}
+{{- $createSecrets := true }}
+{{- if and .Values.secrets (kindIs "bool" .Values.secrets.create) }}{{ $createSecrets = .Values.secrets.create }}{{ end }}
+
+3. Sign in as "{{ .Values.app.adminUsername }}".
+{{- if and $createSecrets (not .Values.app.adminPassword) }} The password was generated:
+     kubectl -n {{ $ns }} get secret {{ include "axera.appSecretName" . }} -o jsonpath='{.data.AdminCredentials__Password}' | base64 -d ; echo
+{{- else if .Values.app.adminPassword }} The password is the one you set in app.adminPassword.
+{{- else }} The password is AdminCredentials__Password in your Secret {{ include "axera.appSecretName" . }}.
+{{- end }}
+   Change it after the first sign-in; the Secret keeps only the INITIAL password.
+
+4. Licensing: a {{ .Values.licensing.trial.days }}-day trial is seeded automatically. Upload a licence under
+   Settings > System > License before it expires.
+{{- if not $isOpenShift }} Off OpenShift the licence is not bound to a cluster ID; the
+   worker-node count uses the label node-role.kubernetes.io/worker (label your worker nodes).
 {{- end }}
 
-3. Sign in with the bootstrap admin account:
-     Username: {{ .Values.app.adminUsername }}
-{{- if .Values.app.adminPassword }}
-     Password: (the value you set in app.adminPassword)
+5. Register this cluster: Settings > Integrations > Connections > Kubernetes Clusters > Manage Clusters > Add Cluster.
+   API URL https://kubernetes.default.svc, token of ServiceAccount axera-integration-sa:
+     kubectl -n {{ $ns }} get secret axera-sa-token -o jsonpath='{.data.token}' | base64 -d ; echo
+   Other clusters: install the axera-force chart there and register its token.
+{{- $integration := .Values.integration | default dict }}
+{{- $namespacedRoles := dig "namespacedRoles" "auto" $integration | default "auto" | toString }}
+{{- if (dig "leastPrivilege" false $integration) }}
+   integration.leastPrivilege=true: only ClusterRole axera-integration-role-{{ $ns }} is bound.
 {{- else }}
-     Password: (auto-generated) retrieve it with:
-       oc get secret axera-app-secret -n {{ .Values.global.namespace }} \
-         -o jsonpath='{.data.AdminCredentials__Password}' | base64 -d ; echo
+   Bound: ClusterRoles axera-integration-role-{{ $ns }}, axera-integration-extended-{{ $ns }} and
+   axera-integration-agent-deploy-{{ $ns }} (integration.leastPrivilege=true drops the last two).
 {{- end }}
-   Change this password after first login.
-
-4. Licensing: a {{ .Values.licensing.trial.days }}-day trial is seeded automatically. Upload a
-   production license under Admin → License before it expires.
-
-{{- if and (not .Values.postgres.external) (eq (.Values.postgres.password | default "") "") }}
-
-NOTE: internal Postgres is using an auto-generated password stored in the
-      "axera-db-secrets" Secret. It is preserved across `helm upgrade`.
+{{- if eq $namespacedRoles "never" }}
+   integration.namespacedRoles=never: no Role in the agent namespace "axera", so packet capture
+   answers 403 until pods/exec there is granted to axera-integration-sa by hand.
+{{- else if and (eq $namespacedRoles "auto") (not (lookup "v1" "Namespace" "" "axera")) }}
+   The agent namespace "axera" does not exist yet (or this render had no cluster), so the packet
+   capture Role was not rendered. Install the axera-force chart into "axera", then run
+   helm upgrade on this release again (or set integration.namespacedRoles=always).
 {{- end }}
-{{- if .Values.imagePullSecret.enabled }}
+
+Data tier: PostgreSQL {{ include "axera.pgTier" . }}, Kafka {{ include "axera.kafkaTier" . }}. Run every helm upgrade with the SAME -f files
+as this install: an upgrade whose values change the tier (or the PostgreSQL image flavour) is refused.
+{{- if (.Values.dataTier | default dict).allowChange }}
+
+WARNING: dataTier.allowChange=true switched the data-tier guard off for this run. Do not keep it in
+         a values file.
+{{- end }}
+{{- if $createSecrets }}
+
+GitOps: the generated secrets, the Kafka cluster ID and the namespaced Roles rely on Helm lookup,
+which answers empty under helm template (Argo CD). There, set secrets.create=false (or
+secrets.existingSecrets) with Secrets you create, kafka.clusterId, and
+integration.namespacedRoles=always; otherwise every render generates new values.
+{{- end }}
+{{- if eq $dist "k3s" }}
+{{- if and (eq $exposeType "Ingress") (contains "traefik" (include "axera.ingressClassName" .)) }}
+
+k3s follow-up: Traefik 2.11.2 and newer, Traefik 3 included, reads a request for at most 60 s by default,
+which cuts slow reads and large uploads (pcap import). Raise its readTimeout to 180s (README, "Traefik
+read timeout"):
+  apiVersion: helm.cattle.io/v1
+  kind: HelmChartConfig
+  metadata: { name: traefik, namespace: kube-system }
+  spec:
+    valuesContent: |-
+      additionalArguments:
+        - "--entrypoints.web.transport.respondingTimeouts.readTimeout=180s"
+        - "--entrypoints.websecure.transport.respondingTimeouts.readTimeout=180s"
+{{- end }}
+{{- end }}
+{{- if eq $dist "rke2" }}
+{{- if and (eq $exposeType "Ingress") (contains "traefik" (include "axera.ingressClassName" .)) }}
+
+RKE2 follow-up: raise the Traefik readTimeout to 180s with a HelmChartConfig named rke2-traefik in
+kube-system (README, "Traefik read timeout"); Traefik 3 (and 2.11.2+) otherwise cuts requests after 60 s.
+{{- end }}
+{{- if not .Values.global.storageClass }}
+
+NOTE: global.storageClass is empty and RKE2 ships no default StorageClass. If the PVCs stay
+      Pending, mark a StorageClass default or set global.storageClass.
+{{- end }}
+{{- end }}
+{{- if not $isOpenShift }}
+{{- if include "axera.archNodeSelector" . }}
+
+NOTE: the product images are built for amd64; every pod carries nodeSelector
+      kubernetes.io/arch=amd64 (global.archNodeSelector).
+{{- end }}
+{{- end }}
+{{- if .Values.mcp.enabled }}
+{{- if include "axera.mcpExposed" . }}
+
+MCP tool server: {{ if $publicUrl }}{{ $publicUrl }}/api/mcp{{ else if eq $exposeType "Route" }}https://<host>/api/mcp, where <host> is
+     kubectl -n {{ $ns }} get route frontend -o jsonpath='{.spec.host}{"\n"}'{{ else }}https://<UI host>/api/mcp{{ end }}
 {{- else }}
 
-NOTE: imagePullSecret is disabled. If the images under "{{ .Values.global.imageRegistry }}"
-      are in a private registry, set imagePullSecret.enabled=true and provide
-      imagePullSecret.dockerconfigjson, or pre-create a pull secret.
+WARNING: mcp.enabled=true but expose.type={{ $exposeType }} cannot route /api/mcp: nothing outside the
+         cluster reaches the MCP tool server. Use a Route, Ingress or Istio front door.
+{{- end }}
+{{- end }}
+{{- if include "axera.kafkaUiExposed" . }}
+
+WARNING: kafka-ui is published outside the cluster and has NO authentication: anyone who reaches it
+         reads every topic. Prefer kubectl port-forward svc/kafka-ui 8080:8080.
+{{- end }}
+{{- if not .Values.networkPolicies.enabled }}
+
+WARNING: networkPolicies.enabled=false: every pod in the cluster can reach the Axera services
+         {{- if not .Values.kafka.external }}, including the in-cluster Kafka (PLAINTEXT, no authentication){{ end }}.
+         Enable them before production (README, "NetworkPolicies").
+{{- end }}
+{{- if and .Values.networkPolicies.enabled (not $isOpenShift) (not .Values.kafka.external) }}
+{{- $kc := .Values.networkPolicies.kafkaClients | default dict }}
+{{- $hostNet := true }}
+{{- if hasKey $kc "hostNetwork" }}{{ $hostNet = $kc.hostNetwork }}{{ end }}
+{{- if and $hostNet (not $kc.cidrs) (not $kc.unrestricted) }}
+
+NOTE: NetworkPolicy allow-agents-to-kafka admits ANY source on 9092 (namespaceSelector {} plus
+      ipBlock 0.0.0.0/0), because off OpenShift there is no host-network policy group. Narrow it
+      with networkPolicies.kafkaClients.cidrs: the node subnet(s) plus the cluster (pod) CIDR.
+{{- end }}
+{{- end }}
+{{- if and (.Values.routes.api).enabled (ne $exposeType "Route") }}
+
+WARNING: routes.api.enabled applies to OpenShift Routes only; expose.type={{ $exposeType }} renders no
+         audit ingest path from it.{{ if has $exposeType (list "Ingress" "Istio") }} Set expose.auditIngest.enabled=true for remote audit forwarders.{{ end }}
+{{- end }}
+{{- if include "axera.backupVolumeEnabled" . }}
+{{- $bst := .Values.backup.storage }}
+{{- if or (eq $bst.type "nfs") $bst.pvcClaimName }}
+
+NOTE: backup.storage names {{ if eq $bst.type "nfs" }}an NFS share{{ else }}claim "{{ $bst.pvcClaimName }}"{{ end }}. The backup Jobs take their volume from the
+      backup settings in the database, not from these values: enter the same
+      {{ if eq $bst.type "nfs" }}NFS server and path{{ else }}claim name{{ end }} under Settings > System > Backup & Restore.
+{{- end }}
+{{- if and $bst.createPvc (eq ($bst.accessMode | default "ReadWriteMany") "ReadWriteMany") (not $bst.storageClass) (has $dist (list "k3s" "anthos")) }}
+
+WARNING: backup.storage.createPvc asks for a ReadWriteMany claim on the default StorageClass, which
+         on {{ $dist }} provides ReadWriteOnce only: the claim stays Pending and the api pod with it.
+         Set backup.storage.storageClass to a ReadWriteMany class, or backup.storage.accessMode=ReadWriteOnce
+         on a single node.
+{{- end }}
+{{- end }}
+{{- if and .Values.ai.enabled (not .Values.ai.external) .Values.ai.pullModel (eq (.Values.ai.modelSource | default "registry") "registry") }}
+
+NOTE: the local AI model is pulled from the public model registry by a Job. On a disconnected
+      cluster use ai.modelSource=image or preloaded.
 {{- end }}
 
-Docs & support: https://axerasecurity.com/support
+Uninstall: `helm uninstall {{ .Release.Name }} -n {{ $ns }}` leaves the Secrets, the integration
+ServiceAccount and token, the dp-keys and backup volumes, the Kafka cluster ID and the database and
+Kafka volumes (README, "Uninstall").
+
+Docs and support: https://axerasecurity.com/support

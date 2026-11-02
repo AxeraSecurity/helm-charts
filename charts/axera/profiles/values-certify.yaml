@@ -1,0 +1,30 @@
+# Red Hat chart-verifier / certification run: with these values ONLY Red Hat-certified images
+# render, so the mandatory images-are-certified check passes.
+#   - the six Axera service images (UBI-based, container-certified)
+#   - PostgreSQL: in-cluster, registry.redhat.io/rhel9/postgresql-16 (also the backup Jobs' image)
+#   - Kafka: EXTERNAL (the in-cluster Kafka image is not certified); kafka-ui off
+#   - AI model: off (the local model server image is not certified)
+#   - helm test: registry.access.redhat.com/ubi9/ubi-minimal
+#
+# global.distribution must be openshift: chart-verifier renders without the cluster's APIs, where
+# auto resolves to vanilla and renders the community PostgreSQL image instead.
+#
+# Point Kafka at a test broker on the certification cluster so that chart-testing (helm install +
+# helm test) also passes, every pod Ready:
+#   chart-verifier verify <chart-url> -F profiles/values-certify.yaml \
+#     --kubeconfig <test-cluster-kubeconfig> -W
+# (-W = --web-catalog-only; drop it if OWNERS providerDelivery is false)
+global:
+  distribution: openshift
+
+postgres:
+  external: false
+
+kafka:
+  external: true
+  bootstrapServers: "kafka-test:9092"   # your test Kafka on the certification cluster
+  securityProtocol: Plaintext
+  enableUI: false
+
+ai:
+  enabled: false
