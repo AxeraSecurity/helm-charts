@@ -1,0 +1,30 @@
+{{- include "axera.init" . }}
+{{- /*
+  kafka-ui through the SAME Istio ingress gateway as the UI. Renders only when
+  expose.type=Istio AND kafka-ui is deployed (internal Kafka + kafka.enableUI) AND
+  kafka.uiIstioHost is set. Off by default.
+
+  kafka-ui has NO authentication: anyone who reaches kafka.uiIstioHost reads every topic and can
+  manage the broker. Prefer `kubectl port-forward svc/kafka-ui 8080:8080`; if you must publish
+  it, put an Istio AuthorizationPolicy or an authenticating proxy in front. The host must also
+  be in your ingress Gateway's servers[].hosts (and covered by its certificate with TLS).
+*/}}
+{{- if and (eq (include "axera.exposeType" .) "Istio") (include "axera.kafkaUiExposed" .) }}
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: kafka-ui
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+spec:
+  hosts:
+    - {{ .Values.kafka.uiIstioHost | quote }}
+  gateways:
+    - {{ include "axera.gatewayRef" . | quote }}
+  http:
+    - route:
+        - destination:
+            host: kafka-ui.{{ .Values.global.namespace }}.svc.{{ include "axera.clusterDnsDomain" . }}
+            port:
+              number: 8080
+{{- end }}

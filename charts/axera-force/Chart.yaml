@@ -1,0 +1,66 @@
+apiVersion: v2
+name: axera-force
+description: >-
+  Axera cluster agent for one Kubernetes cluster (OpenShift, k3s, RKE2 / Rancher, Anthos, or
+  vanilla kubeadm): one DaemonSet in namespace "axera" that runs the eBPF flow agent, the flow
+  pipeline, the process sensor and the shipper, sending flow and process telemetry to a central
+  Axera platform through Kafka, with an optional packet-capture sidecar, an optional API audit
+  forwarder, and the integration ServiceAccount used to register the cluster in Axera.
+type: application
+version: 2.0.0
+appVersion: "17.2.0"
+# Pod Security Admission (namespace "axera" must be privileged) is GA from 1.25.
+kubeVersion: ">=1.25.0-0"
+home: https://axerasecurity.com
+sources:
+  - https://github.com/AxeraSecurity/helm-charts
+icon: https://axerasecurity.github.io/helm-charts/axera-logo.svg
+keywords:
+  - axera
+  - ebpf
+  - network-observability
+  - microsegmentation
+  - kubernetes-security
+  - kafka
+  - openshift
+  - k3s
+  - rke2
+  - rancher
+  - anthos
+maintainers:
+  - name: Axera Security
+    email: support@axerasecurity.com
+    url: https://axerasecurity.com
+annotations:
+  # Every image the chart can run, pinned by digest (mirror them for air-gapped installs).
+  artifacthub.io/images: |
+    - name: flow-agent
+      image: quay.io/netobserv/netobserv-ebpf-agent:v1.11.3-community@sha256:663e616091c9cb8b0c2061fc44117876f8d50c111df16da9c255d882cc439a74
+    - name: flow-pipeline
+      image: quay.io/netobserv/flowlogs-pipeline:v1.11.5-community@sha256:d6c6a1cc9ac181689f9f317ae06f485d4dab19edc3aa3a083bc78d203b3be7b9
+    - name: process-sensor
+      image: quay.io/cilium/tetragon:v1.7.1@sha256:afc9458ba4bc3f2795da3df6b03d88ce50e175ac3903027de8036e2046b84a02
+    - name: shipper
+      image: quay.io/axera/fluent-bit:4.2.8@sha256:f8c65280140252318fb5a20450face7e6af505245546d62f4a3cc7166489f764
+      platforms:
+        - linux/amd64
+    - name: capture
+      image: quay.io/openshift/origin-network-tools:4.19.0@sha256:052dd26abfe4e7de9649ddb5b7b8514865d5b76551dd2dd126463a7e0e2fc28c
+    - name: audit-forwarder
+      image: docker.io/timberio/vector:0.40.1-debian@sha256:881a3728091fab7a39dade6ca70f1e76e14e0a308bdb57a00009dc3d0b54e74d
+  artifacthub.io/crds: |
+    - kind: TracingPolicy
+      version: v1alpha1
+      name: tracingpolicies.cilium.io
+      displayName: TracingPolicy
+      description: Cluster-wide process sensor policy (observe-only tcp_connect by default).
+    - kind: TracingPolicyNamespaced
+      version: v1alpha1
+      name: tracingpoliciesnamespaced.cilium.io
+      displayName: TracingPolicyNamespaced
+      description: Namespaced process sensor policy.
+    - kind: PodInfo
+      version: v1alpha1
+      name: podinfo.cilium.io
+      displayName: PodInfo
+      description: Pod metadata the process sensor keeps.

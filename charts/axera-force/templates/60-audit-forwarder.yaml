@@ -1,0 +1,461 @@
+{{/*
+The audit forwarder's configuration, defined ONCE so the DaemonSet can hash exactly the bytes the
+ConfigMap carries: the forwarder reads it only at start (no config watch), so a ConfigMap-only change
+would otherwise never reach a running pod.
+*/}}
+{{- define "axeraforce.auditForwarder.vectorConfig" -}}
+data_dir: /vector-data
+
+sources:
+  kube_apiserver_audit:
+    type: file
+    include:
+      - /var/log/kube-apiserver/audit.log
+    max_line_bytes: 1048576
+  # The forwarder's own health (this copy only; the filter below is untouched). A pod that runs
+  # proves nothing about delivery: a wrong URL answers 503 and the batch is dropped after five
+  # retries without a word. The forwarder counts that in the series whose name ends in
+  # component_errors_total (component_id="axera_audit") and the answers in the series ending in
+  # http_client_responses_total (label status), served by forwarder_metrics_exporter.
+  forwarder_metrics:
+    type: internal_metrics
+    scrape_interval_secs: 15
+
+transforms:
+  # ===========================================================================
+  # WHAT THIS FILTER KEEPS, and just as deliberately, what it drops.
+  #
+  # Every clause below is scoped to the exact (apiGroup, resource, subresource,
+  # verb) tuple one Axera consumer needs. Widening any of them is a VOLUME
+  # decision on a large estate, so the reasoning is written down per clause,
+  # with the shapes that were considered and rejected under "EXCLUDED".
+  #
+  # THREE POLICY FAMILIES:
+  #   1. networking.k8s.io networkpolicies  -> "Modified by" / "Deleted by"
+  #      attribution.
+  #   1b. policy.networking.k8s.io adminnetworkpolicies /
+  #      baselineadminnetworkpolicies       -> the same attribution for Axera's
+  #      override policies.
+  #   2. security.istio.io authorizationpolicies / peerauthentications /
+  #      requestauthentications             -> mesh policy tamper detection.
+  #
+  # FOUR CONTROL-PLANE-ABUSE RULES: exec into a pod, secret enumeration,
+  # anonymous access to a sensitive resource, RBAC binding escalation
+  # (clauses 3-6). They are scoped as tightly as the rules allow, because
+  # `list secrets` and `get pods` are two of the most frequent calls on any
+  # cluster.
+  #
+  # ACTOR CLASSES, by the shape of user.username: service accounts
+  # ("system:serviceaccount:<ns>:<sa>"), Axera's own service accounts (that
+  # shape, containing "axera") and the anonymous identities. The noisiest
+  # actors are dropped ON THE NODE, before they cost bandwidth or a ledger row.
+  #
+  # Not templated, on purpose: the same body ships in every Axera install
+  # method, so it carries no values knob.
+  #
+  # Plain comparisons (NOT string!()) and `?? false` on every fallible call, so
+  # an event with no objectRef and no user (healthz, tokenreviews, collection
+  # lists) falls through to the abort instead of erroring. Survivors are
+  # reshaped into Axera's audit event; requestObject / responseObject ride along
+  # only when the cluster's audit policy logs bodies (level RequestResponse).
+  # ===========================================================================
+  np_events:
+    type: remap
+    inputs: [kube_apiserver_audit]
+    drop_on_error: true
+    drop_on_abort: true
+    source: |
+      . = parse_json!(.message)
+      if .stage != "ResponseComplete" { abort }
+
+      verb  = .verb
+      group = .objectRef.apiGroup
+      res   = .objectRef.resource
+      sub   = .objectRef.subresource
+      user  = .user.username
+
+      user_is_system = starts_with(user, "system:") ?? false
+      user_is_sa     = starts_with(user, "system:serviceaccount:") ?? false
+      user_has_axera = contains(user, "axera") ?? false
+
+      # is_machine deliberately EXCLUDES the anonymous identities: they also
+      # start with "system:", but clause 5 is about exactly them.
+      is_anon     = user == "system:anonymous" || user == "system:unauthenticated"
+      is_machine  = user_is_system && !is_anon
+      is_axera_sa = user_is_sa && user_has_axera
+
+      # The core API group is OMITTED from objectRef, so it arrives as null; some
+      # emitters write "" instead. Same for an absent subresource.
+      is_core      = group == null || group == ""
+      is_rbac      = group == "rbac.authorization.k8s.io"
+      no_sub       = sub == null || sub == ""
+      policy_write = includes(["create", "update", "patch", "delete"], verb)
+      rbac_write   = includes(["create", "update", "patch"], verb)
+
+      # 1. NetworkPolicy writes → "Modified by" attribution.
+      #    The apiGroup guard is load-bearing: Calico ships a CRD
+      #    ALSO named "networkpolicies" (projectcalico.org / crd.projectcalico.org).
+      #    Without the guard a Calico policy edit would be forwarded as if it were a
+      #    Kubernetes NetworkPolicy and could be stamped onto an unrelated Axera
+      #    record — a wrong answer to "who modified this policy", which is worse
+      #    than no answer.
+      #    EXCLUDED: "networkpolicies" in any other apiGroup — a different object
+      #    with different semantics that the attributor cannot match.
+      keep_np = res == "networkpolicies" && group == "networking.k8s.io" && policy_write
+
+      # 1b. Override policy writes (AdminNetworkPolicy, cluster baseline) → the
+      #     same "Modified by" / "Deleted by" attribution, for Axera's override
+      #     records (objectRef.namespace is null: they are cluster-scoped).
+      #     Deletes are KEPT: a delete outside Axera is who the Missing row names.
+      #     EXCLUDED: sub-resource writes, and that `no_sub` is load-bearing:
+      #     OVN-Kubernetes writes per-zone status (Ready-In-Zone-*) on every
+      #     AdminNetworkPolicy all the time, and a /status write is not a policy
+      #     change — without the guard this clause would be the forwarder's
+      #     loudest. EXCLUDED: these resource names in any other apiGroup.
+      keep_anp = group == "policy.networking.k8s.io" && includes(["adminnetworkpolicies", "baselineadminnetworkpolicies"], res) && no_sub && policy_write
+
+      # 2. Mesh policy writes → mesh-policy-tamper detector.
+      #    EXCLUDED: sub-resource writes. istiod updating /status is not a policy
+      #    change and status churns constantly.
+      keep_mesh = group == "security.istio.io" && includes(["authorizationpolicies", "peerauthentications", "requestauthentications"], res) && no_sub && policy_write
+
+      # 3. audit.exec-into-pod (T1609). pods/exec and pods/attach only.
+      #    "create" is the SPDY form of exec, "get" the websocket form — both are
+      #    real execs, which is why the verb set has to carry `get` here. That is
+      #    only safe because it is pinned to the exec/attach SUBRESOURCE.
+      #    VOLUME: this is the clause that looks frightening and is actually cheap.
+      #    EXCLUDED, and this is the whole story: bare `get pods` (no subresource)
+      #    — the single most frequent read on any cluster, every kubelet,
+      #    controller and operator informer — never matches, because a pod read
+      #    carries no subresource. Also EXCLUDED: pods/log, pods/status,
+      #    pods/portforward, pods/ephemeralcontainers, pods/binding, pods/eviction.
+      #    EXCLUDED: Axera's OWN service account. The PCAP capture feature execs
+      #    into pods by design, so without this every capture would raise a High
+      #    incident accusing Axera of exec-ing into your workloads.
+      #    KEPT for every other service account — a foreign operator exec-ing into
+      #    a pod is rare, and it is precisely the signal this rule wants.
+      keep_exec = is_core && res == "pods" && includes(["exec", "attach"], sub) && includes(["create", "get"], verb) && !is_axera_sa
+
+      # 4. audit.secret-enum (T1552.007). A LIST across secrets is the
+      #    enumeration shape, and this is the highest-volume widening in this
+      #    file — it is the reason is_machine exists.
+      #    VOLUME: on a large estate every controller, operator and informer LISTs
+      #    secrets at startup and on every relist. That is thousands of events an
+      #    hour, none of them a finding, and forwarding them would fill the ledger
+      #    with machine chatter within a day.
+      #    EXCLUDED: `get secrets` — single-object reads, the kubelet projecting a
+      #    secret into a pod, the highest-frequency secret call of all; it is not
+      #    enumeration and the rule does not test it.
+      #    EXCLUDED: `watch` — the informer's steady state, same reasoning.
+      #    EXCLUDED: every "system:" identity — service accounts, system:node:*,
+      #    system:kube-controller-manager, system:apiserver.
+      #    COVERAGE LIMIT, STATED PLAINLY SO NOBODY HAS TO REDISCOVER IT: a
+      #    STOLEN SERVICE-ACCOUNT TOKEN used to enumerate secrets is therefore NOT
+      #    seen by this rule. Human and anonymous enumeration is. That is a
+      #    deliberate volume trade, not an oversight. An estate that wants the SA
+      #    case covered drops `&& !is_machine` here and sizes the ledger for it.
+      keep_secret_enum = is_core && res == "secrets" && verb == "list" && no_sub && !is_machine
+
+      # 5. audit.anonymous-access (T1078). The rule's predicate is a USERNAME
+      #    CLASS, not a verb, so every verb is kept here — which is safe only
+      #    because the actor gate comes FIRST and costs nothing on a healthy
+      #    cluster: anonymous requests to these resources are refused at
+      #    authorization and are rare, and the rule only fires on one that was
+      #    ALLOWED, i.e. on a genuinely misconfigured cluster.
+      #    EXCLUDED: nothing beyond the five sensitive resources the rule tests;
+      #    widening the resource set here would forward every anonymous /healthz
+      #    probe on the estate.
+      keep_anon = is_anon && ((is_core && res == "secrets") || (is_rbac && includes(["clusterrolebindings", "rolebindings", "clusterroles", "roles"], res)))
+
+      # 6. audit.rbac-escalation (T1078). Binding WRITES only.
+      #    KEPT FOR EVERY ACTOR, service accounts included: a compromised
+      #    ServiceAccount granting itself cluster-admin is the exact scenario this
+      #    rule exists for, so `!is_machine` must NOT be applied here. Volume is
+      #    acceptable because binding writes are rare by nature — operators
+      #    reconcile RBAC on resync, not once per loop — and the correlation
+      #    service dedups the repeats.
+      #    EXCLUDED: `roles` / `clusterroles` writes — the rule matches bindings
+      #    only, and role edits are far more frequent under GitOps.
+      #    EXCLUDED: reads of any kind, and sub-resource writes.
+      #    If an estate's operators do churn bindings, narrow HERE by ACTOR
+      #    (`&& !is_machine`) rather than by resource: the resource set IS the
+      #    detection, and note that narrowing by actor gives up the compromised-SA
+      #    case above.
+      keep_rbac = is_rbac && includes(["clusterrolebindings", "rolebindings"], res) && no_sub && rbac_write
+
+      if !keep_np && !keep_anp && !keep_mesh && !keep_exec && !keep_secret_enum && !keep_anon && !keep_rbac { abort }
+
+      # ---------------------------------------------------------------------
+      # OBJECT BODIES: only for the shapes that actually need them, and NEVER
+      # for anything touching secrets.
+      #
+      # The bodies ride along only when the cluster's audit policy logs them
+      # (level RequestResponse, or the AllRequestBodies profile). Some regulated
+      # estates mandate exactly that for forensics. Under it, the responseObject of a
+      # `list secrets` IS THE SECRETS — every Secret in the namespace, data and
+      # all — and copying it here would carry that off the node, into Axera's
+      # database, into its backups and into the evidence pack. No detector
+      # wants it: the secret-enumeration rule fires on resource+verb alone, and
+      # exec has no meaningful body either.
+      #
+      # So bodies are carried for the four WRITE shapes that diff objects
+      # (NetworkPolicy and override policy attribution, mesh tamper, RBAC
+      # escalation) and dropped
+      # for everything else. `keep_anon` is excluded too — its sensitive-resource
+      # set includes secrets, so an anonymous read of them would be the same
+      # leak by another route.
+      bodies_ok = (keep_np || keep_anp || keep_mesh || keep_rbac) && res != "secrets"
+      req_body = if bodies_ok { .requestObject } else { null }
+      resp_body = if bodies_ok { .responseObject } else { null }
+
+      . = {
+        "at": .requestReceivedTimestamp,
+        "clusterName": "${CLUSTER_NAME}",
+        "user": .user.username,
+        "uid": .user.uid,
+        "groups": .user.groups,
+        "impersonatedUser": .impersonatedUser.username,
+        "verb": .verb,
+        "resource": .objectRef.resource,
+        "apiGroup": .objectRef.apiGroup,
+        "namespace": .objectRef.namespace,
+        "name": .objectRef.name,
+        "subResource": .objectRef.subresource,
+        "sourceIp": .sourceIPs[0],
+        "sourceIps": .sourceIPs,
+        "userAgent": .userAgent,
+        "requestUri": .requestURI,
+        "auditId": .auditID,
+        "responseCode": .responseStatus.code,
+        "decision": .annotations."authorization.k8s.io/decision",
+        "reason": .annotations."authorization.k8s.io/reason",
+        "requestObject": req_body,
+        "responseObject": resp_body
+      }
+
+  # ===========================================================================
+  # THE HEARTBEAT: proof that this forwarder is still reading the audit log.
+  #
+  # np_events forwards seven rare shapes and nothing else, so on a quiet cluster
+  # it can send nothing for days while working perfectly, exactly like a
+  # forwarder that is gone. This taps the SAME file source, lets one raw line
+  # through per five minutes (throttle) and REPLACES it wholesale with a fixed
+  # marker: a heartbeat arrives only while the API server is writing audit.log,
+  # this pod can read it and the POST reaches Axera. Nothing of the line
+  # survives, and drop_on_error keeps a raw audit line from ever leaving the
+  # node. Axera stamps it with its own receipt time and counts it as no event.
+  # Volume: one small POST per control-plane node every five minutes.
+  # ===========================================================================
+  audit_heartbeat_tick:
+    type: throttle
+    inputs: [kube_apiserver_audit]
+    threshold: 1
+    window_secs: 300
+
+  audit_heartbeat:
+    type: remap
+    inputs: [audit_heartbeat_tick]
+    drop_on_error: true
+    source: |
+      . = {
+        "clusterName": "${CLUSTER_NAME}",
+        "verb": "axera:heartbeat",
+        "userAgent": "axera-audit-forwarder"
+      }
+
+sinks:
+  axera_audit:
+    type: http
+    inputs: [np_events, audit_heartbeat]
+    uri: "${AXERA_AUDIT_URI}"
+    method: post
+    encoding:
+      codec: json
+    payload_prefix: '{"Events":'
+    payload_suffix: '}'
+    batch:
+      max_events: 200
+      timeout_secs: 5
+    request:
+      headers:
+        X-Internal-Token: "${INTERNAL_TOKEN}"
+      retry_attempts: 5
+    {{- if (.Values.auditForwarder).insecureSkipVerify }}
+    # Test/self-signed only — prefer auditForwarder.caCert.
+    tls:
+      verify_certificate: false
+      verify_hostname: false
+    {{- else if (.Values.auditForwarder).caCert }}
+    # Trust the CA of the central API's certificate (a private or self-signed
+    # CA fails verification otherwise: "certificate verify failed").
+    tls:
+      ca_file: /etc/vector-ca/ca.crt
+    {{- end }}
+    healthcheck:
+      enabled: false
+  # Pod port 9598 (the pod is not hostNetwork): kubectl -n axera port-forward <forwarder pod> 9598, then
+  # curl -s localhost:9598/metrics | grep -E 'component_(errors|sent_events)_total|http_client_responses_total'.
+  forwarder_metrics_exporter:
+    type: prometheus_exporter
+    inputs: [forwarder_metrics]
+    address: 0.0.0.0:9598
+{{- end }}
+
+{{- if (.Values.auditForwarder).enabled }}
+{{- $platform := include "axeraforce.platform" . | fromJson }}
+{{- $labels := include "axeraforce.labelsFor" (list . "audit-forwarder") }}
+# =============================================================================
+# Audit forwarder (opt-in): feeds THIS cluster's Kubernetes API audit stream into the central
+# Axera. It answers WHO changed a policy in the cluster (the NetworkPolicy, override policy and mesh
+# "Modified by" chips) and WHO abused the control plane (exec into a pod, secret enumeration,
+# anonymous access to a sensitive resource, RBAC binding escalation). A DaemonSet on the
+# control-plane nodes tails the API server's audit.log (auditForwarder.logDir on the host), keeps
+# ONLY the seven narrowly scoped shapes documented in the filter above, stamps them with this
+# cluster's name and POSTs them to the central API (auditForwarder.targetUri) with the central
+# platform's internal token. It reads a root-owned host file, so it runs privileged.
+# =============================================================================
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: axera-audit-forwarder
+  namespace: {{ .Release.Namespace }}
+  labels: {{- $labels | nindent 4 }}
+{{- if $platform.openshift }}
+---
+# OpenShift: the privileged SCC for the forwarder (elsewhere the namespace's Pod Security
+# "privileged" admits it).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ .Release.Namespace }}-audit-forwarder-scc
+  labels: {{- $labels | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:openshift:scc:privileged
+subjects:
+  - kind: ServiceAccount
+    name: axera-audit-forwarder
+    namespace: {{ .Release.Namespace }}
+{{- end }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: axera-audit-forwarder-token
+  namespace: {{ .Release.Namespace }}
+  labels: {{- $labels | nindent 4 }}
+type: Opaque
+stringData:
+  Internal__Token: {{ (.Values.auditForwarder).internalToken | default "" | quote }}
+  {{- if (.Values.auditForwarder).caCert }}
+  ca.crt: |
+{{ (.Values.auditForwarder).caCert | indent 4 }}
+  {{- end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: axera-audit-forwarder-config
+  namespace: {{ .Release.Namespace }}
+  labels: {{- $labels | nindent 4 }}
+data:
+  vector.yaml: |
+{{- include "axeraforce.auditForwarder.vectorConfig" . | nindent 4 }}
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: axera-audit-forwarder
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: axera-audit-forwarder
+    {{- $labels | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: axera-audit-forwarder
+  template:
+    metadata:
+      labels:
+        app: axera-audit-forwarder
+        app.kubernetes.io/name: {{ .Chart.Name }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: audit-forwarder
+      annotations:
+        # The forwarder reads its config, token and CA only at start, so anything that changes what it
+        # enforces must change this hash: the values that render the ConfigMap and Secret, and the
+        # config body itself (static template text that does not move when values do).
+        checksum/forwarder-config: {{ printf "%s|%s|%s" (.Values.auditForwarder | toJson) (.Values.clusterName | default "") (include "axeraforce.auditForwarder.vectorConfig" .) | sha256sum }}
+    spec:
+      serviceAccountName: axera-audit-forwarder
+      {{- with include "axeraforce.imagePullSecrets" . }}
+      imagePullSecrets: {{- . | trim | nindent 8 }}
+      {{- end }}
+      {{- if $platform.openshift }}
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: ""
+      {{- else }}
+      # Control-plane (server) nodes only, by either role label: k3s and RKE2 servers carry
+      # node-role.kubernetes.io/control-plane (and master) with the value "true", kubeadm uses "".
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - { key: node-role.kubernetes.io/control-plane, operator: Exists }
+              - matchExpressions:
+                  - { key: node-role.kubernetes.io/master, operator: Exists }
+      {{- end }}
+      # Blanket toleration: control-plane nodes often carry extra taints (NoExecute, custom infra
+      # taints) beyond the usual NoSchedule; the node selection above already pins this DaemonSet to
+      # control-plane nodes only.
+      tolerations:
+        - operator: Exists
+      containers:
+        - name: vector
+          image: {{ .Values.images.auditForwarder | quote }}
+          imagePullPolicy: IfNotPresent
+          args: ["--config", "/etc/vector/vector.yaml"]
+          ports:
+            # The forwarder's internal metrics (forwarder_metrics_exporter in the config above).
+            - { name: metrics, containerPort: 9598, protocol: TCP }
+          securityContext:
+            privileged: true
+            runAsUser: 0
+          env:
+            - name: CLUSTER_NAME
+              value: {{ .Values.clusterName | quote }}
+            - name: AXERA_AUDIT_URI
+              value: {{ (.Values.auditForwarder).targetUri | default "" | quote }}
+            - name: INTERNAL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: axera-audit-forwarder-token
+                  key: Internal__Token
+          volumeMounts:
+            # The host's audit log directory (auditForwarder.logDir), always seen at this path inside the
+            # container, so the config above is the same on every distribution.
+            - { name: audit-log, mountPath: /var/log/kube-apiserver, readOnly: true }
+            - { name: vector-data, mountPath: /vector-data }
+            - { name: vector-config, mountPath: /etc/vector, readOnly: true }
+            {{- if (.Values.auditForwarder).caCert }}
+            - { name: central-ca, mountPath: /etc/vector-ca, readOnly: true }
+            {{- end }}
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits:   { cpu: 200m, memory: 256Mi }
+      volumes:
+        - name: audit-log
+          hostPath: { path: {{ include "axeraforce.auditLogDir" . | quote }}, type: Directory }
+        - name: vector-data
+          emptyDir: {}
+        - name: vector-config
+          configMap: { name: axera-audit-forwarder-config }
+        {{- if (.Values.auditForwarder).caCert }}
+        - name: central-ca
+          secret:
+            secretName: axera-audit-forwarder-token
+            items: [ { key: ca.crt, path: ca.crt } ]
+        {{- end }}
+{{- end }}

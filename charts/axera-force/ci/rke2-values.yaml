@@ -1,0 +1,7 @@
+global:
+  distribution: rke2
+clusterName: ci-rke2
+# Offline render (no node pod ranges to check): podCIDR must be stated.
+podCIDR: 10.42.0.0/16
+kafka:
+  bootstrapServers: kafka.example.com:9093

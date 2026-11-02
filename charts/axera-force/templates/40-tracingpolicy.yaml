@@ -1,0 +1,44 @@
+{{- if .Values.process.installTracingPolicy }}
+# Observe-only tcp_connect policy for the process sensor (cluster-scoped). Its CRDs ship in the
+# chart's crds/ folder, so Helm installs them before this object.
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicy
+metadata:
+  # Namespace-suffixed (cluster-scoped): it must not collide with another agent's policy on the
+  # same cluster (deleting one would disable the other).
+  name: axera-force-egress-{{ .Release.Namespace }}
+  labels: {{- include "axeraforce.labels" . | nindent 4 }}
+spec:
+  # NO podSelector unless a non-empty one is configured. With every selector unset the sensor
+  # applies no policy filter and reports tcp_connect for every process on the node, pods and host
+  # processes alike (Axera uses the host stream). `podSelector: {}` is never rendered: from sensor
+  # v1.7.0 it means "pod workloads only", which silently drops the host stream. A non-empty selector
+  # is an explicit choice of pods only.
+  {{- with .Values.process.tracingPolicyPodSelector }}
+  {{- if or .matchLabels .matchExpressions }}
+  podSelector: {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- end }}
+  kprobes:
+    - call: "tcp_connect"
+      syscall: false
+      args:
+        - index: 0
+          type: "sock"
+      selectors:
+        {{- if not (include "axeraforce.processObserve" . | fromJson).hostProcesses }}
+        # With host processes left out (process.observe.hostProcesses false) the kubelet's connects are
+        # never reported: a large share of the process topic that Axera would drop later anyway (it
+        # finds no pod for them). NotPostfix matches the binary's path suffix, so it holds for every
+        # distribution's kubelet location (/usr/bin, /var/lib/rancher/rke2/bin ...); a kubelet embedded
+        # in another binary (k3s) is not matched and is still left out by the shipper or by Axera.
+        - matchBinaries:
+            - operator: NotPostfix
+              values: ["/kubelet"]
+          matchActions:
+            - action: Post
+        {{- else }}
+        - matchActions:
+            - action: Post
+        {{- end }}
+{{- end }}

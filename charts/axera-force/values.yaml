@@ -1,0 +1,377 @@
+# =============================================================================
+# axera-force: the Axera cluster agent for ONE Kubernetes cluster.
+#
+# It sends this cluster's network flows and process events to a central Axera platform through
+# Kafka, and gives the platform an integration identity on this cluster.
+#
+# Install it into namespace "axera" and nowhere else (the chart refuses any other namespace). The
+# chart does not create the namespace: create it first, with Pod Security "privileged" (the agent
+# uses the host network and PID namespace, host paths and added capabilities):
+#
+#   kubectl create namespace axera
+#   kubectl label namespace axera \
+#     pod-security.kubernetes.io/enforce=privileged \
+#     pod-security.kubernetes.io/audit=privileged \
+#     pod-security.kubernetes.io/warn=privileged
+#
+# Host ports the agent opens on every node (it runs on the host network): 2055/TCP and 28080/TCP
+# (flow pipeline ingest and health), and with metrics.enabled 28081-28084/TCP on the node IP.
+# 2055/TCP is the flow pipeline's plaintext, unauthenticated ingest and listens on EVERY node address,
+# although only the agent on the same node (127.0.0.1) uses it: block it from other hosts in the node or
+# network firewall, or anyone who reaches a node can inject flow records. 28080 needs no remote access
+# (the kubelet probes it on the node); open 28081-28084 only to your Prometheus scrapers.
+#
+# REQUIRED: clusterName and kafka.bootstrapServers everywhere; podCIDR on Anthos and vanilla
+# Kubernetes, and on every render that cannot read the cluster (see podCIDR). Start from the profile of
+# your distribution: profiles/values-<openshift|k3s|rke2|anthos|vanilla>.yaml.
+# =============================================================================
+
+global:
+  # The Kubernetes distribution this cluster runs: auto | openshift | k3s | rke2 | anthos | vanilla.
+  # It picks the defaults in the table below; every one of them can still be set explicitly.
+  #
+  #                     openshift       k3s / rke2                            anthos                           vanilla
+  #   createSCC (auto)  yes             no                                    no                               no
+  #   podCIDR           read (live)     10.42.0.0/16, checked (live)          required                         required
+  #   serviceCIDR       read (live) /   10.43.0.0/16                          none                             none
+  #                     172.30.0.0/16
+  #   flow.tcAttachMode any             any                                   tcx                              any
+  #   CRI socket hint   none            /run/k3s/containerd/containerd.sock   /run/containerd/containerd.sock  none
+  #   AppArmor          n/a (SELinux)   unconfined for the eBPF containers and the capture sidecar
+  #   pod netns access  off on OVN      on                                    on                               on
+  #   flow.ingress      allowed         refused                               refused                          refused
+  #   (live): at helm install / upgrade only; an offline render must set podCIDR on every distribution.
+  #
+  # auto: OpenShift when the API server serves security.openshift.io/v1 or route.openshift.io/v1;
+  # otherwise the Nodes' kubelet version decides ("+k3s" k3s, "+rke2" RKE2, "-gke." Anthos), else
+  # vanilla. helm install / upgrade can look; `helm template` and GitOps renders cannot, and fall back
+  # to vanilla silently (helm template shows no NOTES). Set it explicitly for any render that does not
+  # talk to the cluster.
+  distribution: auto
+
+# The name of THIS cluster: the name you register it under in Axera AND its Kafka flow topic (Axera
+# maps the topic to the cluster). The process topic is "<clusterName>-process", the DNS topic
+# "<clusterName>-dns", and egress flows carry clusterName. Letters, digits, '.', '_' and '-' only.
+clusterName: ""
+
+# The pod network CIDR of THIS cluster (labelled ClusterSubnet in every flow). A wrong value silently
+# empties or pollutes the external-flows lane, so the chart never guesses it. Empty works only on a live
+# helm install / upgrade: OpenShift reads it from the Network "cluster" object (an explicit value must be
+# one of its clusterNetwork entries); k3s and RKE2 take their default 10.42.0.0/16 and refuse the install
+# when a node's pod range (spec.podCIDR) lies outside it. Required on Anthos (usually 192.168.0.0/16),
+# vanilla Kubernetes (kubeadm --pod-network-cidr) and every offline render (helm template, GitOps).
+podCIDR: ""
+# The Service network CIDR (ClusterIP range), labelled ClusterSubnet too so a ClusterIP never reads as
+# egress. Empty: on a live OpenShift install the Network object's serviceNetwork, else the
+# distribution's default (OpenShift 172.30.0.0/16, k3s and RKE2 10.43.0.0/16), none on Anthos (usually
+# 10.96.0.0/20) and vanilla (kubeadm default 10.96.0.0/12): set it there.
+serviceCIDR: ""
+# More in-cluster ranges labelled ClusterSubnet (a second pod range added after install, ...).
+extraPodCIDRs: []
+
+# Corporate / on-prem network(s) labelled LocalNetwork (internal, not internet egress). Must NOT equal
+# or lie inside the pod or Service CIDR (those addresses are labelled ClusterSubnet first, so such a
+# range would label nothing; the chart refuses it). A supernet that contains them, such as 10.0.0.0/8,
+# is fine. The default equals Anthos' usual pod CIDR: set your own range there.
+localNetworkCIDR: "192.168.0.0/16"
+extraLocalNetworkCIDRs: []
+
+# Cross-cluster egress attribution. Leave empty for a single cluster.
+clusterPublicIP: ""                  # this cluster's own egress IP, as a /32
+multiCluster: {}
+#   cidr: 203.0.113.0/31
+#   peers:
+#     - { name: peer-cluster-a, publicIP: 203.0.113.5/32 }
+# Submariner Globalnet intercluster lane. Leave empty unless Submariner (Globalnet) is installed.
+submariner: {}
+#   topic: intercluster-flows
+#   globalCidr: 242.0.0.0/8
+#   clusterGlobalCidr: 242.0.0.0/24
+
+# ONE Kafka endpoint shared by both writers: the flow pipeline (flows) and the shipper (process events).
+# Create the topics on the central Kafka BEFORE installing: <clusterName>, <clusterName>-process, the
+# shared external-flows, plus <clusterName>-dns with flow.dnsVisibility, the ingress topic with
+# flow.ingress.enabled and the intercluster topic with submariner. The flow pipeline never creates a
+# topic (records to a missing topic are dropped), even when the broker allows auto-creation. The agent's
+# Kafka user needs Write + Describe on them; the central platform consumes them (add the cluster to its
+# Kafka topic configuration) as consumer groups axera-radar (flows), axera-process (process events) and
+# axera-dns (DNS records).
+kafka:
+  # host:port of the broker listener the agent produces to, e.g. kafka.example.com:9093. One address
+  # (a broker, or a bootstrap name / VIP) or a comma-separated list. The flow pipeline takes a single
+  # address, so it gets only the FIRST entry and finds the other brokers from that broker's metadata;
+  # the shipper uses the whole list. Every node must reach EVERY broker the metadata advertises: the
+  # agent runs on the host network, so the brokers see (and their firewall must admit) every node IP.
+  bootstrapServers: ""
+  securityProtocol: SaslSsl          # Plaintext | Ssl | SaslPlaintext | SaslSsl
+  # ScramSha512 | Plain (SASL protocols only). ScramSha256 is refused: the flow pipeline can log in only
+  # with Plain or SCRAM-SHA-512.
+  saslMechanism: ScramSha512
+  # Where the credentials come from.
+  #   createSecret: false (default, recommended): create these Secrets in namespace axera yourself,
+  #   BEFORE installing (the names and keys are fixed; the pods wait in Init:0/1 until they exist):
+  #
+  #     kubectl -n axera create secret generic kafka-ca --from-file=ca.crt=./kafka-ca.crt
+  #     read -rs KAFKA_PW    # type the SASL password; it is not echoed
+  #     kubectl -n axera create secret generic kafka-sasl \
+  #       --from-literal=username=<kafka user> --from-literal=password="$KAFKA_PW"
+  #     unset KAFKA_PW
+  #
+  #   (kafka-ca only for Ssl / SaslSsl, kafka-sasl only for SaslPlaintext / SaslSsl.) The values must be
+  #   bare: a trailing newline fails the login like a wrong password (--from-literal adds none).
+  #   After rotating either Secret, restart the agent (it reads them only at start):
+  #     kubectl -n axera rollout restart daemonset/axera-agent
+  #   helm upgrade does this by itself only when it can read the Secrets (not under helm template or GitOps).
+  #
+  #   createSecret: true: the chart creates kafka-ca / kafka-sasl from saslUsername, saslPassword and
+  #   caCert below. The credentials then live in your values file and in the Helm release Secret.
+  createSecret: false
+  saslUsername: ""
+  saslPassword: ""
+  # PEM of the broker's CA certificate. createSecret: true with Ssl / SaslSsl needs it (or
+  # systemTrustStore: true).
+  caCert: ""
+  # true: the broker certificate is signed by a public CA the agent images already trust, so no CA
+  # Secret is mounted (no kafka-ca needed). false: with Ssl / SaslSsl the CA comes from kafka-ca.
+  systemTrustStore: false
+  # Skip broker certificate verification. Test only.
+  insecureSkipVerify: false
+  compression: ""                     # none | gzip | snappy | lz4 | zstd; empty = lz4
+
+flow:
+  topic: ""                          # empty or equal to clusterName (anything else is refused)
+  externalTopic: external-flows      # shared by every cluster of the platform
+  direction: both                    # ingress | egress | both
+  excludeInterfaces: lo
+  enableDnsTracking: true
+  enablePktTranslation: true
+  enableRtt: true
+  # Packet-drop tracking (the skb:kfree_skb tracepoint). Off by default: needs kernel 5.14+ on every node.
+  enablePktDrops: false
+  # How the flow agent hooks each network interface:
+  #   tcx  the TCX hook (kernel 6.6+): sits beside any other TC program. Nodes on older kernels capture
+  #        no flows.
+  #   tc   the legacy clsact qdisc.
+  #   any  tcx where the kernel has it, else tc (default).
+  #   empty  tcx on anthos, any elsewhere (default).
+  # WARNING: in tc mode (and in any on a kernel without TCX) the flow agent replaces an interface's
+  # existing clsact qdisc, which removes the TC programs a CNI attached there (eBPF CNIs such as Anthos
+  # Dataplane V2, or Calico in eBPF mode) and breaks pod networking on that node. With such a CNI use tcx.
+  # The chart refuses tc / any on distribution anthos and when the API server serves cilium.io/v2 (both
+  # also in offline renders), and, at helm install / upgrade only, when it finds DaemonSet anetd or
+  # cilium in kube-system (or cilium in namespace cilium), an OpenShift networkType of that eBPF CNI, or
+  # Calico's eBPF dataplane (Installation default or FelixConfiguration default). Nothing else is
+  # detected: with another eBPF CNI set tcx yourself.
+  # Flannel (k3s, RKE2 default Canal), plain Calico, OVN-Kubernetes and OpenShiftSDN attach no TC
+  # programs to these interfaces.
+  tcAttachMode: ""
+  # Attach the flow agent inside every pod's network namespace too (setns), not only on the node's
+  # interfaces. Costs the flow agent CAP_SYS_ADMIN and a read-only /var/run/netns mount with
+  # HostToContainer propagation, which needs /var/run to be a shared mount on the node (it is on systemd
+  # hosts; it is not on nodes that run inside containers, such as k3d, where the flow agent container then
+  # fails with "not a shared or slave mount": set false there). null: off on OpenShift with OVN-Kubernetes
+  # or OpenShiftSDN (the node's interfaces carry every pod's traffic), on everywhere else.
+  podNetnsAttach: null
+  # UDP flows, on by default (except DNS 53/5353, which dnsVisibility carries). false keeps the flow lanes
+  # TCP-only: less volume, but UDP services are invisible and generated policies cannot open their ports.
+  udp: true
+  # DNS visibility, off by default: DNS records go to their own topic (<clusterName>-dns). Needs
+  # enableDnsTracking: true.
+  dnsVisibility: false
+  dnsTopic: ""                       # defaults to "<clusterName>-dns" (what Axera derives)
+  # North-south ingress lane. OpenShift only (it relies on OVN-Kubernetes): refused elsewhere.
+  ingress:
+    enabled: false
+    topic: ingress-flows
+  # Load-balancer VIPs / externalIPs for the ingress lane (rendered only while ingress.enabled).
+  ingressVipCIDRs: []
+  #   - "192.0.2.10/32"
+
+process:
+  topic: ""                          # empty = "<clusterName>-process" (the only accepted value)
+  # Apply the observe-only tcp_connect policy (its CRDs ship in this chart's crds/ folder).
+  installTracingPolicy: true
+  # podSelector for that policy. Empty (default): no podSelector, so connects of every process on the
+  # node, pods and host alike. A selector with matchLabels / matchExpressions keeps only matching pods.
+  tracingPolicyPodSelector: {}
+  #   matchExpressions:
+  #     - { key: app.kubernetes.io/name, operator: Exists }
+  # Exec visibility: also ship process exec events (runtime-exec detection). Off by default: the
+  # highest-volume stream.
+  execExport: false
+  # The shipper's Kafka producer queue cap in KiB, at least 1024. Keeps the shipper under its memory
+  # limit while the broker is unreachable or refuses the login. Raise it only together with
+  # resources.shipper.limits.memory.
+  shipperQueueMaxKbytes: 16384
+  # Fallback only: the perf ring buffer instead of the BPF ring buffer, when the sensor loses events or
+  # its memory grows.
+  usePerfRingBuffer: false
+  # Extra runtime keys for the process sensor's ConfigMap (keys the chart renders itself are ignored).
+  sensorConfig: {}
+  # Optional enrichment hint: the node's CRI socket. Empty: the distribution's usual socket (k3s and RKE2
+  # /run/k3s/containerd/containerd.sock, Anthos /run/containerd/containerd.sock, none on OpenShift and
+  # vanilla). "none" switches the hint off. The sensor checks it on each node at start; a missing socket
+  # never blocks the agent, and pod association never needs it.
+  criSocket: ""
+  # The process-to-pod association in the shipper. shadow: a process whose cgroup names a pod is kept
+  # from the host rule; on: a connect whose cgroup proves a host process is dropped whatever its address.
+  association:
+    mode: shadow
+  # Legacy: the sensor's metrics port. null: metrics.sensorPort.
+  metricsPort: null
+  # Which connects are shipped: application namespaces only by default. Exec events follow these
+  # switches too while execFollowsScope is true.
+  observe:
+    hostProcesses: false        # connects with no pod (host processes)
+    openshiftNamespaces: false  # openshift, openshift-*
+    kubeNamespaces: false       # kube-*
+    excludeNamespaces: []       # more: exact names, or a prefix ending in "*"
+    execFollowsScope: true
+  # Ship a repeated connect (same workload, binary, destination, port, protocol) once per window, on the
+  # node. Seconds; 0 ships every connect.
+  dedupeWindowSeconds: 60
+
+# Images, pinned by tag AND digest (the digest is what the node pulls). For a private mirror, copy them
+# with their digests (e.g. skopeo copy --all) and keep the digests here.
+images:
+  flowAgent: "quay.io/netobserv/netobserv-ebpf-agent:v1.11.3-community@sha256:663e616091c9cb8b0c2061fc44117876f8d50c111df16da9c255d882cc439a74"
+  flowPipeline: "quay.io/netobserv/flowlogs-pipeline:v1.11.5-community@sha256:d6c6a1cc9ac181689f9f317ae06f485d4dab19edc3aa3a083bc78d203b3be7b9"
+  # The process sensor, also the btf-check init container. Matches the v1.7.1 CRDs in crds/.
+  processSensor: "quay.io/cilium/tetragon:v1.7.1@sha256:afc9458ba4bc3f2795da3df6b03d88ce50e175ac3903027de8036e2046b84a02"
+  # amd64 only (see requireAmd64).
+  shipper: "quay.io/axera/fluent-bit:4.2.8@sha256:f8c65280140252318fb5a20450face7e6af505245546d62f4a3cc7166489f764"
+  # The capture sidecar (needs sh, grep, readlink, timeout, nsenter and tcpdump). amd64 only.
+  capture: "quay.io/openshift/origin-network-tools:4.19.0@sha256:052dd26abfe4e7de9649ddb5b7b8514865d5b76551dd2dd126463a7e0e2fc28c"
+  # The audit forwarder (auditForwarder.enabled only).
+  auditForwarder: "docker.io/timberio/vector:0.40.1-debian@sha256:881a3728091fab7a39dade6ca70f1e76e14e0a308bdb57a00009dc3d0b54e74d"
+
+# Pull secrets for a private mirror (kubernetes.io/dockerconfigjson Secrets in namespace axera), for
+# the agent and the audit forwarder: [ "my-registry" ] or [ { name: my-registry } ].
+imagePullSecrets: []
+
+# true: the agent runs on amd64 nodes only (nodeSelector kubernetes.io/arch: amd64), because the shipper
+# and capture images are built for amd64 alone. Set false only with multi-arch images of your own.
+requireAmd64: true
+
+# On-demand packet capture: an idle tcpdump sidecar (container pcap-capture) the Axera API execs into for
+# a bounded, filtered capture of a Graph edge or incident.
+capture:
+  enabled: true
+  # pods/exec in namespace axera goes to Role axera-capture-exec-agent, bound to exactly
+  # axera/axera-integration-sa and <ns>/axera-integration-sa for every namespace listed here (never the
+  # agent's own ServiceAccount). When the central Axera platform runs on THIS cluster, list its namespace
+  # (it registers its own axera-integration-sa). RBAC cannot narrow exec to the capture sidecar, so the
+  # registered token can exec into the root process sensor container too: it is root on every node.
+  # capture.enabled: false removes the grant.
+  integrationNamespaces: []
+  # Capture inside the source pod's network namespace (nsenter) instead of on the node's interfaces:
+  # needed where an eBPF datapath hands same-node pod traffic veth-to-veth. Costs the sidecar
+  # CAP_SYS_ADMIN and CAP_SYS_PTRACE. null: off on OpenShift with OVN-Kubernetes or OpenShiftSDN, on
+  # everywhere else.
+  podNetns: null
+
+# The integration identity Axera uses to talk to THIS cluster's API: ServiceAccount axera-integration-sa
+# in namespace axera, its long-lived token Secret axera-sa-token (both kept on helm uninstall) and the
+# integration ClusterRoles (axera-integration-role-axera, ...).
+#   true:  a cluster that does NOT host the central Axera platform (the usual case).
+#   false: the cluster that hosts the platform: it already created <platform ns>/axera-integration-sa;
+#          register that one and set capture.integrationNamespaces: [<platform ns>].
+integration:
+  create: true
+  # Regulated installs: leave out ClusterRoles axera-integration-extended (service-mesh routing writes,
+  # cluster-wide pods/log, any Namespace update) and axera-integration-agent-deploy (agent install from
+  # the UI; not needed with this chart). pods/log is then granted only by Roles in podLogsNamespaces.
+  leastPrivilege: false
+  # How the namespaced Roles render (the pods/log Roles with leastPrivilege, and ingressLoggingApply):
+  # auto (namespaces that exist at helm install / upgrade; helm template sees none) | always (every
+  # listed namespace; they must exist) | never.
+  namespacedRoles: auto
+  # Namespaces whose pod logs Axera reads (the ztunnel verdict stream). On OpenShift the chart adds
+  # openshift-ovn-kubernetes.
+  podLogsNamespaces:
+    - istio-system
+    - ztunnel
+  # OpenShift, opt-in: lets "Apply from Axera" (Settings > Integrations > Ingress & Load Balancers) patch
+  # the router access logging of these IngressControllers (Role axera-integration-ingress-logging-axera in
+  # openshift-ingress-operator: get + patch, limited to the names listed). Off: copy the patch yourself.
+  ingressLoggingApply:
+    enabled: false
+    ingressControllers: [default]
+
+# OpenShift SecurityContextConstraints axera-ebpf-axera and its use-Role. auto: on OpenShift only;
+# true: always (fails on a cluster without the SCC API); false: never (an admin pre-creates it).
+createSCC: auto
+
+# Scheduling. tolerations empty: a single {operator: Exists} (every node, control plane included).
+tolerations: []
+#   - { key: node-role.kubernetes.io/control-plane, operator: Exists, effect: NoSchedule }
+nodeSelector: {}
+affinity: {}
+# e.g. system-node-critical, so the agent is not the first pod evicted under node pressure.
+priorityClassName: ""
+# How the DaemonSet replaces its pods. Empty: RollingUpdate, maxUnavailable 1, never a surge pod (the
+# agent listens on node ports). maxUnavailable: an integer (at least 1) or a percentage ("1%" to "100%").
+# type: OnDelete for a canary.
+updateStrategy: {}
+#   type: OnDelete
+#   maxUnavailable: "10%"
+
+# The agent's Prometheus endpoints, on the node IP and these node ports. With the Prometheus Operator
+# (monitoring.coreos.com/v1) a PodMonitor axera-agent-metrics scrapes them.
+metrics:
+  enabled: true
+  flowAgentPort: 28081
+  flowPipelinePort: 28082
+  sensorPort: 28083
+  shipperPort: 28084
+
+# Per-container requests / limits: flowAgent, flowPipeline, processSensor, btfCheck, shipper, capture.
+# A block set here REPLACES that container's resourceDefaults block as a whole (never merged). The flow
+# agent and the process sensor parse the kernel's BTF at start, far above their steady state: give them
+# limits only well above the start-up peak measured on your nodes.
+resources: {}
+#   processSensor:
+#     requests: { cpu: 100m, memory: 256Mi }
+#     limits: { cpu: "2", memory: 2Gi }
+
+# The defaults behind an unset resources.<container>. The requests stay small so the agent fits busy
+# nodes; the limits bound a runaway container. The flow pipeline's CPU limit is 2 so its bursts are not
+# throttled (a 500m limit capped a busy node near 1000 flows/s).
+resourceDefaults:
+  flowAgent:
+    requests: { cpu: 10m, memory: 64Mi }
+  flowPipeline:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { cpu: "2", memory: 1Gi }
+  processSensor:
+    requests: { cpu: 10m, memory: 64Mi }
+    limits: { cpu: "2", memory: 2Gi }
+  shipper:
+    requests: { cpu: 25m, memory: 32Mi }
+    limits: { cpu: 150m, memory: 192Mi }
+  capture:
+    requests: { cpu: 10m, memory: 32Mi }
+    limits: { cpu: 500m, memory: 256Mi }
+
+# Kubernetes API audit forwarder (opt-in): a DaemonSet on the control-plane nodes that tails the API
+# server's audit.log, keeps only the policy-change and control-plane-abuse events Axera uses and posts
+# them to the central Axera API. Not supported on Anthos (the user cluster's audit log is not a node file).
+# The API server must have auditing on, with a policy that logs the forwarded resources at level
+# RequestResponse (see the README).
+auditForwarder:
+  enabled: false
+  # https://<host that reaches the central api Service>/api/Internal/Audit. NOT the console host: the
+  # console answers 404 to /api/Internal/*, and the forwarder drops a batch answered 404.
+  #   Central from the axera chart on OpenShift: set routes.api.enabled=true and routes.api.host there,
+  #     then use https://<routes.api.host>/api/Internal/Audit.
+  #   Operator-installed central: https://api-axera-central.apps.<clusterDomain>/api/Internal/Audit.
+  #   Central behind an Ingress or Istio: expose only the path /api/Internal/Audit (pathType Exact) to
+  #     Service api, port 8080, in the platform namespace (see the README).
+  targetUri: ""
+  # The central platform's internal token. Pass it with --set-file / a values file kept out of git.
+  internalToken: ""
+  caCert: ""                         # PEM of the CA that signed the central API's certificate
+  insecureSkipVerify: false          # test only
+  # The host directory holding audit.log. Empty: /var/log/kube-apiserver on OpenShift; required elsewhere
+  # (k3s /var/lib/rancher/k3s/server/logs, RKE2 /var/lib/rancher/rke2/server/logs; the profiles set it).
+  logDir: ""

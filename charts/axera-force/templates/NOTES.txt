@@ -1,0 +1,220 @@
+{{- $ns := .Release.Namespace -}}
+{{- $d := include "axeraforce.distribution" . | fromJson -}}
+{{- $p := include "axeraforce.platform" . | fromJson -}}
+{{- $sasl := include "axeraforce.sasl" . -}}
+{{- $useCA := include "axeraforce.useCA" . -}}
+{{- $ingress := include "axeraforce.ingress" . -}}
+{{- $flpAddr := include "axeraforce.flpKafkaAddress" . | trimAll "\"" -}}
+{{- $netns := include "axeraforce.podNetns" . | fromJson -}}
+Axera agent "{{ .Values.clusterName }}" (chart {{ .Chart.Version }}, Axera {{ .Chart.AppVersion }}) in namespace {{ $ns }}.
+{{- $podSrc := include "axeraforce.podCIDRSource" . }}
+Distribution: {{ $d.name }} ({{ if eq $d.how "set" }}set by global.distribution{{ else if eq $d.how "detected" }}detected{{ else }}NOT detected{{ end }}). Pod CIDR {{ include "axeraforce.podCIDR" . }}{{ if eq $podSrc "cluster" }} (read from the cluster's Network object){{ else if eq $podSrc "default" }} (the {{ $d.name }} default, checked against every node's pod range){{ end }}{{ with include "axeraforce.serviceCIDR" . }}, Service CIDR {{ . }}{{ end }}.
+{{- if eq $d.how "fallback" }}
+
+WARNING: global.distribution is auto, but this render could not see the cluster (helm template, a
+GitOps render, or no permission to list Nodes), so it rendered for "vanilla". Set global.distribution
+(openshift, k3s, rke2, anthos or vanilla) explicitly, or use the matching profiles/values-<distribution>.yaml.
+{{- end }}
+
+1. Watch the agent start on every node:
+     kubectl -n {{ $ns }} rollout status daemonset/axera-agent
+     kubectl -n {{ $ns }} get pods -l app=axera-agent -o wide
+{{- if .Values.requireAmd64 }}
+   requireAmd64 is true: the agent runs on amd64 nodes only (the shipper and capture images are amd64-only).
+{{- $nodes := (lookup "v1" "Node" "" "").items | default list }}
+{{- if $nodes }}
+{{- $amd := 0 }}
+{{- range $nodes }}{{ if eq (toString (dig "metadata" "labels" "kubernetes.io/arch" "" .)) "amd64" }}{{ $amd = add1 $amd }}{{ end }}{{ end }}
+{{- if eq (int $amd) 0 }}
+
+   WARNING: none of this cluster's {{ len $nodes }} node(s) is amd64 (kubectl get nodes -L kubernetes.io/arch), so the
+   agent runs on NO node: DaemonSet axera-agent has 0 desired pods, and "rollout status" still reports success.
+{{- else if lt (int $amd) (len $nodes) }}
+   {{ $amd }} of {{ len $nodes }} nodes are amd64: the other nodes get no agent and send no flows or process events.
+{{- end }}
+{{- end }}
+{{- end }}
+{{- if and (or $useCA $sasl) (not .Values.kafka.createSecret) }}
+{{- $needCA := and $useCA (not (lookup "v1" "Secret" $ns "kafka-ca")) }}
+{{- $needSASL := and $sasl (not (lookup "v1" "Secret" $ns "kafka-sasl")) }}
+{{- /* Checked on every Secret that exists, never printed: the keys the pods read, and whitespace the
+     shipper (env, verbatim) would send. */}}
+{{- $bad := list }}
+{{- if and $useCA (not $needCA) }}
+{{- $c := (lookup "v1" "Secret" $ns "kafka-ca").data | default dict }}
+{{- if not (hasKey $c "ca.crt") }}
+{{- $bad = append $bad "Secret kafka-ca has no key ca.crt (the flow pipeline and the shipper cannot verify the broker)" }}
+{{- else if not (index $c "ca.crt") }}
+{{- $bad = append $bad "Secret kafka-ca key ca.crt is empty (the flow pipeline and the shipper cannot verify the broker)" }}
+{{- end }}
+{{- end }}
+{{- if and $sasl (not $needSASL) }}
+{{- $s := (lookup "v1" "Secret" $ns "kafka-sasl").data | default dict }}
+{{- range $k := list "username" "password" }}
+{{- $v := toString (index $s $k | default "") }}
+{{- if not (hasKey $s $k) }}
+{{- $bad = append $bad (printf "Secret kafka-sasl has no key %s (the shipper fails with CreateContainerConfigError, the flow pipeline crash-loops)" $k) }}
+{{- else if not $v }}
+{{- $bad = append $bad (printf "Secret kafka-sasl key %s is empty (the agent logs in with an empty value: SASL authentication fails)" $k) }}
+{{- else if ne (b64dec $v) (trim (b64dec $v)) }}
+{{- $bad = append $bad (printf "Secret kafka-sasl key %s starts or ends with whitespace, e.g. a trailing newline (the flow pipeline trims it, the shipper does not: process events fail with SASL authentication error)" $k) }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- if or $needCA $needSASL }}
+
+   The Kafka Secrets are yours to create (kafka.createSecret: false). Not found:{{ if $needCA }} kafka-ca{{ end }}{{ if $needSASL }} kafka-sasl{{ end }}{{ if not (lookup "v1" "Namespace" "" $ns) }} (or this
+   render cannot see the cluster){{ end }}. Until they exist the pods stay in Init:0/1 (ContainerCreating) and start by themselves once they do:
+{{- if $needCA }}
+     kubectl -n {{ $ns }} create secret generic kafka-ca --from-file=ca.crt=./kafka-ca.crt
+{{- end }}
+{{- if $needSASL }}
+     read -rs KAFKA_PW    # type the SASL password; it is not echoed
+     kubectl -n {{ $ns }} create secret generic kafka-sasl --from-literal=username=<user> --from-literal=password="$KAFKA_PW"
+     unset KAFKA_PW
+{{- end }}
+{{- else }}
+
+   Kafka Secrets found:{{ if $useCA }} kafka-ca{{ end }}{{ if $sasl }} kafka-sasl{{ end }}.
+{{- end }}
+{{- range $bad }}
+   WARNING: {{ . }}.
+{{- end }}
+{{- if $bad }}
+   Re-create each flagged Secret with exactly these keys and bare values (kubectl create secret generic ... --from-literal / --from-file=ca.crt=...), then run:
+     kubectl -n {{ $ns }} rollout restart daemonset/axera-agent
+{{- else }}
+   After rotating them: kubectl -n {{ $ns }} rollout restart daemonset/axera-agent
+{{- end }}
+{{- end }}
+
+2. Kafka: {{ .Values.kafka.bootstrapServers }} ({{ .Values.kafka.securityProtocol }}{{ if $sasl }}, {{ .Values.kafka.saslMechanism }}{{ end }}).
+   The agent pods use the host network, so the brokers see (and their firewall must admit) every
+   NODE IP of this cluster, and every node must reach every broker the metadata advertises.
+{{- if ne $flpAddr (trim .Values.kafka.bootstrapServers) }}
+   The flow pipeline takes ONE address and uses the first entry, {{ $flpAddr }}; it finds the other
+   brokers from that broker's metadata. Keep that first broker reachable.
+{{- end }}
+{{- /* The axera chart's own broker (full shape): Service "kafka" in the platform namespace, plaintext,
+     no users or ACLs, on a cluster that also hosts the platform (integration.create false and the
+     broker's namespace in capture.integrationNamespaces). The platform creates the topics there from
+     its kafka.clusters. Any other broker, even a plaintext Service called "kafka", gets the
+     create-the-topics-first wording. */}}
+{{- $bsNs := "" }}
+{{- if regexMatch "^kafka\\.[a-z0-9-]+(\\.svc(\\.[a-z0-9-]+)*)?(:[0-9]+)?$" $flpAddr }}
+{{- $bsNs = regexReplaceAll "^kafka\\.([a-z0-9-]+).*$" $flpAddr "${1}" }}
+{{- end }}
+{{- $platformBroker := and (eq .Values.kafka.securityProtocol "Plaintext") $bsNs (not .Values.integration.create) (has $bsNs (.Values.capture.integrationNamespaces | default list)) }}
+{{- if $platformBroker }}
+   Topics this agent writes:
+{{- else }}
+   Topics this agent writes (create them first: the flow pipeline never creates a topic):
+{{- end }}
+     {{ include "axeraforce.flowTopic" . }}  (flows)
+     {{ .Values.flow.externalTopic }}  (egress flows, shared by every cluster)
+     {{ include "axeraforce.processTopic" . }}  (process events)
+{{- if .Values.flow.dnsVisibility }}
+     {{ include "axeraforce.dnsTopic" . }}  (DNS records)
+{{- end }}
+{{- if $ingress }}
+     {{ include "axeraforce.ingressTopic" . }}  (north-south ingress)
+{{- end }}
+{{- if .Values.submariner }}
+     {{ (.Values.submariner).topic | default "intercluster-flows" }}  (cross-cluster flows)
+{{- end }}
+{{- if $platformBroker }}
+   This is the platform's in-cluster broker (plaintext, no users or ACLs): do not create topics or ACLs.
+   The platform creates and consumes the topics of the clusters in its kafka.clusters, and the broker
+   creates none on its own, so the platform's kafka.clusters must include "{{ .Values.clusterName }}".
+{{- else }}
+   The agent's Kafka user needs Write + Describe on them; the central platform's user needs Read,
+   Describe and DescribeConfigs on them and Read on consumer groups axera-radar (flows), axera-process
+   (process events){{ if .Values.flow.dnsVisibility }} and axera-dns (DNS records){{ end }}. Add the cluster to the central platform's Kafka
+   topic configuration (kafka.clusters, or spec.kafka.clusters of an operator-managed platform:
+   {{ .Values.clusterName }}) so it consumes them.
+{{- end }}
+
+3. Register this cluster in Axera (Settings > Integrations > Connections > Kubernetes Clusters > Manage Clusters > Add Cluster)
+   with Cluster Name "{{ .Values.clusterName }}".
+{{- if and (not .Values.integration.create) .Values.capture.integrationNamespaces }}
+{{- $platformNs := first .Values.capture.integrationNamespaces }}
+   integration.create is false and capture.integrationNamespaces is set (this cluster hosts the central
+   Axera platform): register the platform's own ServiceAccount token with the in-cluster API address.
+     API URL: https://kubernetes.default.svc
+     Token (paste it into the UI yourself):
+       kubectl -n {{ $platformNs }} get secret axera-sa-token -o jsonpath='{.data.token}' | base64 -d; echo
+{{- else }}
+{{- if .Values.integration.create }}
+   Token (paste it into the UI yourself; never send it by e-mail or chat):
+{{- else }}
+   integration.create is false: register {{ $ns }}/axera-integration-sa, created outside this chart (for
+   example from the static integration manifest). Token (paste it into the UI yourself):
+{{- end }}
+     kubectl -n {{ $ns }} get secret axera-sa-token -o jsonpath='{.data.token}' | base64 -d; echo
+   API URL: this cluster's DIRECT API server, reachable from the central Axera pods and passing
+   WebSocket / streaming traffic (packet capture execs over it). Never https://127.0.0.1:6443 (that is
+   the node itself, as seen from the central platform's pods).
+{{- if eq $d.name "k3s" }}
+     k3s:       https://<server node IP or VIP>:6443 (the address in /etc/rancher/k3s/k3s.yaml, with
+                127.0.0.1 replaced by the server's reachable IP; add it to the server's --tls-san if it
+                is not already a certificate name)
+{{- else if eq $d.name "rke2" }}
+     RKE2:      https://<server node IP or VIP>:6443, or Rancher's Authorized Cluster Endpoint. Not the
+                Rancher server URL: exec through its proxy closes at once and acts as a Rancher user.
+{{- else if eq $d.name "anthos" }}
+     Anthos:    the user cluster's control-plane VIP (the kubeconfig "server:" field), not the Connect
+                gateway (Google identities, not ServiceAccount tokens).
+{{- else if eq $d.name "openshift" }}
+     OpenShift: https://api.<cluster domain>:6443
+{{- else }}
+     Kubernetes: the API server address or load balancer in your kubeconfig "server:" field.
+{{- end }}
+{{- end }}
+{{- if .Values.capture.enabled }}
+
+4. Packet capture: Role axera-capture-exec-agent grants pods/exec in {{ $ns }} to the registered identity
+   (RBAC cannot narrow it to the capture sidecar: whoever holds that token is root on every node).
+   Check it:
+{{- if or .Values.integration.create (not .Values.capture.integrationNamespaces) (has $ns .Values.capture.integrationNamespaces) }}
+     kubectl auth can-i create pods --subresource=exec -n {{ $ns }} --as=system:serviceaccount:{{ $ns }}:axera-integration-sa
+{{- end }}
+{{- range ((.Values.capture.integrationNamespaces | default list) | uniq) }}
+{{- if ne . $ns }}
+     kubectl auth can-i create pods --subresource=exec -n {{ $ns }} --as=system:serviceaccount:{{ . }}:axera-integration-sa
+{{- end }}
+{{- end }}
+   Capture inside pod network namespaces: {{ ternary "on" "off" $netns.capture }} (capture.podNetns).
+{{- end }}
+
+5. Process sensor CRDs (tracingpolicies, tracingpoliciesnamespaced, podinfo in cilium.io, v1.7.1) come
+   from this chart's crds/ folder: installed if absent, never upgraded or deleted by Helm. For an
+   offline render (helm template | kubectl apply, GitOps) add --include-crds.
+{{- if not $p.openshift }}
+{{- $nsObj := lookup "v1" "Namespace" "" $ns }}
+{{- if and $nsObj (not (index (($nsObj.metadata).labels | default dict) "pod-security.kubernetes.io/enforce")) }}
+
+WARNING: namespace {{ $ns }} has no pod-security.kubernetes.io/enforce label, so the cluster default
+applies (restricted on hardened k3s and on RKE2's CIS profile). If the pods are refused ("violates
+PodSecurity"), run:
+  kubectl label namespace {{ $ns }} pod-security.kubernetes.io/enforce=privileged pod-security.kubernetes.io/audit=privileged pod-security.kubernetes.io/warn=privileged
+{{- end }}
+{{- end }}
+{{- if (.Values.auditForwarder).enabled }}
+
+6. Audit forwarder: DaemonSet axera-audit-forwarder on the control-plane nodes reads
+   {{ include "axeraforce.auditLogDir" . }}/audit.log on each of them. The API server must write that file, with an
+   audit policy that logs the forwarded resources at level RequestResponse (see the chart README).
+     kubectl -n {{ $ns }} get pods -l app=axera-audit-forwarder -o wide
+   It posts to {{ (.Values.auditForwarder).targetUri }}. That must reach the central api Service, not
+   the console host (the console answers 404 to /api/Internal/*). Check the answers it gets:
+     kubectl -n {{ $ns }} port-forward <forwarder pod> 9598
+     curl -s localhost:9598/metrics | grep http_client_responses_total
+   (the series whose name ends in http_client_responses_total) status 404: targetUri is the console
+   host; 401 / 403: wrong auditForwarder.internalToken.
+{{- end }}
+{{- if not $p.openshift }}
+
+Licensing: Axera counts a cluster's licensed nodes by the label node-role.kubernetes.io/worker, which
+{{ $d.name }} nodes do not carry by default. Label the nodes that run your workloads:
+  kubectl label node <node> node-role.kubernetes.io/worker=
+{{- end }}

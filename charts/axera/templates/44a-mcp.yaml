@@ -1,0 +1,160 @@
+{{- include "axera.init" . }}
+{{- if .Values.mcp.enabled }}
+# Standalone MCP (Model Context Protocol) tool server — see values.mcp for the toggle. Since the
+# API's in-process MCP endpoint was removed this is the ONLY MCP endpoint: with
+# mcp.enabled=false no AI client can reach Axera's tools at all. Thin and DB-free: no
+# ConnectionStrings, no dp-keys/backup volumes, no waitForDb init container. Every tool proxies
+# over HTTP to Radar or NetworkPolicyWatcher (Services__Radar__Url /
+# Services__NetworkPolicyWatcher__Url) or to the API (Services__API__Url, the in-cluster api
+# Service and never the frontend host), all from axera-app-config. Every per-tool authorization
+# check is delegated to the API's POST /api/Internal/mcp-authz/check with the caller's own
+# forwarded bearer token plus the X-Internal-Token shared secret.
+#
+# Least privilege. This pod is reachable from outside (Route, Ingress or Istio), so it gets exactly
+# what its code reads and nothing more:
+#   - its own ServiceAccount, axera-mcp-sa, with no Role or RoleBinding and no mounted token. The
+#     tool server never calls the Kubernetes API, so it holds no Kubernetes credential at all
+#     (not axera-sa, which may create Jobs and Secrets and use axera-scc);
+#   - two keys of axera-app-secret instead of the whole Secret: AccessTokenSecret (verifies the
+#     callers' bearer tokens and keys the MCP provenance header) and Internal__Token (the shared
+#     secret the API requires on /api/Internal/*). The admin credentials, the encryption key and
+#     IV and the mesh ingest tokens never enter this pod's environment;
+#   - CPU and memory requests and a memory limit (resources.mcp), and a pinned restricted
+#     securityContext on every distribution.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: axera-mcp-sa
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+automountServiceAccountToken: false
+{{- if .Values.imagePullSecret.enabled }}
+imagePullSecrets:
+  - name: {{ .Values.imagePullSecret.name }}
+{{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: mcp
+    {{- include "axera.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: mcp }
+  template:
+    metadata:
+      labels: { app: mcp }
+      annotations:
+        # Rolls the pod when a ConfigMap it reads through envFrom changes (see axera.configMapChecksum).
+        checksum/config: {{ include "axera.configMapChecksum" (dict "ctx" $ "names" (list "axera-app-config")) }}
+        # Rolls the pod when a secret value set through values changes (axera.secretValuesChecksum).
+        checksum/secret: {{ include "axera.secretValuesChecksum" . }}
+    spec:
+      serviceAccountName: axera-mcp-sa
+      {{- with (include "axera.scheduling" (dict "component" "mcp" "ctx" .) | trim) }}{{ . | nindent 6 }}{{- end }}
+      automountServiceAccountToken: false
+      containers:
+        - name: mcp
+          image: {{ include "axera.image" (dict "img" .Values.images.mcp "ctx" .) }}
+          imagePullPolicy: Always
+          ports:
+            - { containerPort: 8080 }
+          envFrom:
+            # Service URLs, CORS origins and Serilog levels; this ConfigMap holds no secret.
+            - configMapRef: { name: axera-app-config }
+          env:
+            - { name: ASPNETCORE_ENVIRONMENT, value: Production }
+            - { name: ASPNETCORE_URLS, value: "http://+:8080" }
+            - name: AccessTokenSecret
+              valueFrom: { secretKeyRef: { name: {{ include "axera.appSecretName" . }}, key: AccessTokenSecret } }
+            - name: Internal__Token
+              valueFrom: { secretKeyRef: { name: {{ include "axera.appSecretName" . }}, key: Internal__Token } }
+            # Workstation GC: a thin request proxy does not need a heap per core, and server GC
+            # pushed the pod to 650-750 MiB at idle.
+            - { name: DOTNET_gcServer, value: "0" }
+            # One structured line per tools/call (tool, caller, outcome, duration; never argument
+            # values). Kept at Information so the chart-wide Error level does not hide it.
+            - { name: Serilog__MinimumLevel__Override__Mcp.Access, value: Information }
+            # Largest JSON-RPC request body accepted; a larger one is answered 413 with a JSON-RPC
+            # error instead of being buffered.
+            - { name: Mcp__MaxRequestBodyBytes, value: {{ .Values.mcp.maxRequestBodyBytes | default 1048576 | int64 | quote }} }
+            # Browser origins allowed to call the tool server besides AllowedCorsOrigins (e.g. MCP
+            # Inspector at http://localhost:6274). A request carrying any other Origin is refused
+            # with 403; clients that send no Origin (CLI and server-side agents) are unaffected.
+            {{- range $i, $o := (.Values.mcp.allowedOrigins | default list) }}
+            - { name: Mcp__AllowedOrigins__{{ $i }}, value: {{ $o | quote }} }
+            {{- end }}
+          resources: {{- toYaml .Values.resources.mcp | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            capabilities: { drop: [ALL] }
+            seccompProfile: { type: RuntimeDefault }
+          # /healthz is the first middleware (ahead of CORS, auth, the licence check and the
+          # database), so these probes see a hung or starved process and never a dependency outage.
+          # Startup allows 5 min of seeding/startup work; liveness restarts after ~2 min unanswered.
+          # probes.mode (values.yaml) picks httpGet /healthz or, for images without it, tcpSocket.
+          {{- include "axera.healthProbes" (dict "port" 8080 "path" "/healthz" "ctx" .) | nindent 10 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcp
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+spec:
+  selector: { app: mcp }
+  ports:
+    - { name: http, port: 8080, targetPort: 8080 }
+{{- if and (eq (include "axera.exposeType" .) "Route") .Values.routes.frontend.enabled }}
+---
+# MCP clients (an AI assistant, a desktop agent) reach the tool server at the SAME address they
+# used while the API hosted it: https://<frontend host>/api/mcp. This path-scoped Route on the
+# frontend host sends only that path here (with no host known, spec.subdomain asks for the name
+# OpenShift gives the frontend Route, frontend-<namespace>.<ingress domain>, so both share it); the router picks the longest matching path, so
+# everything else stays on the frontend Route. Without it nothing outside the cluster reaches the
+# tool server: the frontend proxies /api/* to the API, which no longer has an api/mcp endpoint.
+# Off OpenShift the Ingress / VirtualService carries the same /api/mcp rule (50-ingress.yaml,
+# 51-istio-virtualservice.yaml).
+#
+# Annotations: the same request timeout and HSTS header as the frontend Route (one host, one
+# request chain), and no sticky cookie: the tool server is a stateless bearer-token API, so the
+# router's default affinity cookie (SameSite=None) only adds a cookie nobody needs.
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: mcp
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+  {{- $ann := dict }}
+  {{- with .Values.routes.frontend.timeout }}
+  {{- $_ := set $ann "haproxy.router.openshift.io/timeout" (toString .) }}
+  {{- end }}
+  {{- with .Values.routes.frontend.hstsHeader }}
+  {{- $_ := set $ann "haproxy.router.openshift.io/hsts_header" (toString .) }}
+  {{- end }}
+  {{- if ne (toString ((.Values.mcp.route).disableCookies)) "false" }}
+  {{- $_ := set $ann "haproxy.router.openshift.io/disable_cookies" "true" }}
+  {{- end }}
+  {{- with $ann }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- $mhost := include "axera.frontendHost" . }}
+  {{- if $mhost }}
+  host: {{ $mhost }}
+  {{- else }}
+  subdomain: frontend-{{ .Values.global.namespace }}
+  {{- end }}
+  path: /api/mcp
+  to: { kind: Service, name: mcp }
+  port: { targetPort: http }
+  tls:
+    termination: {{ .Values.routes.frontend.tls.termination }}
+    insecureEdgeTerminationPolicy: {{ .Values.routes.frontend.tls.insecureEdgeTerminationPolicy }}
+{{- end }}
+{{- end }}

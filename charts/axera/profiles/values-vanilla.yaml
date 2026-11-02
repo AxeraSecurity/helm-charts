@@ -1,0 +1,33 @@
+# Vanilla (upstream) Kubernetes: only what differs from values.yaml.
+#   helm upgrade --install axera axera/axera -n axera-central -f profiles/values-vanilla.yaml -f my-values.yaml
+#
+# What distribution vanilla turns on by default: an Ingress on the IngressClass you name below,
+# the community PostgreSQL image (alpine), hardened product containers, the amd64 nodeSelector,
+# the "monitoring" scrape namespace and no OpenShift objects.
+global:
+  distribution: vanilla
+  # Empty → the default StorageClass (the PVCs stay Pending if the cluster has none).
+  storageClass: ""
+
+expose:
+  type: Ingress
+  frontend:
+    host: "<<< FILL: UI host name, e.g. axera.example.com >>>"
+    tls: true
+  ingress:
+    # kubectl get ingressclass. "" uses the cluster's default class, but a stock ingress-nginx marks
+    # none default and ignores a class-less Ingress. The ingress-nginx annotations are added unless
+    # the class name contains "traefik" (expose.ingress.nginxDefaults).
+    className: "<<< FILL: your IngressClass (kubectl get ingressclass), e.g. nginx or traefik >>>"
+    tlsSecretName: ""
+    annotations: {}
+
+networkPolicies:
+  # Default: any source on the UI ports. Narrow it to your ingress controller pods, e.g.:
+  # ingressFrom:
+  #   - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: ingress-nginx}}
+  #     podSelector: {matchLabels: {app.kubernetes.io/name: ingress-nginx}}
+  ingressFrom: []
+  kafkaClients:
+    # Node subnet(s) plus the cluster (pod) CIDR, e.g. cidrs: ["10.0.0.0/24", "10.244.0.0/16"]
+    cidrs: []

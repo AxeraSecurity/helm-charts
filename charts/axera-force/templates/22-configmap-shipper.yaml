@@ -1,0 +1,395 @@
+{{- $tls := include "axeraforce.tls" . -}}
+{{- $sasl := include "axeraforce.sasl" . -}}
+{{- $obs := include "axeraforce.processObserve" . | fromJson -}}
+{{- $assoc := include "axeraforce.processAssociation" . | fromJson -}}
+{{- /* The sensor's namespace denylist as Lua { prefix, exact } pairs: the sensor applies it by the pod it names, so a
+       pod-less event whose parent's pod it named is held to the same scope here (axera-process-filter.lua). */ -}}
+{{- $denyLua := list -}}
+{{- range (include "axeraforce.processNamespaceDenyRegex" . | fromJsonArray) -}}
+{{- if hasSuffix "$" . }}{{ $denyLua = append $denyLua (printf "{ %s, true }" (trimSuffix "$" (trimPrefix "^" .) | quote)) }}{{ else }}{{ $denyLua = append $denyLua (printf "{ %s, false }" (trimPrefix "^" . | quote)) }}{{ end -}}
+{{- end -}}
+{{- /* The in-cluster ranges (podCIDR, extraPodCIDRs, serviceCIDR, each with its distribution default): the
+       host-process rule below treats a connect from any of them as a pod's. */ -}}
+{{- $podCIDRs := include "axeraforce.clusterCIDRs" . | fromJsonArray -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: axera-shipper
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "axeraforce.labels" . | nindent 4 }}
+data:
+  fluent-bit.conf: |
+    [SERVICE]
+        Flush         1
+        Daemon        Off
+        Log_Level     info
+        Parsers_File  parsers.conf
+        {{- $metrics := include "axeraforce.metrics" . | fromJson }}
+        {{- if $metrics.enabled }}
+        # The shipper's built-in metrics (/api/v2/metrics/prometheus: records sent, retried and
+        # dropped per output) on the node's IP (NODE_IP, status.hostIP) and metrics.shipperPort.
+        HTTP_Server   On
+        HTTP_Listen   ${NODE_IP}
+        HTTP_Port     {{ $metrics.shipperPort }}
+        {{- end }}
+
+    [INPUT]
+        Name          tail
+        Tag           tetragon
+        Path          /var/run/cilium/tetragon/tetragon.log
+        Parser        tetragon_json
+        DB            /var/run/cilium/tetragon/flb_tetragon.db
+        Refresh_Interval 5
+        Skip_Long_Lines  On
+        Mem_Buf_Limit    32MB
+
+    # The process sensor stamps every event's envelope with ALL labels of the agent's Node
+    # (node_labels; no flag turns it off) and its field-filters cannot drop it:
+    # they mask only the event and copy every envelope field. Radar never reads it, and a node
+    # with Node Feature Discovery labels multiplies the size of each trimmed event. (Tail still
+    # reads the whole line first: with Skip_Long_Lines a line past Buffer_Max_Size, 32k by
+    # default, never gets here.)
+    [FILTER]
+        Name          record_modifier
+        Match         tetragon
+        Remove_key    node_labels
+
+    # The process-to-pod association's heartbeat: once a minute this tick becomes the node's
+    # association_health record in the Lua filter below (counts by source, layout, self-check), so a node
+    # whose association degrades is reported even while it ships no events.
+    [INPUT]
+        Name          dummy
+        Tag           tetragon
+        Dummy         {"axera_tick":1}
+        Interval_Sec  60
+
+    # Always on: the process-to-pod association (pod-less events get process.axera_cgroup from the
+    # process's own cgroup or its parent's), the association heartbeat, process.observe's host rule
+    # and dedupeWindowSeconds — on the node, before Kafka (axera-process-filter.lua below).
+    [FILTER]
+        Name          lua
+        Match         tetragon
+        script        /fluent-bit/etc/axera-process-filter.lua
+        call          axera_process_filter
+
+    [OUTPUT]
+        Name          kafka
+        Match         tetragon
+        Brokers       {{ .Values.kafka.bootstrapServers }}
+        Topics        {{ include "axeraforce.processTopic" . }}
+        Timestamp_Key @ts
+        Retry_Limit   false
+        rdkafka.log.connection.close false
+        # Producer compression (kafka.compression, unset = lz4); Radar decompresses every codec.
+        rdkafka.compression.codec {{ include "axeraforce.kafkaCompression" . }}
+        # Cap the producer queue (librdkafka default 1 GiB): while the broker is unreachable or
+        # refuses the login, Retry_Limit false keeps queueing and the shipper is OOMKilled.
+        rdkafka.queue.buffering.max.kbytes {{ (.Values.process).shipperQueueMaxKbytes | default 16384 | int }}
+        # Keep a queued message for up to 30 minutes while the broker
+        # is unreachable (librdkafka's default, 5 min, fails it after that; the shipper has already handed
+        # it over, so a failed delivery is a lost record: no retry). The queue cap above bounds memory,
+        # not time. Memory at the cap: the 16384 KiB queue measured the shipper at ~83 MiB with the
+        # broker refusing it (the tail input's Mem_Buf_Limit 32MB + the queued payload + librdkafka's
+        # per-message bookkeeping + the process), and the dedupe window's key table adds up to ~30 MiB
+        # (200 000 keys): ~113 MiB, under the 192Mi limit with ~80 MiB to spare. When the queue is full,
+        # produce fails and the shipper retries the chunk (Retry_Limit false); the tail input pauses at
+        # Mem_Buf_Limit and resumes from its DB offset, so beyond the cap the sensor's export file
+        # (50 MB x 3, 7-13 min of a busy node's events) is the buffer. Raise the cap only together with
+        # the shipper's memory limit: every MiB queued is at least a MiB of memory, plus bookkeeping.
+        rdkafka.message.timeout.ms 1800000
+        {{- if ne .Values.kafka.securityProtocol "Plaintext" }}
+        rdkafka.security.protocol {{ include "axeraforce.fbSecurityProtocol" . }}
+        {{- end }}
+        {{- if $sasl }}
+        rdkafka.sasl.mechanisms   {{ include "axeraforce.fbSaslMechanism" . }}
+        rdkafka.sasl.username     ${KAFKA_SASL_USERNAME}
+        rdkafka.sasl.password     ${KAFKA_SASL_PASSWORD}
+        {{- end }}
+        {{- if include "axeraforce.useCA" . }}
+        rdkafka.ssl.ca.location   /etc/kafka-certs/ca.crt
+        {{- end }}
+        {{- if and $tls .Values.kafka.insecureSkipVerify }}
+        rdkafka.enable.ssl.certificate.verification false
+        {{- end }}
+  axera-process-filter.lua: |
+    -- Axera process shipper filter (rendered by the chart from process.*; do not edit by hand).
+    -- Runs on every node before Kafka:
+    --   * Process-to-pod association (always on, files/association.lua + files/cgparse.lua below): an event whose
+    --     process the sensor left without a pod gets process.axera_cgroup = { pod_uid, container_id, role, ... }
+    --     from the process's own cgroup path (/proc, any depth, pid-reuse guarded) or, for a process already
+    --     gone, from its parent's. It rests only on the cgroup path, the pod UID / container id patterns and the
+    --     process ancestry: no runtime, runtime handler, CRI socket, binary or product is consulted, so a runtime
+    --     wrapper, a relocated socket or extra sub-cgroups below the container change nothing. Radar maps the
+    --     pod UID / container id to the pod (its pod list) and applies the namespace scope to the result.
+    --   * Association heartbeat: the 60 s tick input becomes one association_health record per node, with the
+    --     node's answer to the runtime socket hint (process.criSocket: present | missing, written by the
+    --     sensor container when it starts; off when unset, invalid when too long) and the sensor's version.
+    --   * Namespace scope of a pod-less process: the sensor's export denylist (process.observe) applies by the
+    --     pod the sensor names, so it never sees a pod-less event. When the sensor named the parent's pod (the
+    --     event's parent fields, or the ancestor the association chained to) and that namespace is left out, the
+    --     connect (and the exec, with observe.execFollowsScope) is dropped here — unless the process's own cgroup
+    --     names another container than its parent's (then its own pod decides, in Radar) or proves a host cgroup.
+    --   * Host processes (observe.hostProcesses=false), both modes: a process whose own or parent's cgroup names a
+    --     pod (process.axera_cgroup: pod UID, container id or the parent's pod) is a pod's process and is never
+    --     dropped here as a host process — hostNetwork pods included, whose connects leave from the node's
+    --     address: Radar names the pod and its namespace scope drops the ones left out (in Radar's shadow mode
+    --     the pod is not applied and Radar drops them as unattributed). Otherwise the address
+    --     rule: a connect is dropped as a host process's when the event names no pod and no container id AND
+    --     its source address is outside the in-cluster ranges (POD_CIDRS below) or loopback; an exec with
+    --     neither is dropped under observe.execFollowsScope. Mode "on" adds one drop: a connect whose cgroup
+    --     proves a host process is dropped whatever its address (kubelet and haproxy through the node's
+    --     management port, whose address sits inside the pod network); "shadow" (the default) leaves that to
+    --     the address rule.
+    --   * dedupeWindowSeconds > 0: a repeated connect (same workload, binary, destination, port,
+    --     protocol) and a repeated exec (same workload, binary) is shipped once per window, the first.
+    --     Anything never seen before always ships. A connect with no pod is keyed by its container id, its
+    --     pod UID, else its source address, so two unassociated pods never share a key.
+    --   * The parent of an event the sensor attributed is cut back to its pid, the only parent field Radar
+    --     reads then (Ppid): the sensor exports the parent's fields for every event (its field
+    --     filter cannot ask for them only when the process has no pod), ~245 B per event.
+    --     A pod-less event keeps them for Radar (its exec id for the ancestry step, and an older
+    --     Radar's adoption). Such a record is re-encoded (rc 2) instead of passed through.
+    -- Every other event passes untouched. LuaJIT / Lua 5.1 compatible.
+    local WINDOW = {{ include "axeraforce.processDedupeWindow" . }}
+    local DROP_HOST = {{ not $obs.hostProcesses }}
+    local EXEC_SCOPE = {{ $obs.execFollowsScope }}
+    local MODE_ON = {{ eq $assoc.mode "on" }}
+    local POD_CIDRS = { {{ range $i, $c := $podCIDRs }}{{ if $i }}, {{ end }}{{ $c | quote }}{{ end }} }
+    local DENY_NS = { {{ join ", " $denyLua }} }
+    local MAX_KEYS = 200000
+    local NODE = os.getenv("NODE_NAME") or ""
+    local CRI_HINT = {{ $assoc.cri | quote }}
+    -- Written by the sensor container at start when a CRI socket hint is set (30-daemonset.yaml).
+    local CRI_STATE_FILE = "/var/run/cilium/tetragon/axera-runtime-socket"
+    local HEALTH = { mode = {{ $assoc.mode | quote }}, cri = CRI_HINT, sensor_version = {{ include "axeraforce.sensorVersion" . | quote }}, window_seconds = 60 }
+
+    -- ==== files/cgparse.lua (association contract schema 2) ====
+    local cgparse = (function()
+{{ .Files.Get "files/cgparse.lua" | indent 4 }}
+    end)()
+    -- ==== files/association.lua ====
+    local assoc = (function()
+{{ .Files.Get "files/association.lua" | indent 4 }}
+    end)()
+    -- ==== end of the shared files ====
+    assoc.init(cgparse)
+
+    -- ::ffff:a.b.c.d (a dual-stack socket's IPv4 peer, every JVM) is the IPv4 address it carries.
+    local function unmap(ip)
+      if ip and string.lower(string.sub(ip, 1, 7)) == "::ffff:" then return string.sub(ip, 8) end
+      return ip
+    end
+
+    local function str(v) if type(v) == "string" then return v end return "" end
+
+    local function ipv4_num(ip)
+      local a, b, c, d = string.match(ip or "", "^(%d+)%.(%d+)%.(%d+)%.(%d+)$")
+      if not a then return nil end
+      a, b, c, d = tonumber(a), tonumber(b), tonumber(c), tonumber(d)
+      if a > 255 or b > 255 or c > 255 or d > 255 then return nil end
+      return ((a * 256 + b) * 256 + c) * 256 + d
+    end
+
+    local RANGES = {}
+    for _, cidr in ipairs(POD_CIDRS) do
+      local ip, bits = string.match(cidr, "^([%d%.]+)/(%d+)$")
+      local n = ipv4_num(ip)
+      bits = tonumber(bits)
+      if n and bits and bits >= 0 and bits <= 32 then
+        local size = 2 ^ (32 - bits)
+        local lo = n - (n % size)
+        RANGES[#RANGES + 1] = { lo, lo + size - 1 }
+      end
+    end
+
+    -- true / false for an IPv4 source; nil when it cannot be judged (IPv6, missing, no ranges).
+    local function in_pod_network(ip)
+      if #RANGES == 0 then return nil end
+      local n = ipv4_num(unmap(ip))
+      if not n then return nil end
+      for i = 1, #RANGES do
+        if n >= RANGES[i][1] and n <= RANGES[i][2] then return true end
+      end
+      return false
+    end
+
+    local function is_loopback(ip)
+      ip = unmap(ip)
+      return ip == "::1" or string.sub(ip or "", 1, 4) == "127."
+    end
+
+    -- The sensor named the event's pod or its container id (the address rule's notion of "not a host process").
+    local function sensor_scoped(pod, proc)
+      return pod ~= nil or str(proc["docker"]) ~= ""
+    end
+
+    -- A pod's process: the sensor's, or one whose own or parent's cgroup names a pod (both modes).
+    local function pod_process(pod, proc, id)
+      if sensor_scoped(pod, proc) then return true end
+      return id ~= nil and (id.pod_uid ~= nil or id.container_id ~= nil or id.parent_pod ~= nil)
+    end
+
+    -- A connect's source is a host process's when it is no pod's process and (mode "on") its cgroup proves a
+    -- host cgroup, or its address is outside the pod network or loopback; a pod-network (or unjudgeable IPv6)
+    -- source of unknown identity is kept for Radar.
+    local function host_connect(pod, proc, sock, id)
+      if pod_process(pod, proc, id) then return false end
+      if MODE_ON and id ~= nil and id.role == "host" then return true end
+      local judged = in_pod_network(sock["saddr"])
+      if judged == nil then return is_loopback(sock["saddr"]) end
+      return judged == false
+    end
+
+    local function ns_denied(ns)
+      for _, d in ipairs(DENY_NS) do
+        if d[2] then
+          if ns == d[1] then return true end
+        elseif ns:sub(1, #d[1]) == d[1] then
+          return true
+        end
+      end
+      return false
+    end
+
+    -- The namespace of the pod the sensor named for a pod-less process's parent: the event's parent fields, else
+    -- the ancestor the association chained to. "" when no ancestor's pod is known on the node.
+    local function parent_namespace(ev, id)
+      local parent = ev["parent"]
+      if type(parent) == "table" and type(parent["pod"]) == "table" and str(parent["pod"]["namespace"]) ~= "" then
+        return parent["pod"]["namespace"]
+      end
+      if id ~= nil and type(id.parent_pod) == "table" then return str(id.parent_pod.namespace) end
+      return ""
+    end
+
+    -- A pod-less event held to the sensor's namespace scope through its parent's pod. Not when the process's own
+    -- cgroup proves a host cgroup (the host rule judges it) or names another container than the parent's (a
+    -- process placed into another pod: that pod decides, in Radar, by its pod UID); a parent with no container id
+    -- of its own is taken to share the process's container.
+    local function parent_scope_denied(ev, id)
+      if #DENY_NS == 0 then return false end
+      local ns = parent_namespace(ev, id)
+      if ns == "" or not ns_denied(ns) then return false end
+      if id ~= nil and id.role == "host" then return false end
+      if id ~= nil and id.source == "cgroup_proc" and id.container_id ~= nil then
+        local pd = type(ev["parent"]) == "table" and str(ev["parent"]["docker"]) or ""
+        if pd ~= "" and id.container_id:sub(1, #pd) ~= pd then return false end
+      end
+      return true
+    end
+
+    -- The node's answer to the runtime socket hint: "present" | "missing" as the sensor container wrote it at
+    -- start, "unknown" before it has (or when the file cannot be read); the rendered state otherwise.
+    local function cri_state()
+      if CRI_HINT ~= "configured" then return CRI_HINT end
+      local f = io.open(CRI_STATE_FILE, "r")
+      if not f then return "unknown" end
+      local v = f:read("*l"); f:close()
+      if v == "present" or v == "missing" then return v end
+      return "unknown"
+    end
+
+    local seen, count, swept = {}, 0, 0
+
+    local function sweep(now)
+      local kept = 0
+      for k, t in pairs(seen) do
+        if now - t >= WINDOW then seen[k] = nil else kept = kept + 1 end
+      end
+      count, swept = kept, now
+      -- Still too many live keys: forget them all rather than grow (the next events ship again).
+      if count > MAX_KEYS then seen, count = {}, 0 end
+    end
+
+    -- true when the event was shipped within the window under this key (and so is dropped now).
+    local function repeated(key, timestamp)
+      if WINDOW <= 0 then return false end
+      local now = tonumber(timestamp) or os.time()
+      if now - swept >= WINDOW or count > MAX_KEYS then sweep(now) end
+      local last = seen[key]
+      if last ~= nil and now - last < WINDOW and now >= last then return true end
+      if last == nil then count = count + 1 end
+      seen[key] = now
+      return false
+    end
+
+    -- The workload part of a key: the pod's workload, else the container id of a not-yet-associated container,
+    -- else the pod UID its cgroup names, else (a connect) the source address, so two unassociated pods never
+    -- share a key; "host" for an exec.
+    local function who(proc, pod, sock, id)
+      if pod then return str(pod["namespace"]) .. "/" .. str(pod["workload"] ~= nil and pod["workload"] or pod["name"]) end
+      local c = str(proc["docker"])
+      if c ~= "" then return "container:" .. c end
+      if id ~= nil and id.pod_uid ~= nil then return "uid:" .. id.pod_uid end
+      if id ~= nil and id.container_id ~= nil then return "container:" .. id.container_id end
+      if sock ~= nil and str(unmap(sock["saddr"])) ~= "" then return "ip:" .. str(unmap(sock["saddr"])) end
+      return "host"
+    end
+
+    -- The parent reduced to its pid (or removed when it has none); reports whether ev changed.
+    local function trim_parent(ev)
+      local parent = ev["parent"]
+      if type(parent) ~= "table" then return false end
+      for k in pairs(parent) do
+        if k ~= "pid" then
+          if parent["pid"] ~= nil then ev["parent"] = { pid = parent["pid"] } else ev["parent"] = nil end
+          return true
+        end
+      end
+      return false
+    end
+
+    local function iso_now()
+      return os.date("!%Y-%m-%dT%H:%M:%SZ")
+    end
+
+    function axera_process_filter(tag, timestamp, record)
+      if record["axera_tick"] ~= nil then
+        HEALTH.cri = cri_state()
+        return 2, timestamp, { association_health = assoc.health(NODE, HEALTH, os.time()), node_name = NODE, time = iso_now() }
+      end
+      local kind, ev = "connect", record["process_kprobe"]
+      if type(ev) ~= "table" then kind, ev = "exec", record["process_exec"] end
+      if type(ev) ~= "table" then return 0, timestamp, record end
+      local proc = ev["process"]
+      if type(proc) ~= "table" then proc = {} end
+      local pod = proc["pod"]
+      if type(pod) ~= "table" then pod = nil end
+      -- rc 2 = record modified, timestamp kept (the shipper's Lua filter contract).
+      local rc = 0
+      local id = assoc.resolve(proc, ev["parent"], tonumber(timestamp) or os.time(), kind)
+      if id ~= nil then
+        proc["axera_cgroup"] = assoc.fields(id)
+        rc = 2
+      end
+      if pod == nil and (kind == "connect" or EXEC_SCOPE) and parent_scope_denied(ev, id) then return -1, timestamp, record end
+      if pod ~= nil and trim_parent(ev) then rc = 2 end
+      local host = not pod_process(pod, proc, id)
+
+      if kind == "connect" then
+        local args = ev["args"]
+        local sock = type(args) == "table" and type(args[1]) == "table" and args[1]["sock_arg"] or nil
+        if type(sock) ~= "table" then
+          if DROP_HOST and host then return -1, timestamp, record end
+          return rc, timestamp, record
+        end
+        if DROP_HOST and host_connect(pod, proc, sock, id) then return -1, timestamp, record end
+        local key = table.concat({ "c", who(proc, pod, sock, id), str(proc["binary"]), str(unmap(sock["daddr"])),
+          tostring(sock["dport"] or ""), tostring(sock["protocol"] or "") }, "|")
+        if repeated(key, timestamp) then return -1, timestamp, record end
+        return rc, timestamp, record
+      end
+
+      if EXEC_SCOPE and DROP_HOST and host then return -1, timestamp, record end
+      if repeated(table.concat({ "e", who(proc, pod, nil, id), str(proc["binary"]) }, "|"), timestamp) then
+        return -1, timestamp, record
+      end
+      return rc, timestamp, record
+    end
+  parsers.conf: |
+    [PARSER]
+        Name   tetragon_json
+        Format json
+        Time_Key time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L%z
+        Time_Keep On

@@ -1,4 +1,48 @@
+{{- include "axera.init" . }}
 {{- if not .Values.kafka.external }}
+{{- /*
+  Single-node KRaft broker (broker + controller in one process) for an all-in-one install. It is
+  advertised on its in-cluster DNS name in PLAINTEXT, so only producers inside this cluster can use
+  it: monitoring more than one cluster needs your own Kafka (kafka.external=true).
+
+  Data directory: KAFKA_LOG_DIRS points INTO the volume, at a subdirectory. Without it Kafka falls
+  back to a directory in the container's writable layer (every message and consumer offset lost on
+  a restart), and the volume root of an ext4 PVC holds lost+found, which Kafka refuses to start on.
+
+  Cluster ID: kept in ConfigMap kafka-cluster-id (helm.sh/resource-policy: keep, read back on every
+  upgrade). Resolution: kafka.clusterId > that ConfigMap > the CLUSTER_ID the running broker was
+  started with (the 2.x chart wrote a literal one, and its volume is formatted with it) > the fixed
+  default every earlier chart used. The broker refuses a volume formatted with another ID, so it
+  must never change; a single-node in-cluster broker gains nothing from a random one, and the fixed
+  default keeps helm template / GitOps renders stable.
+*/}}
+{{- $ns := .Values.global.namespace }}
+{{- $clusterId := .Values.kafka.clusterId | default "" }}
+{{- if not $clusterId }}
+{{- $clusterId = dig "data" "clusterId" "" ((lookup "v1" "ConfigMap" $ns "kafka-cluster-id") | default dict) }}
+{{- end }}
+{{- if not $clusterId }}
+{{- $sts := lookup "apps/v1" "StatefulSet" $ns "kafka" | default dict }}
+{{- range (dig "spec" "template" "spec" "containers" list $sts) }}
+{{- range (.env | default list) }}
+{{- if and (eq (toString .name) "CLUSTER_ID") .value (not $clusterId) }}{{ $clusterId = toString .value }}{{ end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- if not $clusterId }}
+{{- $clusterId = "MkU3OEVBNTcwNTJENDM2Qk" }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-cluster-id
+  namespace: {{ $ns }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/resource-policy: keep
+data:
+  clusterId: {{ $clusterId | quote }}
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -17,11 +61,15 @@ spec:
       labels: { app: kafka }
     spec:
       serviceAccountName: axera-sa
+      {{- with (include "axera.scheduling" (dict "component" "kafka" "ctx" .) | trim) }}{{ . | nindent 6 }}{{- end }}
       securityContext:
         fsGroup: 0
       initContainers:
         - name: copy-config
           image: {{ include "axera.image" (dict "img" .Values.images.kafka "ctx" .) }}
+          {{- with (.Values.resources).initContainers }}
+          resources: {{- toYaml . | nindent 12 }}
+          {{- end }}
           command:
             - sh
             - -c
@@ -41,14 +89,20 @@ spec:
             - { name: KAFKA_PROCESS_ROLES, value: "broker,controller" }
             - { name: KAFKA_LISTENERS, value: "PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093" }
             - name: KAFKA_ADVERTISED_LISTENERS
-              value: "PLAINTEXT://kafka.{{ .Values.global.namespace }}.svc.cluster.local:9092"
+              value: "PLAINTEXT://kafka.{{ .Values.global.namespace }}.svc.{{ include "axera.clusterDnsDomain" . }}:9092"
             - { name: KAFKA_CONTROLLER_QUORUM_VOTERS, value: "1@localhost:9093" }
             - { name: KAFKA_CONTROLLER_LISTENER_NAMES, value: "CONTROLLER" }
             - { name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP, value: "PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT" }
             - { name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR, value: "1" }
-            - { name: KAFKA_AUTO_CREATE_TOPICS_ENABLE, value: "true" }
+            # With topic provisioning Create (the default here) Radar creates every topic it consumes
+            # with its lane profile (retention 2 h), so a producer may not auto-create one with the
+            # broker defaults first (7 days, which Radar would then only report as drift).
+            - { name: KAFKA_AUTO_CREATE_TOPICS_ENABLE, value: {{ ternary "false" "true" (eq (include "axera.kafkaProvisioningMode" .) "Create") | quote }} }
             - { name: KAFKA_LOG_RETENTION_HOURS, value: "168" }
-            - { name: CLUSTER_ID, value: "MkU3OEVBNTcwNTJENDM2Qk" }
+            - name: CLUSTER_ID
+              valueFrom: { configMapKeyRef: { name: kafka-cluster-id, key: clusterId } }
+            # On the PVC mounted at /var/lib/kafka/data, one level down (see the header).
+            - { name: KAFKA_LOG_DIRS, value: "/var/lib/kafka/data/kraft-combined-logs" }
           volumeMounts:
             - { name: config, mountPath: /opt/kafka/config }
             - { name: data, mountPath: /var/lib/kafka/data }
@@ -59,7 +113,7 @@ spec:
           livenessProbe:
             tcpSocket: { port: 9092 }
             initialDelaySeconds: 60
-            periodSeconds: 20
+            {{- include "axera.livenessBudget" . | nindent 12 }}
           resources: {{- toYaml .Values.resources.kafka | nindent 12 }}
       volumes:
         - name: config
@@ -70,7 +124,7 @@ spec:
       spec:
         accessModes: [ReadWriteOnce]
         {{- if .Values.global.storageClass }}
-        storageClassName: {{ .Values.global.storageClass }}
+        storageClassName: {{ .Values.global.storageClass | quote }}
         {{- end }}
         resources:
           requests:

@@ -1,0 +1,7 @@
+global:
+  distribution: openshift
+clusterName: ci-openshift
+# Offline render (no Network object to read): podCIDR must be stated.
+podCIDR: 10.128.0.0/14
+kafka:
+  bootstrapServers: kafka.example.com:9093

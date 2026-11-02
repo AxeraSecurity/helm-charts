@@ -1,0 +1,44 @@
+# Example: a k3s cluster sending to an existing central Axera platform whose Kafka is external
+# (SASL_SSL, SCRAM-SHA-512). Replace my-k3s and kafka.example.com:9093 with your values.
+#
+#   kubectl create namespace axera
+#   kubectl label namespace axera pod-security.kubernetes.io/enforce=privileged \
+#     pod-security.kubernetes.io/audit=privileged pod-security.kubernetes.io/warn=privileged
+#   kubectl -n axera create secret generic kafka-ca --from-file=ca.crt=./kafka-ca.crt
+#   read -rs KAFKA_PW
+#   kubectl -n axera create secret generic kafka-sasl \
+#     --from-literal=username=<kafka user> --from-literal=password="$KAFKA_PW"
+#   unset KAFKA_PW
+#   cp axera-force/examples/values-k3s-external-kafka.yaml my-agent.yaml   # edit the copy
+#   helm install axera-force axera/axera-force -n axera -f my-agent.yaml
+global:
+  distribution: k3s
+
+clusterName: my-k3s
+
+# The k3s --cluster-cidr / --service-cidr (defaults below). The install refuses a node whose pod range
+# lies outside podCIDR: kubectl get nodes -o jsonpath='{.items[*].spec.podCIDR}'
+podCIDR: 10.42.0.0/16
+serviceCIDR: 10.43.0.0/16
+
+# Your corporate / on-prem range(s), outside the pod and Service CIDRs.
+localNetworkCIDR: 192.168.0.0/16
+
+kafka:
+  bootstrapServers: kafka.example.com:9093
+  securityProtocol: SaslSsl
+  saslMechanism: ScramSha512
+  createSecret: false        # kafka-ca and kafka-sasl are created above
+
+requireAmd64: true           # the shipper image is amd64-only
+
+integration:
+  create: true               # this cluster does not host the central platform
+
+# Optional: forward the API audit log (turn on k3s auditing first, see the README).
+# auditForwarder:
+#   enabled: true
+#   logDir: /var/lib/rancher/k3s/server/logs
+#   # the central api Service's audit path, NOT the console host (see the README)
+#   targetUri: https://axera-api.example.com/api/Internal/Audit
+#   # internalToken: pass it with --set-file auditForwarder.internalToken=./internal-token

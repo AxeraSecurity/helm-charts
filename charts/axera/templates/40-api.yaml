@@ -1,3 +1,23 @@
+{{- include "axera.init" . }}
+{{- /*
+  Kerberos (SPNEGO) sign-in. Off by default. When kerberos.enabled, the API pod gets the keytab
+  from the customer-created Secret kerberos.keytabSecret (read-only, mode 0440), a minimal
+  krb5.conf (the API only ACCEPTS tickets: it never contacts the KDC) and a private replay cache.
+  Rotating the keytab: update the Secret, then bump kerberos.keytabVersion to roll the pod.
+*/}}
+{{- $krb := .Values.kerberos | default dict }}
+{{- $krbOn := and $krb.enabled $krb.keytabSecret }}
+{{- if and $krb.enabled (not $krb.keytabSecret) }}
+{{- fail "kerberos.enabled requires kerberos.keytabSecret (a Secret holding the service keytab)" }}
+{{- end }}
+{{- $krb5Conf := "" }}
+{{- if $krbOn }}
+{{- if $krb.krb5Conf }}
+{{- $krb5Conf = $krb.krb5Conf }}
+{{- else }}
+{{- $krb5Conf = printf "[libdefaults]\n%s  dns_canonicalize_hostname = false\n  rdns = false\n  permitted_enctypes = aes256-cts-hmac-sha1-96 aes128-cts-hmac-sha1-96 aes256-cts-hmac-sha384-192 aes128-cts-hmac-sha256-128\n" (ternary (printf "  default_realm = %s\n" (upper (toString $krb.realm))) "" (not (empty $krb.realm))) }}
+{{- end }}
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -19,15 +39,34 @@ spec:
   template:
     metadata:
       labels: { app: api }
+      annotations:
+        # Rolls the pod when a ConfigMap it reads through envFrom changes (see axera.configMapChecksum).
+        checksum/config: {{ include "axera.configMapChecksum" (dict "ctx" $ "names" (list "axera-app-config")) }}
+        # Rolls the pod when a secret value set through values changes (axera.secretValuesChecksum).
+        checksum/secret: {{ include "axera.secretValuesChecksum" . }}
+        {{- if $krbOn }}
+        # Rolls the pod when krb5.conf changes or the admin bumps kerberos.keytabVersion after
+        # rotating the keytab Secret (a mounted Secret updates, but GSSAPI keeps what it loaded).
+        axerasecurity.com/kerberos-config: {{ printf "%s/%s" $krb5Conf (toString ($krb.keytabVersion | default "")) | sha256sum | trunc 16 | quote }}
+        {{- end }}
     spec:
       serviceAccountName: axera-sa
-      {{- if .Values.global.createSCC }}
+      # Uses its ServiceAccount token and namespace file (axera-sa itself mounts no token).
+      automountServiceAccountToken: true
+      {{- with (include "axera.scheduling" (dict "component" "api" "ctx" .) | trim) }}{{ . | nindent 6 }}{{- end }}
+      {{- if include "axera.createSCC" . }}
       # axera-scc uses fsGroup: RunAsAny, so OpenShift does NOT auto-assign one — set it
       # explicitly or the dp-keys PVC (mounted at /var/lib/axera) stays root-owned and the
       # .NET process can't write the key ring. The volume is chowned to this GID (g+w) and the
       # container gets it as a supplemental group. Override via global.dpKeysFsGroup if needed.
       securityContext:
         fsGroup: {{ .Values.global.dpKeysFsGroup | default 1001 }}
+      {{- else if not (include "axera.isOpenShift" .) }}
+      # Off OpenShift nothing assigns a group: give the dp-keys volume the image user's group so
+      # the key ring is writable (OnRootMismatch: no recursive chown on every start).
+      securityContext:
+        fsGroup: {{ .Values.global.dpKeysFsGroup | default 1001 }}
+        fsGroupChangePolicy: OnRootMismatch
       {{- else }}
       # Default restricted/-v2 SCC: fsGroup is MustRunAs — OpenShift auto-assigns a GID from the
       # namespace's allowed range, which already makes the PVC writable. We deliberately do NOT
@@ -42,44 +81,120 @@ spec:
         - name: api
           image: {{ include "axera.image" (dict "img" .Values.images.api "ctx" .) }}
           imagePullPolicy: Always
+          {{- with include "axera.appContainerSecurityContext" . }}
+          {{- . | nindent 10 }}
+          {{- end }}
           ports:
             - { containerPort: 8080 }
+            {{- if include "axera.metricsEnabled" . }}
+            # /metrics: plain HTTP, no authentication, scraped through the Service's metrics
+            # port by the ServiceMonitor in templates/47-monitoring.yaml; never behind a Route.
+            - { name: metrics, containerPort: 9090 }
+            {{- end }}
           envFrom:
             - configMapRef: { name: axera-app-config }
-            - secretRef: { name: axera-app-secret }
+            - secretRef: { name: {{ include "axera.appSecretName" . }} }
           env:
             - { name: ASPNETCORE_ENVIRONMENT, value: Production }
             - { name: ASPNETCORE_URLS, value: "http://+:8080" }
+            # The metrics endpoint: the process adds the 9090 listener itself, next to the
+            # URLs above; Metrics__Enabled false serves nothing there.
+            {{- include "axera.metricsEnv" . | nindent 12 }}
+            {{- with ((.Values.app).performance | default dict).hangfireWorkerCount }}
+            # app.performance.hangfireWorkerCount; unset keeps the API's default (8).
+            - { name: Hangfire__WorkerCount, value: {{ . | int64 | toString | quote }} }
+            {{- end }}
             # DataProtection key-ring store: FileSystem (PVC, default) or Database (DB-backed,
             # storage-less — keys live in the app DB, survive restarts with no PVC).
             - { name: DataProtection__Store, value: "{{ .Values.app.dpKeysStore | default "FileSystem" }}" }
             - { name: Licensing__NodeCountStrategy, value: "{{ .Values.licensing.nodeCountStrategy | default "HostOnly" }}" }
             - name: ConnectionStrings__DefaultConnection
-              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: APP_DB_CONNSTR } }
-            {{- if .Values.ai.enabled }}
-            # Behavioral-anomaly advisory job reads the Radar DB (egress flows).
-            # Injected whenever AI is on — the advisory toggle is flipped at runtime
-            # from the AI settings page (DB-backed), so the connection must be present
-            # even when advisory starts disabled. The API schedules the cron whenever
-            # this connection string exists and self-gates execution on the DB flag.
+              valueFrom: { secretKeyRef: { name: {{ include "axera.dbSecretName" . }}, key: APP_DB_CONNSTR } }
+            # Radar DB (read): powers the AxeraFlow "connected" flow-heartbeat, Shift-Left
+            # live-traffic coverage, and the AI behavioral-anomaly advisory. Injected
+            # unconditionally — only the advisory is AI; the first two work with AI off, so
+            # gating this on ai.enabled silently leaves AxeraFlow stuck at "deployed-no-flows"
+            # even though flows are arriving. The API self-gates each consumer (empty = off).
             - name: ConnectionStrings__Radar
-              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: RADAR_DB_CONNSTR } }
+              valueFrom: { secretKeyRef: { name: {{ include "axera.dbSecretName" . }}, key: RADAR_DB_CONNSTR } }
+            # Backup/restore: the app spawns pg_dump/pg_restore Jobs in its OWN namespace and
+            # reads/writes dumps on the shared /backups volume mounted below.
+            - name: POD_NAMESPACE
+              valueFrom: { fieldRef: { fieldPath: metadata.namespace } }
+            # Namespaces deploy, the watcher and containment must never write into, beyond the
+            # groups the API knows by itself (openshift-*, kube-*, istio-system, its own namespace
+            # and, from v13.3.0, the shipped agent namespaces). Listed explicitly as well, so the
+            # install says what it protects: "axera" is where the AxeraForce agent DaemonSet runs.
+            - { name: AXERA_PROTECTED_NAMESPACES, value: "{{ .Values.app.protectedNamespaces | default "axera,axera-flow,axera-process,axera-force" }}" }
+            # Axera's own ServiceAccounts, matched EXACTLY (namespace:name). The mesh-policy-tamper
+            # and rbac-escalation detectors, Mesh > Policies > Hygiene (write authority) and NetworkPolicy "who modified"
+            # treat a write by one of these as Axera's own; any other identity, including a tenant
+            # ServiceAccount whose name merely contains "axera", is a tenant write. The identity each
+            # cluster is registered with is recognised from its token without being listed here.
+            # operands.v1330 decides the shape (axera.ownServiceAccountEnv in _helpers.tpl).
+            {{- include "axera.ownServiceAccountEnv" . | nindent 12 }}
+            {{- include "axera.pgCaAppEnv" . | nindent 12 }}
+            {{- if .Values.backup.enabled }}
+            - { name: BACKUP_LOCAL_PATH, value: /backups }
+            - { name: BACKUP_PG_IMAGE, value: {{ include "axera.backupPgImage" . | quote }} }
+            - { name: Backup__ServiceAccount, value: axera-sa }
             {{- end }}
-          readinessProbe:
-            tcpSocket: { port: 8080 }
-            initialDelaySeconds: 15
-            periodSeconds: 10
-          livenessProbe:
-            tcpSocket: { port: 8080 }
-            initialDelaySeconds: 45
-            periodSeconds: 20
+            # The release this API stamps onto backups, as bare semver like the
+            # image's own AXERA_VERSION (the API shows it as v<version>). An explicit
+            # backup.productVersion wins; otherwise the api image tag, but only when it is a version
+            # and no digest pins the image (a digest-pinned image may run another release than its
+            # tag says). Neither: nothing is set here and the image's baked-in AXERA_VERSION speaks.
+            {{- $axeraVersion := (.Values.backup).productVersion }}
+            {{- if and (not $axeraVersion) (not .Values.images.api.digest) (regexMatch "^v?[0-9]+\\.[0-9]+\\.[0-9]+" (toString .Values.images.api.tag)) }}
+            {{- $axeraVersion = .Values.images.api.tag }}
+            {{- end }}
+            {{- with $axeraVersion }}
+            - { name: AXERA_VERSION, value: {{ trimPrefix "v" (toString .) | quote }} }
+            {{- end }}
+            {{- if $krbOn }}
+            # Kerberos sign-in: the acceptor keytab, its krb5.conf, and a writable replay cache
+            # (a replayed authenticator is refused only if the cache survives between requests).
+            - { name: KRB5_KTNAME, value: "FILE:/etc/axera/kerberos/keytab/{{ $krb.keytabKey | default "krb5.keytab" }}" }
+            - { name: KRB5_CONFIG, value: /etc/axera/kerberos/conf/krb5.conf }
+            - { name: KRB5RCACHEDIR, value: /var/tmp/krb5-rcache }
+            # Kestrel's 32 KB request-header total is too small for tickets of users in many groups.
+            - { name: Kestrel__Limits__MaxRequestHeadersTotalSize, value: "65536" }
+            {{- end }}
+          # Startup, readiness and liveness probes with 5 s timeouts (they were 1 s
+          # tcpSocket probes). operands.v1330 picks httpGet /healthz (the first middleware: ahead of
+          # CORS, auth, the licence check and the database, so a probe sees a hung or starved
+          # process and never a dependency outage) or, for the v13.0.0 images, tcpSocket.
+          # Startup allows 5 min of seeding/startup work; liveness restarts after ~2 min unanswered.
+          {{- include "axera.healthProbes" (dict "port" 8080 "path" "/healthz" "ctx" .) | nindent 10 }}
+          resources: {{- toYaml .Values.resources.api | nindent 12 }}
           volumeMounts:
             # ASP.NET DataProtection key ring. Without a writable mount here the keys fall
-            # back to the image path /var/lib/axera, which the random OpenShift UID cannot
+            # back to the image path /var/lib/axera, which a random UID cannot
             # write → "Access to the path '/var/lib/axera' is denied" and the key ring fails
             # to load at startup (DataProtection-encrypted secret read/write breaks).
             - { name: dp-keys, mountPath: /var/lib/axera }
+            {{- if include "axera.backupVolumeEnabled" . }}
+            - { name: axera-backups, mountPath: /backups }
+            {{- end }}
+            {{- include "axera.pgCaAppMount" . | nindent 12 }}
+            {{- if $krbOn }}
+            - { name: kerberos-keytab, mountPath: /etc/axera/kerberos/keytab, readOnly: true }
+            - { name: kerberos-conf, mountPath: /etc/axera/kerberos/conf, readOnly: true }
+            - { name: kerberos-rcache, mountPath: /var/tmp/krb5-rcache }
+            {{- end }}
       volumes:
+        {{- if $krbOn }}
+        - name: kerberos-keytab
+          secret:
+            secretName: {{ $krb.keytabSecret }}
+            defaultMode: 0440
+            items:
+              - { key: {{ $krb.keytabKey | default "krb5.keytab" | quote }}, path: {{ $krb.keytabKey | default "krb5.keytab" | quote }} }
+        - name: kerberos-conf
+          configMap: { name: axera-krb5-conf }
+        - name: kerberos-rcache
+          emptyDir: { medium: Memory, sizeLimit: 16Mi }
+        {{- end }}
         - name: dp-keys
         {{- if eq (.Values.app.dpKeysStore | default "FileSystem") "Database" }}
           # DB-backed key ring (DataProtection:Store=Database) → keys persist in the app DB, so
@@ -90,32 +205,65 @@ spec:
           # stay readable. PVC defined at the bottom of this file.
           persistentVolumeClaim: { claimName: axera-dp-keys }
         {{- end }}
+        {{- include "axera.pgCaAppVolume" . | nindent 8 }}
+        {{- if include "axera.backupVolumeEnabled" . }}
+        - name: axera-backups
+          {{- if eq .Values.backup.storage.type "nfs" }}
+          nfs:
+            server: {{ .Values.backup.storage.nfs.server | quote }}
+            path: {{ .Values.backup.storage.nfs.path | quote }}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.backup.storage.pvcClaimName | default "axera-backups" }}
+          {{- end }}
+        {{- end }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: api
   namespace: {{ .Values.global.namespace }}
-  labels: {{- include "axera.labels" . | nindent 4 }}
+  labels:
+    # The ServiceMonitor (templates/47-monitoring.yaml) selects the Services by this label.
+    app: api
+    {{- include "axera.labels" . | nindent 4 }}
 spec:
   selector: { app: api }
   ports:
     - { name: http, port: 8080, targetPort: 8080 }
+    {{- if include "axera.metricsEnabled" . }}
+    - { name: metrics, port: 9090, targetPort: metrics }
+    {{- end }}
 {{- if ne (.Values.app.dpKeysStore | default "FileSystem") "Database" }}
 ---
 # Persistent store for the ASP.NET DataProtection key ring (mounted at /var/lib/axera on the
 # api pod). Small RWO volume; keys survive restarts so DataProtection-encrypted secrets stay
 # readable. Only created for the filesystem key ring — omitted when dpKeysStore=Database.
+# keep: `helm uninstall` leaves it, so a reinstall still decrypts what the old key ring encrypted.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: axera-dp-keys
   namespace: {{ .Values.global.namespace }}
   labels: {{- include "axera.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/resource-policy: keep
 spec:
   accessModes: [ ReadWriteOnce ]
   {{- if .Values.global.storageClass }}
-  storageClassName: {{ .Values.global.storageClass }}
+  storageClassName: {{ .Values.global.storageClass | quote }}
   {{- end }}
   resources: { requests: { storage: 128Mi } }
+{{- end }}
+{{- if $krbOn }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: axera-krb5-conf
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+data:
+  krb5.conf: |
+{{ $krb5Conf | indent 4 }}
 {{- end }}

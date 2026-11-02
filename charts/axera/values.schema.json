@@ -1,137 +1,2382 @@
 {
-  "$schema": "https://json-schema.org/draft-07/schema#",
-  "title": "Axera Helm chart values",
-  "description": "Configuration schema for the Axera microsegmentation & NDR chart.",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Axera platform chart values",
   "type": "object",
   "properties": {
     "global": {
       "type": "object",
+      "description": "Install-wide settings: distribution, namespace, storage, registry, SCC, Pod Security, amd64 node selector.",
       "properties": {
-        "namespace": { "type": "string", "minLength": 1 },
-        "clusterDomain": { "type": "string" },
-        "storageClass": { "type": "string" },
-        "imageRegistry": { "type": "string", "minLength": 1 },
-        "createNamespace": { "type": "boolean" },
-        "createSCC": { "type": "boolean" },
-        "dpKeysFsGroup": { "type": "integer" }
+        "distribution": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "openshift",
+            "k3s",
+            "rke2",
+            "anthos",
+            "vanilla"
+          ],
+          "description": "Which distribution this is: auto | openshift | k3s | rke2 | anthos | vanilla. auto → openshift when the API server serves route.openshift.io/v1 or security.openshift.io/v1; else from a node's kubelet version (+k3s → k3s, +rke2 → rke2, -gke. → anthos); else vanilla. A render that cannot see the cluster (helm template, --dry-run, GitOps) resolves to vanilla and the release notes warn: set it explicitly there. It picks the defaults below that say \"per distribution\": SecurityContextConstraints, the front door (expose.type), the PostgreSQL image, the AllowDropMonitor, container hardening, the NetworkPolicy peers and the amd64 node selector."
+        },
+        "platform": {
+          "type": "string",
+          "enum": [
+            "",
+            "auto",
+            "openshift",
+            "kubernetes"
+          ],
+          "description": "DEPRECATED alias kept for older values files: openshift → distribution openshift; kubernetes → auto-detection without OpenShift; auto or empty → global.distribution decides. Leave empty."
+        },
+        "namespace": {
+          "type": "string",
+          "description": "Target namespace. Empty → the release namespace (helm ... -n <namespace>). Recommended: axera-central. Never \"axera\": that is the agent namespace (axera-force chart) and the chart refuses it. A value other than the release namespace is refused unless createNamespace=true. One platform per namespace; the cluster-scoped objects carry the namespace as a suffix."
+        },
+        "clusterDomain": {
+          "type": "string",
+          "description": "OpenShift only: wildcard apps domain used to derive Route hostnames as <route>-<namespace>.<clusterDomain> Empty → OpenShift assigns Route hostnames from its default ingress domain."
+        },
+        "clusterDnsDomain": {
+          "type": "string",
+          "description": "Cluster DNS domain (kubelet --cluster-domain), used in in-cluster FQDNs: the Kafka advertised listener and the Istio destinations. Change only if the cluster was built with another one."
+        },
+        "storageClass": {
+          "type": "string",
+          "description": "StorageClass for every ReadWriteOnce volume (PostgreSQL x2, Kafka, the AI model, dp-keys). Empty → the cluster's DEFAULT StorageClass (k3s: local-path; Anthos: standard-rwo; RKE2 ships none: mark one default or name it here). StatefulSet claims are immutable: pick it before the first install."
+        },
+        "imageRegistry": {
+          "type": "string",
+          "description": "Image registry prefix (no trailing slash). Image path = <registry>/<repo>@<digest>."
+        },
+        "createNamespace": {
+          "type": "boolean",
+          "description": "true → the chart creates and OWNS global.namespace (`helm uninstall` then deletes it with every volume in it). Off OpenShift it also stamps the Pod Security labels (podSecurity below) and, on anthos, istio-injection (istio.injection). Recommended: false, and create the namespace yourself with those labels (README, \"Prepare the namespace\"). With true, install the release record into another existing namespace (helm -n default --set global.namespace=<ns>) and never pass --create-namespace."
+        },
+        "podSecurity": {
+          "type": "string",
+          "enum": [
+            "privileged",
+            "baseline",
+            "restricted"
+          ],
+          "description": "Pod Security level stamped on the namespace when the chart creates it (off OpenShift). Every pod of this chart passes \"baseline\"; \"restricted\" is not reachable (PostgreSQL, Kafka, the AI model and the API-created backup Jobs start as root)."
+        },
+        "createSCC": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "enum": [
+            true,
+            false,
+            "auto"
+          ],
+          "description": "SecurityContextConstraints axera-scc-<namespace> and its use grant for axera-sa: auto | true | false. Rendered on OpenShift only (auto and true); false if a cluster admin pre-creates them. Never gates the integration identity or the licence RBAC."
+        },
+        "dpKeysFsGroup": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Group of the API pod, so the dp-keys volume is writable by the image's USER 1001 (set everywhere except OpenShift with createSCC=false, where the SCC assigns one)."
+        },
+        "archNodeSelector": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "enum": [
+            true,
+            false,
+            "auto"
+          ],
+          "description": "nodeSelector kubernetes.io/arch: amd64 on every pod (the product images are built for amd64 only): auto (on everywhere except OpenShift) | true | false. A nodeSelector of your own in scheduling that names kubernetes.io/arch wins."
+        }
       }
     },
     "imagePullSecret": {
       "type": "object",
+      "description": "Image pull secret — not needed for the public images. Enable only if you mirror them into a private registry (global.imageRegistry, images.*.registry).",
       "properties": {
-        "enabled": { "type": "boolean" },
-        "name": { "type": "string" },
-        "dockerconfigjson": { "type": "string" }
+        "enabled": {
+          "type": "boolean",
+          "description": "Render a pull Secret and reference it from every pod. Not needed for the public images."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the pull Secret (rendered by the chart, or created by you with an empty dockerconfigjson)."
+        },
+        "dockerconfigjson": {
+          "type": "string",
+          "description": "base64 of a ~/.docker/config.json. Prefer creating the Secret yourself: kubectl -n <ns> create secret docker-registry axera-pull-secret --docker-server=<registry> ... and leaving this empty. Never commit it."
+        }
+      }
+    },
+    "secrets": {
+      "type": "object",
+      "description": "Secrets (templates/10-secrets.yaml) create: true (default) — the chart renders axera-db-secrets, axera-app-secret and kafka-external-secret. Every blank secret value (postgres.password, app.accessTokenSecret, app.adminPassword, app.encryptionKey, app.encryptionIV, app.internalToken) is read back from the existing Secret on upgrade, else generated. The Secrets carry helm.sh/resource-policy: keep (uninstall leaves them). create: false — the chart renders NO Secret. Create them yourself with these keys: axera-db-secrets : POSTGRES_USER, POSTGRES_PASSWORD, APP_DB_NAME, RADAR_DB_NAME, APP_DB_CONNSTR, RADAR_DB_CONNSTR axera-app-secret : AccessTokenSecret (64+ chars), AdminCredentials__Username, AdminCredentials__Email, AdminCredentials__Password, Encryption__Key (base64 of 32 bytes), Encryption__IV (base64 of 16 bytes), Internal__Token kafka-external-secret : KafkaServer, Kafka__BootstrapServers, Kafka__SecurityProtocol, Kafka__SaslMechanism, Kafka__SaslUsername, Kafka__SaslPassword, Kafka__SslCaLocation (/etc/kafka-certs/ca.crt or \"\"), ca.crt GitOps (Argo CD renders with helm template, where lookup answers empty): use create: false or existingSecrets, or every render generates new values.",
+      "properties": {
+        "create": {
+          "type": "boolean",
+          "description": "true: the chart renders axera-db-secrets, axera-app-secret and kafka-external-secret (generated values kept on upgrade). false: no Secret is rendered; create them yourself."
+        },
+        "existingSecrets": {
+          "type": "object",
+          "description": "Name a Secret of your own (same keys as above) per kind; the chart then renders no Secret of that kind and every workload reads the named one. Empty = the chart's own Secret.",
+          "properties": {
+            "db": {
+              "type": "string",
+              "description": "A Secret of your own with the axera-db-secrets keys; empty = the chart's Secret."
+            },
+            "app": {
+              "type": "string",
+              "description": "A Secret of your own with the axera-app-secret keys; empty = the chart's Secret."
+            },
+            "kafka": {
+              "type": "string",
+              "description": "A Secret of your own with the kafka-external-secret keys; empty = the chart's Secret."
+            }
+          }
+        }
+      }
+    },
+    "dataTier": {
+      "type": "object",
+      "description": "Data tier guard (templates/00-validate.yaml) The chart records where the data lives on its Secrets (platform.axerasecurity.com/postgres-tier, platform.axerasecurity.com/postgres-flavor, platform.axerasecurity.com/kafka-tier). A helm upgrade whose values ask for another tier or PostgreSQL image flavour is REFUSED: the usual cause is a values file left out of the command, which would start the platform on new, EMPTY databases. To change it on purpose (data moved), pass --set dataTier.allowChange=true to that one command; never keep it in a values file.",
+      "properties": {
+        "allowChange": {
+          "type": "boolean",
+          "description": "true lets ONE helm upgrade change the PostgreSQL / Kafka tier or the PostgreSQL image flavour. Pass with --set, never keep it in a values file."
+        }
+      }
+    },
+    "logging": {
+      "type": "object",
+      "description": "Logging — Serilog minimum levels: Verbose | Debug | Information | Warning | Error | Fatal.",
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": [
+            "Verbose",
+            "Debug",
+            "Information",
+            "Warning",
+            "Error",
+            "Fatal"
+          ],
+          "description": "Global minimum level. Raise to Information/Debug to troubleshoot. The once-a-minute ingest summaries stay at Information unless overrides name them."
+        },
+        "overrides": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "Verbose",
+              "Debug",
+              "Information",
+              "Warning",
+              "Error",
+              "Fatal"
+            ]
+          },
+          "description": "Per-source overrides applied on top of level. Set to {} to disable.",
+          "properties": {
+            "Microsoft.AspNetCore": {
+              "type": "string"
+            },
+            "Microsoft.EntityFrameworkCore": {
+              "type": "string"
+            },
+            "Microsoft.EntityFrameworkCore.Database.Command": {
+              "type": "string"
+            },
+            "System.Net.Http.HttpClient": {
+              "type": "string"
+            }
+          }
+        }
       }
     },
     "images": {
       "type": "object",
+      "description": "Container images, every one pinned by digest (quay manifest-list / index digests). The axera.image helper prefers `digest` over `tag`. For an air-gapped install mirror the images listed in Chart.yaml (artifacthub.io/images) and set global.imageRegistry or images.<name>.registry.",
+      "properties": {
+        "api": {
+          "type": "object",
+          "properties": {
+            "registry": {
+              "type": "string",
+              "description": "Registry for this image; empty = global.imageRegistry."
+            },
+            "repo": {
+              "type": "string"
+            },
+            "tag": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "digest": {
+              "type": "string",
+              "pattern": "^(sha256:[a-f0-9]{64})?$",
+              "description": "Preferred over tag when set."
+            }
+          }
+        },
+        "allowdropmonitor": {
+          "type": "object",
+          "properties": {
+            "registry": {
+              "type": "string",
+              "description": "Registry for this image; empty = global.imageRegistry."
+            },
+            "repo": {
+              "type": "string"
+            },
+            "tag": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "digest": {
+              "type": "string",
+              "pattern": "^(sha256:[a-f0-9]{64})?$",
+              "description": "Preferred over tag when set."
+            }
+          }
+        },
+        "radar": {
+          "type": "object",
+          "properties": {
+            "registry": {
+              "type": "string",
+              "description": "Registry for this image; empty = global.imageRegistry."
+            },
+            "repo": {
+              "type": "string"
+            },
+            "tag": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "digest": {
+              "type": "string",
+              "pattern": "^(sha256:[a-f0-9]{64})?$",
+              "description": "Preferred over tag when set."
+            }
+          }
+        },
+        "networkpolicywatcher": {
+          "type": "object",
+          "properties": {
+            "registry": {
+              "type": "string",
+              "description": "Registry for this image; empty = global.imageRegistry."
+            },
+            "repo": {
+              "type": "string"
+            },
+            "tag": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "digest": {
+              "type": "string",
+              "pattern": "^(sha256:[a-f0-9]{64})?$",
+              "description": "Preferred over tag when set."
+            }
+          }
+        },
+        "mcp": {
+          "type": "object",
+          "properties": {
+            "registry": {
+              "type": "string",
+              "description": "Registry for this image; empty = global.imageRegistry."
+            },
+            "repo": {
+              "type": "string"
+            },
+            "tag": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "digest": {
+              "type": "string",
+              "pattern": "^(sha256:[a-f0-9]{64})?$",
+              "description": "Preferred over tag when set."
+            }
+          }
+        },
+        "frontend": {
+          "type": "object",
+          "properties": {
+            "registry": {
+              "type": "string",
+              "description": "Registry for this image; empty = global.imageRegistry."
+            },
+            "repo": {
+              "type": "string"
+            },
+            "tag": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "digest": {
+              "type": "string",
+              "pattern": "^(sha256:[a-f0-9]{64})?$",
+              "description": "Preferred over tag when set."
+            }
+          }
+        },
+        "postgres": {
+          "type": "object",
+          "description": "The in-cluster PostgreSQL. flavor: auto (rhel on OpenShift, alpine elsewhere) | rhel | alpine. rhel — Red Hat-certified PostgreSQL 16 (registry.redhat.io; covered by the OpenShift pull secret). Data in /var/lib/pgsql/data, uid 26. alpine — community PostgreSQL 16 (public mirror on quay.io/axera). Data in a PGDATA subdirectory, uid 70. The migrate Jobs and wait containers reuse this image (psql / pg_isready). There is no in-place switch between flavours: the data-tier guard refuses one.",
+          "properties": {
+            "flavor": {
+              "type": "string",
+              "enum": [
+                "auto",
+                "rhel",
+                "alpine"
+              ],
+              "description": "auto (rhel on OpenShift, alpine elsewhere) | rhel | alpine."
+            },
+            "rhel": {
+              "type": "object",
+              "properties": {
+                "registry": {
+                  "type": "string",
+                  "description": "Registry for this image; empty = global.imageRegistry."
+                },
+                "repo": {
+                  "type": "string"
+                },
+                "tag": {
+                  "type": [
+                    "string",
+                    "number"
+                  ]
+                },
+                "digest": {
+                  "type": "string",
+                  "pattern": "^(sha256:[a-f0-9]{64})?$",
+                  "description": "Preferred over tag when set."
+                }
+              }
+            },
+            "alpine": {
+              "type": "object",
+              "properties": {
+                "registry": {
+                  "type": "string",
+                  "description": "Registry for this image; empty = global.imageRegistry."
+                },
+                "repo": {
+                  "type": "string"
+                },
+                "tag": {
+                  "type": [
+                    "string",
+                    "number"
+                  ]
+                },
+                "digest": {
+                  "type": "string",
+                  "pattern": "^(sha256:[a-f0-9]{64})?$",
+                  "description": "Preferred over tag when set."
+                }
+              }
+            },
+            "registry": {
+              "description": "Layout of an earlier chart: refused at install with the new key named. Use images.postgres.<rhel|alpine>.registry."
+            },
+            "repo": {
+              "description": "Layout of an earlier chart: refused at install with the new key named. Use images.postgres.<rhel|alpine>.repo."
+            },
+            "tag": {
+              "description": "Layout of an earlier chart: refused at install with the new key named. Use images.postgres.<rhel|alpine>.tag."
+            },
+            "digest": {
+              "description": "Layout of an earlier chart: refused at install with the new key named. Use images.postgres.<rhel|alpine>.digest."
+            }
+          },
+          "additionalProperties": false
+        },
+        "postgresBackup": {
+          "type": "object",
+          "description": "The image of the backup / restore Jobs the API creates with an EXTERNAL PostgreSQL, per flavour (pg_dump must be at least as new as the server). The in-cluster databases' Jobs use the server image (images.postgres). backup.pgImage overrides both with a full image reference.",
+          "properties": {
+            "rhel": {
+              "type": "object",
+              "properties": {
+                "registry": {
+                  "type": "string",
+                  "description": "Registry for this image; empty = global.imageRegistry."
+                },
+                "repo": {
+                  "type": "string"
+                },
+                "tag": {
+                  "type": [
+                    "string",
+                    "number"
+                  ]
+                },
+                "digest": {
+                  "type": "string",
+                  "pattern": "^(sha256:[a-f0-9]{64})?$",
+                  "description": "Preferred over tag when set."
+                }
+              }
+            },
+            "alpine": {
+              "type": "object",
+              "properties": {
+                "registry": {
+                  "type": "string",
+                  "description": "Registry for this image; empty = global.imageRegistry."
+                },
+                "repo": {
+                  "type": "string"
+                },
+                "tag": {
+                  "type": [
+                    "string",
+                    "number"
+                  ]
+                },
+                "digest": {
+                  "type": "string",
+                  "pattern": "^(sha256:[a-f0-9]{64})?$",
+                  "description": "Preferred over tag when set."
+                }
+              }
+            },
+            "registry": {
+              "description": "Layout of an earlier chart: refused at install with the new key named. Use images.postgresBackup.<rhel|alpine>.registry."
+            },
+            "repo": {
+              "description": "Layout of an earlier chart: refused at install with the new key named. Use images.postgresBackup.<rhel|alpine>.repo."
+            },
+            "tag": {
+              "description": "Layout of an earlier chart: refused at install with the new key named. Use images.postgresBackup.<rhel|alpine>.tag."
+            },
+            "digest": {
+              "description": "Layout of an earlier chart: refused at install with the new key named. Use images.postgresBackup.<rhel|alpine>.digest."
+            }
+          },
+          "additionalProperties": false
+        },
+        "kafka": {
+          "type": "object",
+          "properties": {
+            "registry": {
+              "type": "string",
+              "description": "Registry for this image; empty = global.imageRegistry."
+            },
+            "repo": {
+              "type": "string"
+            },
+            "tag": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "digest": {
+              "type": "string",
+              "pattern": "^(sha256:[a-f0-9]{64})?$",
+              "description": "Preferred over tag when set."
+            }
+          },
+          "description": "Internal Kafka is a single-node convenience. For production use your own Kafka (kafka.external)."
+        },
+        "kafkaUi": {
+          "type": "object",
+          "properties": {
+            "registry": {
+              "type": "string",
+              "description": "Registry for this image; empty = global.imageRegistry."
+            },
+            "repo": {
+              "type": "string"
+            },
+            "tag": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "digest": {
+              "type": "string",
+              "pattern": "^(sha256:[a-f0-9]{64})?$",
+              "description": "Preferred over tag when set."
+            }
+          }
+        },
+        "aiModel": {
+          "type": "object",
+          "properties": {
+            "registry": {
+              "type": "string",
+              "description": "Registry for this image; empty = global.imageRegistry."
+            },
+            "repo": {
+              "type": "string"
+            },
+            "tag": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "digest": {
+              "type": "string",
+              "pattern": "^(sha256:[a-f0-9]{64})?$",
+              "description": "Preferred over tag when set."
+            }
+          },
+          "description": "The local AI model server (ai.enabled, off by default). Not versioned with the Axera images."
+        },
+        "aiModelWeights": {
+          "type": "object",
+          "properties": {
+            "registry": {
+              "type": "string",
+              "description": "Registry for this image; empty = global.imageRegistry."
+            },
+            "repo": {
+              "type": "string"
+            },
+            "tag": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "digest": {
+              "type": "string",
+              "pattern": "^(sha256:[a-f0-9]{64})?$",
+              "description": "Preferred over tag when set."
+            }
+          },
+          "description": "ai.modelSource=image only: an image whose /models-src holds the model tree (your build)."
+        },
+        "ollama": {
+          "description": "Layout of an earlier chart: refused at install with the new key named. Use images.aiModel."
+        },
+        "ollamaModels": {
+          "description": "Layout of an earlier chart: refused at install with the new key named. Use images.aiModelWeights."
+        }
+      },
+      "additionalProperties": false
+    },
+    "operands": {
+      "type": "object",
+      "description": "Generation of the images above. true since the v14 images: httpGet /healthz probes, and the install's own identities in AXERA_LOCAL_SERVICE_ACCOUNTS. false only for images before v13.3.0 (tcpSocket probes). Leave it.",
+      "properties": {
+        "v1330": {
+          "type": "boolean",
+          "description": "true for the v14+ images (httpGet /healthz probes). Leave it."
+        }
+      }
+    },
+    "operator": {
+      "type": "object",
+      "description": "Inert under Helm (kept for values compatibility with the operator): the operator's own ServiceAccount, \"<namespace>:<name>\".",
+      "properties": {
+        "serviceAccount": {
+          "type": "string",
+          "description": "Inert under Helm."
+        }
+      }
+    },
+    "probes": {
+      "type": "object",
+      "description": "Probe kind override for the product containers: \"http\" or \"tcp\". Empty follows operands.v1330. liveness: the budget before the kubelet restarts a container (product containers and the in-cluster PostgreSQL, Kafka and AI model). More tolerant than readiness on purpose: a node short of memory slows /healthz long before a process is wedged.",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "",
+            "http",
+            "tcp"
+          ],
+          "description": "http | tcp | empty (follows operands.v1330)."
+        },
+        "liveness": {
+          "type": "object",
+          "description": "Liveness budget before the kubelet restarts a container.",
+          "properties": {
+            "periodSeconds": {
+              "type": "integer"
+            },
+            "timeoutSeconds": {
+              "type": "integer"
+            },
+            "failureThreshold": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    },
+    "scheduling": {
+      "type": "object",
       "additionalProperties": {
         "type": "object",
         "properties": {
-          "repo": { "type": "string" },
-          "tag": { "type": ["string", "number"] },
-          "registry": { "type": "string" }
-        },
-        "required": ["repo", "tag"]
+          "nodeSelector": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "affinity": {
+            "type": "object"
+          },
+          "tolerations": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "priorityClassName": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Pod placement: default applies to every pod, a component block (api, radar, frontend, allowDropMonitor, networkPolicyWatcher, mcp, postgres, kafka, aiModel, jobs) overrides it field by field. Each block: nodeSelector, affinity, tolerations, priorityClassName, rendered verbatim. global.archNodeSelector adds kubernetes.io/arch: amd64 to the nodeSelector off OpenShift."
+    },
+    "podSecurity": {
+      "type": "object",
+      "description": "Container hardening of the product containers (api, allowdropmonitor, radar, networkpolicywatcher, frontend; mcp always has it): allowPrivilegeEscalation false, drop ALL capabilities, seccomp RuntimeDefault, runAsNonRoot (they run as the numeric USER 1001). The psql containers of the Jobs run as the PostgreSQL image's user (alpine 70, rhel 26). auto (default) → on everywhere except OpenShift (the SCC owns these settings there) true / false → force",
+      "properties": {
+        "hardenAppContainers": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "enum": [
+            true,
+            false,
+            "auto"
+          ],
+          "description": "auto (on everywhere except OpenShift) | true | false."
+        }
       }
     },
     "postgres": {
       "type": "object",
+      "description": "POSTGRESQL — internal vs external",
       "properties": {
-        "external": { "type": "boolean" },
-        "user": { "type": "string" },
-        "password": { "type": "string" },
-        "storage": { "type": "string" },
-        "appDbName": { "type": "string" },
-        "radarDbName": { "type": "string" },
-        "appDbConnString": { "type": "string" },
-        "radarConnString": { "type": "string" },
-        "runMigrations": { "type": "boolean" }
+        "external": {
+          "type": "boolean",
+          "description": "true → use external connection strings (no in-cluster PostgreSQL). false → deploy two in-cluster PostgreSQL StatefulSets (app, radar)."
+        },
+        "user": {
+          "type": "string",
+          "description": "The database user. Empty → the existing Secret's POSTGRES_USER, else postgres. With the rhel image keep user \"postgres\" (the image's superuser)."
+        },
+        "password": {
+          "type": "string",
+          "description": "Empty → generated on first install and kept (read back from the Secret) on upgrades."
+        },
+        "storage": {
+          "type": "string",
+          "description": "Volume size of EACH in-cluster PostgreSQL StatefulSet."
+        },
+        "appDbName": {
+          "type": "string",
+          "description": "Application database name."
+        },
+        "radarDbName": {
+          "type": "string",
+          "description": "Radar (flow analytics) database name."
+        },
+        "appDbConnString": {
+          "type": "string",
+          "description": "Used when external=true: Npgsql connection strings, e.g. Host=<pg-host>;Port=5432;Database=MicrosegmentationDB;Username=<user>;Password=<password>;SslMode=VerifyFull The migrate Jobs read Host/Port/Database/Username/Password/SslMode and split on ';' (no ';' in the password). SslMode VerifyCA / VerifyFull checks the server certificate against postgres.caSecret, else the image's system CA bundle. Required on the first install unless you bring the Secret (secrets.existingSecrets.db); an upgrade that leaves them empty keeps the ones in the Secret."
+        },
+        "radarConnString": {
+          "type": "string",
+          "description": "External Radar database connection string (Npgsql format)."
+        },
+        "caSecret": {
+          "type": "string",
+          "description": "External PostgreSQL with a private CA: a Secret in this namespace holding the PEM CA under the key ca.crt. Trusted by the migrate and trial Jobs and the api, radar, networkpolicywatcher and allowdropmonitor pods (PGSSLROOTCERT); not by the backup Jobs the API starts. Empty → system CA bundle."
+        },
+        "runMigrations": {
+          "type": "boolean",
+          "description": "Run the schema migrations as Jobs against both databases (bundled sql/{app,radar}-init.sql). Idempotent — safe to re-run."
+        },
+        "tuning": {
+          "type": "object",
+          "description": "Server settings of the two in-cluster PostgreSQL StatefulSets (external=false), sized for the default resources.postgres memory limit (2Gi): shared_buffers a quarter of it, effective cache three quarters. Scale them with the limit. rhel: env + include file; alpine: -c arguments.",
+          "properties": {
+            "sharedBuffers": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "effectiveCacheSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "maxConnections": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "workMem": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "maintenanceWorkMem": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "maxWalSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "checkpointCompletionTarget": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "randomPageCost": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "SSD / network block storage"
+            },
+            "autovacuumVacuumScaleFactor": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "autovacuumAnalyzeScaleFactor": {
+              "type": [
+                "string",
+                "number"
+              ]
+            }
+          }
+        }
       }
     },
     "kafka": {
       "type": "object",
+      "description": "KAFKA — internal vs external",
       "properties": {
-        "external": { "type": "boolean" },
-        "storage": { "type": "string" },
-        "enableUI": { "type": "boolean" },
-        "bootstrapServers": { "type": "string" },
-        "securityProtocol": { "type": "string" },
-        "saslMechanism": { "type": "string" },
-        "saslUsername": { "type": "string" },
-        "saslPassword": { "type": "string" },
-        "caCert": { "type": "string" },
-        "topics": { "type": "array", "items": { "type": "object" } },
-        "processTopics": { "type": "array", "items": { "type": "object" } }
+        "external": {
+          "type": "boolean",
+          "description": "true → use your Kafka cluster (no in-cluster Kafka, no kafka-ui). false → deploy a single-node KRaft Kafka in this namespace. It is advertised on its in-cluster DNS name in PLAINTEXT, so only agents on THIS cluster can produce to it: monitoring other clusters needs an external Kafka (profiles/values-external-data.yaml)."
+        },
+        "storage": {
+          "type": "string",
+          "description": "Used when external=false."
+        },
+        "clusterId": {
+          "type": "string",
+          "pattern": "^([A-Za-z0-9_-]{22})?$",
+          "description": "The KRaft cluster ID of the in-cluster broker. Empty → the ID kept in ConfigMap kafka-cluster-id (helm.sh/resource-policy: keep), else the one the running broker uses, else the fixed ID of the earlier charts, so an upgrade finds its formatted volume. 22 characters, base64url of 16 bytes."
+        },
+        "enableUI": {
+          "type": "boolean",
+          "description": "kafka-ui: a debugging aid with NO authentication. Off by default; never deployed with an external Kafka. When on it is a ClusterIP Service; reach it with `kubectl -n <ns> port-forward svc/kafka-ui 8080:8080`."
+        },
+        "uiIstioHost": {
+          "type": "string",
+          "description": "expose.type=Istio only: publish kafka-ui on this host through the same gateway (unsafe: no authentication). Empty = not published."
+        },
+        "bootstrapServers": {
+          "type": "string",
+          "description": "Used when external=true (the Radar Kafka client in any mode)."
+        },
+        "securityProtocol": {
+          "type": "string",
+          "enum": [
+            "",
+            "Plaintext",
+            "Ssl",
+            "SaslPlaintext",
+            "SaslSsl"
+          ],
+          "description": "Plaintext | Ssl | SaslPlaintext | SaslSsl. Empty: Plaintext in-cluster, SaslSsl external."
+        },
+        "saslMechanism": {
+          "type": "string",
+          "enum": [
+            "",
+            "Plain",
+            "ScramSha256",
+            "ScramSha512"
+          ],
+          "description": "Plain | ScramSha256 | ScramSha512. Required with SaslPlaintext / SaslSsl (kept from the existing Secret on upgrade). The agents support Plain and ScramSha512 on a shared broker."
+        },
+        "saslUsername": {
+          "type": "string",
+          "description": "SASL user (external Kafka)."
+        },
+        "saslPassword": {
+          "type": "string",
+          "description": "SASL password (external Kafka). Prefer secrets.existingSecrets.kafka."
+        },
+        "caCert": {
+          "type": "string",
+          "description": "Custom CA certificate (PEM). Empty → the system CA bundle."
+        },
+        "topics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "topic"
+            ],
+            "properties": {
+              "topic": {
+                "type": "string",
+                "minLength": 1
+              },
+              "groupId": {
+                "type": "string"
+              },
+              "clusterName": {
+                "type": "string"
+              }
+            }
+          },
+          "description": "Flow topics consumed by Radar (explicit list). With kafka.clusters below, the per-cluster topics are derived and this list can stay as it is."
+        },
+        "processTopics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "topic"
+            ],
+            "properties": {
+              "topic": {
+                "type": "string",
+                "minLength": 1
+              },
+              "groupId": {
+                "type": "string"
+              },
+              "clusterName": {
+                "type": "string"
+              }
+            }
+          },
+          "description": "Per-cluster process-sensor topics for Radar \"Process Activity\": - { topic: <cluster>-process, clusterName: <cluster>, groupId: axera-process }"
+        },
+        "dnsTopics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "topic"
+            ],
+            "properties": {
+              "topic": {
+                "type": "string",
+                "minLength": 1
+              },
+              "groupId": {
+                "type": "string"
+              },
+              "clusterName": {
+                "type": "string"
+              }
+            }
+          },
+          "description": "DNS topics (opt-in per agent): - { topic: <cluster>-dns, clusterName: <cluster>, groupId: axera-dns }"
+        },
+        "interClusterTopics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "topic"
+            ],
+            "properties": {
+              "topic": {
+                "type": "string",
+                "minLength": 1
+              },
+              "groupId": {
+                "type": "string"
+              },
+              "clusterName": {
+                "type": "string"
+              }
+            }
+          },
+          "description": "Cross-cluster (Submariner / Globalnet) topics. Empty = single-cluster install."
+        },
+        "ingressTopics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "topic"
+            ],
+            "properties": {
+              "topic": {
+                "type": "string",
+                "minLength": 1
+              },
+              "groupId": {
+                "type": "string"
+              },
+              "clusterName": {
+                "type": "string"
+              }
+            }
+          },
+          "description": "North-south ingress topics (normally the shared \"ingress-flows\"). Each entry: { topic, clusterName (only for a topic dedicated to one cluster), groupId }."
+        },
+        "ingress": {
+          "type": "object",
+          "description": "Radar's switch for the ingress lane. With no ingress topic the lane reports \"not configured\".",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Radar's north-south ingress lane."
+            }
+          }
+        },
+        "globalnet": {
+          "type": "object",
+          "description": "Globalnet reflector: resolves a Submariner peer's Globalnet egress IP back to its cluster and workload. Without Submariner it finds nothing and idles.",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Resolve Submariner Globalnet egress IPs back to their cluster and workload."
+            },
+            "refreshSeconds": {
+              "type": "integer"
+            }
+          }
+        },
+        "clusters": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Topic catalogue by convention: the agents' cluster names (exactly as each cluster is registered in Axera). Radar derives \"<c>\" (flows), \"<c>-process\" and \"<c>-dns\" per cluster plus the shared topics below and merges them with the explicit lists above. Adding a cluster = one entry here + helm upgrade. Empty = exactly the explicit lists."
+        },
+        "sharedTopics": {
+          "type": "object",
+          "description": "Shared topics added with clusters (ignored without).",
+          "properties": {
+            "external": {
+              "type": "boolean",
+              "description": "external-flows"
+            },
+            "ingress": {
+              "type": "boolean",
+              "description": "ingress-flows"
+            },
+            "interCluster": {
+              "type": "boolean",
+              "description": "intercluster-flows"
+            }
+          }
+        },
+        "topicProvisioning": {
+          "type": "object",
+          "description": "How Radar provisions or verifies the Kafka topics.",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "",
+                "Create",
+                "Verify",
+                "Off",
+                "Strimzi"
+              ],
+              "description": "Create | Verify | Off | Strimzi. Empty: Create with the in-cluster Kafka, Verify with an external one. Create makes the missing topics with the lane profile and never alters an existing topic; Verify only reports; Strimzi renders one KafkaTopic per derived topic (strimzi.clusterName required) and Radar verifies."
+            },
+            "intervalMinutes": {
+              "type": "integer",
+              "description": "0 = Radar's default (10)"
+            },
+            "replicationFactor": {
+              "type": "integer",
+              "description": "0 = min(3, brokers)"
+            },
+            "profiles": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "partitions": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "retentionHours": {
+                    "type": "integer"
+                  },
+                  "retentionBytes": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "description": "Per lane (flows, external, ingress, interCluster, process, dns): { partitions, retentionHours, retentionBytes (per partition, -1 = unlimited) }. Defaults: flows 3 / 2 / 10 GiB, every other lane 1 / 2 / 2 GiB."
+            },
+            "strimzi": {
+              "type": "object",
+              "description": "Strimzi mode: the KafkaTopic owner cluster and namespace.",
+              "properties": {
+                "clusterName": {
+                  "type": "string"
+                },
+                "namespace": {
+                  "type": "string",
+                  "description": "empty = the Axera namespace"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "ai": {
       "type": "object",
+      "description": "AI ASSISTANT (incident triage) — local AI model vs your own endpoint. OFF by default. Provider-agnostic in the backend. Strictly additive: if the model is unreachable the incident UI keeps working without AI.",
       "properties": {
-        "enabled": { "type": "boolean" },
-        "external": { "type": "boolean" },
-        "baseUrl": { "type": "string" },
-        "model": { "type": "string" },
-        "extraModels": { "type": "array", "items": { "type": "string" } },
-        "temperature": { "type": "string" },
-        "timeoutSeconds": { "type": "string" },
-        "storage": { "type": "string" },
-        "pullModel": { "type": "boolean" },
+        "enabled": {
+          "type": "boolean",
+          "description": "Master switch. false → Ai__Enabled=false, no model contacted, no model server pod."
+        },
+        "external": {
+          "type": "boolean",
+          "description": "true → point the API at your endpoint (ai.baseUrl). false → deploy the local AI model server in this namespace (requests 6Gi memory)."
+        },
+        "baseUrl": {
+          "type": "string",
+          "description": "Used when external=true, e.g. http://my-llm.ai-team.svc:11434"
+        },
+        "model": {
+          "type": "string",
+          "description": "Model tag the API requests and the pull / copy step supplies. Check the model's licence for redistribution before mirroring weights into your registry."
+        },
+        "modelSource": {
+          "type": "string",
+          "enum": [
+            "registry",
+            "image",
+            "preloaded"
+          ],
+          "description": "How the model weights get onto the volume: registry - a Job pulls them from the PUBLIC model registry (connected clusters only). image - the weights ship as an image (images.aiModelWeights) copied onto the volume by an init container: the air-gapped path. preloaded - the volume already holds the model tree. Nothing is fetched or copied."
+        },
+        "extraModels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Extra models pulled alongside `model`. Add a tag only after routing a feature to it in Settings > Security > AI Platform > Feature routing."
+        },
+        "temperature": {
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "timeoutSeconds": {
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "storage": {
+          "type": "string",
+          "description": "Local AI model only (external=false):"
+        },
+        "pullModel": {
+          "type": "boolean"
+        },
         "advisory": {
           "type": "object",
+          "description": "Behavioral-anomaly advisory job. These values only seed the settings on first boot; the toggle and tuning live in the AI settings page afterwards.",
           "properties": {
-            "enabled": { "type": "boolean" },
-            "cron": { "type": "string" },
-            "lookbackHours": { "type": "integer" },
-            "maxWorkloads": { "type": "integer" },
-            "maxDestinationsPerWorkload": { "type": "integer" },
-            "minConfidence": { "type": "integer" }
+            "enabled": {
+              "type": "boolean"
+            },
+            "cron": {
+              "type": "string"
+            },
+            "lookbackHours": {
+              "type": "integer"
+            },
+            "maxWorkloads": {
+              "type": "integer"
+            },
+            "maxDestinationsPerWorkload": {
+              "type": "integer"
+            },
+            "minConfidence": {
+              "type": "integer"
+            }
+          }
+        },
+        "policyAdvisory": {
+          "type": "object",
+          "description": "Background policy-recommendation pass. Seeds only, like advisory.",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "intervalHours": {
+              "type": "integer"
+            },
+            "maxPolicies": {
+              "type": "integer"
+            }
           }
         }
       }
     },
     "app": {
       "type": "object",
+      "description": "Application-wide secrets and config Every secret value below is GENERATED on first install when left empty and read back from the existing Secret on upgrades. Set one only to pin a known value; NEVER commit real secrets.",
       "properties": {
-        "accessTokenSecret": { "type": "string" },
-        "adminUsername": { "type": "string" },
-        "adminEmail": { "type": "string" },
-        "adminPassword": { "type": "string" },
-        "encryptionKey": { "type": "string" },
-        "encryptionIV": { "type": "string" },
-        "internalToken": { "type": "string" },
-        "dpKeysStore": { "type": "string", "enum": ["FileSystem", "Database"] },
-        "corsOrigins": { "type": "array", "items": { "type": "string" } },
-        "ovn": { "type": "object" },
-        "archiverIntervalMinutes": { "type": "integer" }
+        "accessTokenSecret": {
+          "type": "string",
+          "anyOf": [
+            {
+              "maxLength": 0
+            },
+            {
+              "minLength": 64
+            }
+          ],
+          "description": "JWT signing key (64+ characters)"
+        },
+        "adminUsername": {
+          "type": "string"
+        },
+        "adminEmail": {
+          "type": "string"
+        },
+        "adminPassword": {
+          "type": "string",
+          "description": "retrieve from the Secret (see the release notes)"
+        },
+        "encryptionKey": {
+          "type": "string",
+          "description": "AES-256 key, base64 of 32 bytes"
+        },
+        "encryptionIV": {
+          "type": "string",
+          "description": "AES IV, base64 of 16 bytes"
+        },
+        "secretsEncryptionKey": {
+          "type": "string",
+          "description": "Secrets__EncryptionKey: key of the third-party credentials stored in the database (registered clusters' tokens, integration passwords), base64 of 32 bytes. Empty → generated once and kept. Pin it only to carry an existing database's credentials over."
+        },
+        "internalToken": {
+          "type": "string",
+          "description": "pod-to-pod /api/Internal shared secret"
+        },
+        "protectedNamespaces": {
+          "type": "string",
+          "description": "Extra namespaces that deploy, the watcher and NDR containment must never write into (comma-separated). \"axera\" is where the axera-force agent runs."
+        },
+        "ownServiceAccounts": {
+          "type": [
+            "array",
+            "string"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Further ServiceAccounts that are Axera's own (list or comma-separated string), matched EXACTLY: \"cluster/namespace:name\" → Axera's own on that registered cluster only. \"namespace:name\" → on EVERY registered cluster (only for a namespace no tenant can create). The install's own axera-sa and axera-integration-sa are added automatically."
+        },
+        "dpKeysStore": {
+          "type": "string",
+          "enum": [
+            "FileSystem",
+            "Database"
+          ],
+          "description": "DataProtection key-ring store for the API: FileSystem → keys on a 128Mi RWO volume (axera-dp-keys, kept on uninstall). Database → keys in the app database: no volume."
+        },
+        "corsOrigins": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "CORS origins added to all services. The public UI URL (Route host or expose.frontend.host) is added automatically."
+        },
+        "ovn": {
+          "type": "object",
+          "description": "AllowDropMonitor (OVN-Kubernetes ACL log collector; allowDropMonitor.enabled) settings.",
+          "properties": {
+            "podListUrl": {
+              "type": "string"
+            },
+            "namespace": {
+              "type": "string"
+            },
+            "container": {
+              "type": "string"
+            },
+            "logPodLabelSelector": {
+              "type": "string"
+            },
+            "reconnectSeconds": {
+              "type": "integer"
+            },
+            "aggIntervalMin": {
+              "type": "integer"
+            },
+            "recordRetentionHours": {
+              "type": "integer"
+            }
+          }
+        },
+        "archiverIntervalMinutes": {
+          "type": "integer",
+          "description": "Radar archiver"
+        },
+        "mesh": {
+          "type": "object",
+          "description": "Mesh verdict ledger (Radar): live rows and the day buckets that answer \"how many mesh denials last week\". siemForward* turn on the \"mesh-verdict\" SIEM stream.",
+          "properties": {
+            "liveRetentionDays": {
+              "type": "integer"
+            },
+            "dailyRetentionDays": {
+              "type": "integer"
+            },
+            "siemForwardEnabled": {
+              "type": "boolean"
+            },
+            "siemForwardAllows": {
+              "type": "boolean"
+            }
+          }
+        },
+        "flowVerdictLedger": {
+          "type": "object",
+          "description": "Flow verdict ledger: the Analytics allow / probable-drop figures, derived from the flow agent's TCP records on every monitored cluster (CNI-independent).",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "pairHourlyRetentionDays": {
+              "type": "integer"
+            },
+            "retentionDays": {
+              "type": "integer"
+            }
+          }
+        },
+        "performance": {
+          "type": "object",
+          "description": "Throughput and retention knobs, each rendered only when set (backend defaults otherwise).",
+          "properties": {
+            "edgeTouchSeconds": {
+              "type": "integer"
+            },
+            "volumeRollupRetentionDays": {
+              "type": "integer"
+            },
+            "flowLanes": {
+              "type": "object",
+              "properties": {
+                "maxBatchSize": {
+                  "type": "integer"
+                },
+                "channelCapacity": {
+                  "type": "integer"
+                },
+                "eastWestWriters": {
+                  "type": "integer"
+                }
+              }
+            },
+            "ingressBatchMaxWaitMs": {
+              "type": "integer"
+            },
+            "ingressBatchMaxRecords": {
+              "type": "integer"
+            },
+            "dnsFlushSeconds": {
+              "type": "integer"
+            },
+            "incidentReporterMaxConcurrentFlushes": {
+              "type": "integer"
+            },
+            "hangfireWorkerCount": {
+              "type": "integer"
+            },
+            "kafkaConsumerFetchMinBytes": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    },
+    "kerberos": {
+      "type": "object",
+      "description": "Radar's process-to-pod association mode (off | shadow | on) with optional clusters / nodes lists. Normally left unset (Radar's default, shadow). processAssociation: { mode: shadow, clusters: [], nodes: [] } Kerberos (SPNEGO) single sign-on for the web console. Off by default. Create a Secret with the service keytab in this namespace, e.g. kubectl -n <ns> create secret generic axera-kerberos --from-file=krb5.keytab=axera.keytab then enable it here. Realm, SPN and the LDAP directory are set in the console.",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "keytabSecret": {
+          "type": "string"
+        },
+        "keytabKey": {
+          "type": "string"
+        },
+        "realm": {
+          "type": "string"
+        },
+        "keytabVersion": {
+          "type": "string",
+          "description": "Bump after rotating the keytab Secret to roll the API pod onto the new key."
+        },
+        "krb5Conf": {
+          "type": "string",
+          "description": "Full krb5.conf to use instead of the generated one (rarely needed)."
+        }
       }
     },
     "licensing": {
       "type": "object",
+      "description": "Licensing — trial bootstrap + node count strategy With trial.enabled and no licence at install time, a trial is seeded (works on every distribution). Off OpenShift a licence is not bound to a cluster ID, and the worker-node count uses the label node-role.kubernetes.io/worker.",
       "properties": {
         "nodeCountStrategy": {
           "type": "string",
-          "enum": ["HostOnly", "MonitoredOnly", "HostPlusMonitored"]
+          "enum": [
+            "HostOnly",
+            "MonitoredOnly",
+            "HostPlusMonitored"
+          ],
+          "description": "HostOnly | MonitoredOnly | HostPlusMonitored"
         },
-        "trial": { "type": "object" }
+        "trial": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "days": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "maxWorkerNodes": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "customer": {
+              "type": "string"
+            },
+            "edition": {
+              "type": "integer",
+              "enum": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "description": "0=Observe 1=Segment 2=NDR (full) 3=Mesh. The numbers are not the tier order (Observe < Segment < Mesh < NDR). Default NDR so evaluators see every module."
+            }
+          }
+        }
       }
     },
     "frontend": {
       "type": "object",
-      "properties": { "basepath": { "type": "string" } }
+      "description": "Frontend",
+      "properties": {
+        "basepath": {
+          "type": "string",
+          "description": "URL base path of the UI (\"\" = served at /)."
+        }
+      }
+    },
+    "expose": {
+      "type": "object",
+      "description": "Exposure of the UI (and /api/mcp)",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "Route",
+            "Ingress",
+            "Istio",
+            "LoadBalancer",
+            "ClusterIP"
+          ],
+          "description": "auto (default) | Route | Ingress | Istio | LoadBalancer | ClusterIP auto → Route on openshift, Istio on anthos, Ingress on k3s, rke2 and vanilla. Route → OpenShift Routes (routes.* below). OpenShift only. Ingress → networking.k8s.io/v1 Ingress \"frontend\": /api/mcp → mcp (with mcp.enabled), / → frontend:3000. Istio → Istio / Cloud Service Mesh VirtualService on an ingress Gateway (istio.*). LoadBalancer → the frontend Service becomes type LoadBalancer. The pods serve plain HTTP: only a load balancer that terminates TLS gives users https. /api/mcp is not reachable from outside (layer 4 cannot route by path). ClusterIP → nothing external (kubectl port-forward svc/frontend 3000:3000)."
+        },
+        "frontend": {
+          "type": "object",
+          "properties": {
+            "host": {
+              "type": "string",
+              "description": "The DNS name users browse to (Ingress, Istio; optional for LoadBalancer). Feeds CORS, the OAuth issuer and the app URL. Required for Istio; strongly recommended for Ingress."
+            },
+            "tls": {
+              "type": [
+                "boolean",
+                "string"
+              ],
+              "description": "true or false, unquoted (a quoted value is refused at install)."
+            },
+            "timeout": {
+              "type": [
+                "string",
+                "integer"
+              ],
+              "description": "Front-door request timeout (Ingress, Istio) in seconds: \"180s\" or 180. The outer step of the timeout ladder (this 180 s > frontend proxy 150 s > heavy reads and MCP upstream calls 120 s). The OpenShift Route uses routes.frontend.timeout (330 s).",
+              "pattern": "^[0-9]+s?$"
+            },
+            "hstsHeader": {
+              "type": "string",
+              "description": "Strict-Transport-Security set by the Istio VirtualService when tls is on (\"\" = none). ingress-nginx sets HSTS controller-wide (its ConfigMap)."
+            },
+            "loadBalancerIP": {
+              "type": "string",
+              "description": "--- LoadBalancer only ---"
+            },
+            "loadBalancerSourceRanges": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "serviceAnnotations": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "servicePort": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "externalTrafficPolicy": {
+              "type": "string",
+              "enum": [
+                "",
+                "Cluster",
+                "Local"
+              ],
+              "description": "LoadBalancer only. \"\" (Kubernetes default: Cluster) | Local: keeps the client address, so NetworkPolicy ipBlock peers match it where node-SNATed traffic matches none (GKE Dataplane V2). Needs a load balancer that health-checks nodes."
+            }
+          }
+        },
+        "ingress": {
+          "type": "object",
+          "properties": {
+            "className": {
+              "type": "string",
+              "description": "IngressClass name. Empty → traefik on k3s, nginx on rke2, the cluster's default IngressClass on vanilla. Clusters created on RKE2 1.36 or newer default to Traefik: set \"traefik\" there."
+            },
+            "tlsSecretName": {
+              "type": "string",
+              "description": "kubernetes.io/tls Secret in this namespace for the host (create it yourself, or let cert-manager create it via annotations). Empty → the controller's default certificate."
+            },
+            "nginxDefaults": {
+              "type": [
+                "boolean",
+                "string"
+              ],
+              "enum": [
+                true,
+                false,
+                "auto"
+              ],
+              "description": "The ingress-nginx annotations (proxy-read/send-timeout = expose.frontend.timeout, proxy-body-size 52m, ssl-redirect with TLS): auto (unless the class names Traefik) | true | false. Traefik has no per-Ingress equivalent: raise its entryPoint readTimeout to 180s with a HelmChartConfig (README, \"Traefik read timeout\"). With Traefik, TLS and a host the chart adds traefik.ingress.kubernetes.io/router.entrypoints: websecure."
+            },
+            "annotations": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "Extra annotations, merged OVER the defaults (a key here wins), e.g. cert-manager.io/cluster-issuer: <issuer>"
+            }
+          }
+        },
+        "auditIngest": {
+          "type": "object",
+          "description": "Publish POST /api/Internal/Audit (the remote agents' audit stream, token-guarded) on the UI host: an Exact-path Ingress api-audit, or a first VirtualService route. Ingress and Istio only (refused with LoadBalancer and ClusterIP); OpenShift Routes use routes.api.enabled.",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
     },
     "routes": {
       "type": "object",
+      "description": "OpenShift Routes (expose.type=Route only)",
       "properties": {
-        "frontend": { "type": "object" },
-        "kafkaUi": { "type": "object" }
+        "frontend": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "host": {
+              "type": "string",
+              "description": "Empty → frontend-<namespace>.<global.clusterDomain>, or assigned by OpenShift."
+            },
+            "timeout": {
+              "type": "string",
+              "description": "HAProxy per-request timeout of the frontend and /api/mcp Routes: the outermost rung of the timeout ladder. Empty → HAProxy's 30 s default."
+            },
+            "hstsHeader": {
+              "type": "string",
+              "description": "Strict-Transport-Security sent by the router on the frontend, mcp, kafka-ui and api Routes. Must satisfy any requiredHSTSPolicies on your IngressController. Empty → no header."
+            },
+            "tls": {
+              "type": "object",
+              "properties": {
+                "termination": {
+                  "type": "string",
+                  "enum": [
+                    "edge",
+                    "reencrypt",
+                    "passthrough"
+                  ]
+                },
+                "insecureEdgeTerminationPolicy": {
+                  "type": "string",
+                  "enum": [
+                    "Redirect",
+                    "Allow",
+                    "None",
+                    ""
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "kafkaUi": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "OFF: kafka-ui has NO authentication. Needs kafka.enableUI and the in-cluster Kafka."
+            },
+            "host": {
+              "type": "string"
+            },
+            "tls": {
+              "type": "object",
+              "properties": {
+                "termination": {
+                  "type": "string",
+                  "enum": [
+                    "edge",
+                    "reencrypt",
+                    "passthrough"
+                  ]
+                },
+                "insecureEdgeTerminationPolicy": {
+                  "type": "string",
+                  "enum": [
+                    "Redirect",
+                    "Allow",
+                    "None",
+                    ""
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "api": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Path-scoped Route so REMOTE agent audit forwarders can POST /api/Internal/Audit. Off by default; token-guarded; exposes ONLY `path`."
+            },
+            "host": {
+              "type": "string"
+            },
+            "path": {
+              "type": "string"
+            },
+            "tls": {
+              "type": "object",
+              "properties": {
+                "termination": {
+                  "type": "string",
+                  "enum": [
+                    "edge",
+                    "reencrypt",
+                    "passthrough"
+                  ]
+                },
+                "insecureEdgeTerminationPolicy": {
+                  "type": "string",
+                  "enum": [
+                    "Redirect",
+                    "Allow",
+                    "None",
+                    ""
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "istio": {
+      "type": "object",
+      "description": "Istio / Cloud Service Mesh (Anthos)",
+      "properties": {
+        "injection": {
+          "type": "string",
+          "description": "istio-injection label stamped on the namespace when the chart creates it on anthos (\"\" = no label). Keep \"disabled\": Axera does not need the mesh, and the API creates backup Jobs at runtime with no sidecar opt-out (a sidecar never exits, so such a Job would hang). Label a pre-created namespace yourself, and never enrol it in ambient mode."
+        },
+        "disableSidecarOnJobs": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "enum": [
+            true,
+            false,
+            "auto"
+          ],
+          "description": "sidecar.istio.io/inject: \"false\" (label and annotation) on the chart's Jobs and test pod: auto (on for anthos and for expose.type Istio) | true | false."
+        },
+        "virtualService": {
+          "type": "object",
+          "description": "expose.type=Istio only.",
+          "properties": {
+            "gateway": {
+              "type": "string",
+              "description": "Existing Gateway to bind to: \"<namespace>/<name>\". Required unless createGateway=true."
+            },
+            "createGateway": {
+              "type": "boolean",
+              "description": "Create a Gateway in this namespace bound to the ingress gateway pods below."
+            },
+            "gatewayName": {
+              "type": "string"
+            },
+            "gatewaySelector": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              },
+              "properties": {
+                "istio": {
+                  "type": "string"
+                }
+              }
+            },
+            "tlsCredentialName": {
+              "type": "string",
+              "description": "createGateway + expose.frontend.tls: the kubernetes.io/tls Secret name, in the ingress gateway's namespace (not this one)."
+            }
+          }
+        }
+      }
+    },
+    "mcp": {
+      "type": "object",
+      "description": "STANDALONE MCP (Model Context Protocol) TOOL SERVER (templates/44a-mcp.yaml) Serves Axera's tool catalogue at <UI URL>/api/mcp (Route, Ingress or Istio front door). Every tool call is forwarded with the caller's own bearer token and authorized by the API. Write tools are closed by default and opened per tool at Settings > Security > MCP Access.",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "allowedOrigins": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Browser origins allowed besides app.corsOrigins and the UI host, e.g. \"http://localhost:6274\"."
+        },
+        "maxRequestBodyBytes": {
+          "type": "integer",
+          "description": "Largest JSON-RPC request body accepted (bytes); a larger one is answered 413."
+        },
+        "route": {
+          "type": "object",
+          "properties": {
+            "disableCookies": {
+              "type": "boolean",
+              "description": "OpenShift: no sticky cookie on the /api/mcp Route (a stateless bearer-token API)."
+            }
+          }
+        }
+      }
+    },
+    "allowDropMonitor": {
+      "type": "object",
+      "description": "AllowDropMonitor — OVN-Kubernetes ACL log collector auto (OpenShift only) | true | false. It reads the OVN-Kubernetes ACL log; on other CNIs it has nothing to read. The Analytics allow / drop figures come from the flow verdict ledger on every distribution. Off: no Deployment, Service, ConfigMap or URL for it, and no OVN log RBAC.",
+      "properties": {
+        "enabled": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "enum": [
+            true,
+            false,
+            "auto"
+          ]
+        }
       }
     },
     "networkPolicies": {
       "type": "object",
-      "properties": { "enabled": { "type": "boolean" } }
+      "description": "NetworkPolicies (namespace ingress segmentation; egress is not restricted)",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Keep it on: without it any pod on the cluster reaches every Axera service over plain HTTP, the /api/Internal lanes, the local AI model server and the in-cluster Kafka. Only effective where the CNI enforces NetworkPolicy."
+        },
+        "routerIngressApps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Pods (by their `app` label) the front door (OpenShift router, ingress controller, Istio gateway, load balancer) may reach. Components this release does not publish are dropped from the render. An empty list lets the front door reach nothing, the UI included."
+        },
+        "ingressFrom": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "description": "Off OpenShift (or with Istio / LoadBalancer on OpenShift): the peers allowed to reach those pods, as raw NetworkPolicyPeer objects. [] → [namespaceSelector {}, ipBlock 0.0.0.0/0] on ports 3000/8080 (works on every CNI). The k3s profile narrows it to Traefik. Examples: - namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: kube-system } } podSelector: { matchLabels: { app.kubernetes.io/name: rke2-ingress-nginx } } - namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: istio-system } } podSelector: { matchLabels: { istio: ingressgateway } }"
+        },
+        "kafkaClients": {
+          "type": "object",
+          "description": "Producers allowed into the in-namespace Kafka (only when kafka.external=false).",
+          "properties": {
+            "hostNetwork": {
+              "type": "boolean",
+              "description": "hostNetwork agents on this cluster's nodes (the axera-force agent). OpenShift: the host-network policy group. Elsewhere there is no such group: with cidrs empty the policy admits any source on 9092 (the release notes warn); list the node subnet(s) plus the cluster CIDR in cidrs to narrow it."
+            },
+            "namespaces": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Pod-network producers in other namespaces, by namespace name."
+            },
+            "cidrs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Producer CIDRs: node subnet(s), plus the cluster (pod) CIDR on flannel / Canal (k3s and RKE2 default 10.42.0.0/16)."
+            },
+            "unrestricted": {
+              "type": "boolean",
+              "description": "true → Kafka is selected by NO policy. For dataplanes where cross-node host traffic matches no ipBlock (e.g. GKE Dataplane V2)."
+            }
+          }
+        },
+        "apiClients": {
+          "type": "object",
+          "description": "In-cluster callers of the API (port 8080) from other namespaces. List \"axera\" when the agent's audit forwarder on this cluster posts to http://api.<namespace>.svc.<clusterDnsDomain>:8080/api/Internal/Audit.",
+          "properties": {
+            "namespaces": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
     },
-    "resources": { "type": "object" }
-  }
+    "resources": {
+      "type": "object",
+      "description": "Resource requests/limits — tune per environment. Every container has a CPU and memory request; every one has a memory limit except the AI model copy. Application pods deliberately have no CPU limit (throttling only lengthens the work). {} renders no resources block.",
+      "properties": {
+        "postgres": {
+          "type": "object",
+          "properties": {
+            "requests": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": "string"
+                },
+                "memory": {
+                  "type": "string"
+                }
+              }
+            },
+            "limits": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": "string"
+                },
+                "memory": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "kafka": {
+          "type": "object",
+          "properties": {
+            "requests": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": "string"
+                },
+                "memory": {
+                  "type": "string"
+                }
+              }
+            },
+            "limits": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": "string"
+                },
+                "memory": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "aiModel": {
+          "type": "object",
+          "description": "CPU inference works for a PoC but is slow; give the model server a GPU node for production.",
+          "properties": {
+            "requests": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": "string"
+                },
+                "memory": {
+                  "type": "string"
+                }
+              }
+            },
+            "limits": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": "string"
+                },
+                "memory": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "api": {
+          "type": "object",
+          "properties": {
+            "requests": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": "string"
+                },
+                "memory": {
+                  "type": "string"
+                }
+              }
+            },
+            "limits": {
+              "type": "object",
+              "properties": {
+                "memory": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "radar": {
+          "type": "object",
+          "properties": {
+            "requests": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": "string"
+                },
+                "memory": {
+                  "type": "string"
+                }
+              }
+            },
+            "limits": {
+              "type": "object",
+              "properties": {
+                "memory": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "networkPolicyWatcher": {
+          "type": "object",
+          "properties": {
+            "requests": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": "string"
+                },
+                "memory": {
+                  "type": "string"
+                }
+              }
+            },
+            "limits": {
+              "type": "object",
+              "properties": {
+                "memory": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "allowDropMonitor": {
+          "type": "object",
+          "properties": {
+            "requests": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": "string"
+                },
+                "memory": {
+                  "type": "string"
+                }
+              }
+            },
+            "limits": {
+              "type": "object",
+              "properties": {
+                "memory": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "frontend": {
+          "type": "object",
+          "properties": {
+            "requests": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": "string"
+                },
+                "memory": {
+                  "type": "string"
+                }
+              }
+            },
+            "limits": {
+              "type": "object",
+              "properties": {
+                "memory": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "mcp": {
+          "type": "object",
+          "properties": {
+            "requests": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": "string"
+                },
+                "memory": {
+                  "type": "string"
+                }
+              }
+            },
+            "limits": {
+              "type": "object",
+              "properties": {
+                "memory": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "jobs": {
+          "type": "object",
+          "description": "The migrate Jobs and the trial-bootstrap Job (psql).",
+          "properties": {
+            "requests": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": "string"
+                },
+                "memory": {
+                  "type": "string"
+                }
+              }
+            },
+            "limits": {
+              "type": "object",
+              "properties": {
+                "memory": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "initContainers": {
+          "type": "object",
+          "description": "Init containers that only wait or copy a few files.",
+          "properties": {
+            "requests": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": "string"
+                },
+                "memory": {
+                  "type": "string"
+                }
+              }
+            },
+            "limits": {
+              "type": "object",
+              "properties": {
+                "memory": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "kafkaUi": {
+          "type": "object",
+          "properties": {
+            "requests": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": "string"
+                },
+                "memory": {
+                  "type": "string"
+                }
+              }
+            },
+            "limits": {
+              "type": "object",
+              "properties": {
+                "memory": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "aiModelPull": {
+          "type": "object",
+          "description": "The AI model pull Job (the download lands in the server pod).",
+          "properties": {
+            "requests": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": "string"
+                },
+                "memory": {
+                  "type": "string"
+                }
+              }
+            },
+            "limits": {
+              "type": "object",
+              "properties": {
+                "memory": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "aiModelCopy": {
+          "type": "object",
+          "description": "The weights copy (ai.modelSource=image). No memory limit: the copied data passes through the page cache, which is charged to the container. If a quota forces one, set it above the model size.",
+          "properties": {
+            "requests": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": "string"
+                },
+                "memory": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "helmTest": {
+          "type": "object",
+          "description": "The helm test pod (curl).",
+          "properties": {
+            "requests": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": "string"
+                },
+                "memory": {
+                  "type": "string"
+                }
+              }
+            },
+            "limits": {
+              "type": "object",
+              "properties": {
+                "memory": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "ollama": {
+          "description": "Layout of an earlier chart: refused at install with the new key named. Use resources.aiModel."
+        },
+        "ollamaPull": {
+          "description": "Layout of an earlier chart: refused at install with the new key named. Use resources.aiModelPull."
+        },
+        "ollamaModelCopy": {
+          "description": "Layout of an earlier chart: refused at install with the new key named. Use resources.aiModelCopy."
+        }
+      },
+      "additionalProperties": false
+    },
+    "backup": {
+      "type": "object",
+      "description": "Backup / restore (Settings > System > Backup & Restore). The API creates pg_dump / pg_restore Jobs in its own namespace and reads/writes dumps on a shared /backups volume.",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "pgImage": {
+          "type": "string",
+          "description": "Image of the dump / restore Jobs (full reference). Empty → the in-cluster PostgreSQL image (images.postgres), or images.postgresBackup.<flavour> with an external database: match the server's major version there."
+        },
+        "productVersion": {
+          "type": "string",
+          "description": "Version stamped onto each backup (blank → the API's own version)."
+        },
+        "storage": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "pvc",
+                "nfs"
+              ],
+              "description": "pvc | nfs — what backs the shared /backups volume."
+            },
+            "createPvc": {
+              "type": "boolean",
+              "description": "false (default): no volume is created and the api pod mounts no /backups, so a cluster without a ReadWriteMany StorageClass installs cleanly. Set createPvc=true, pvcClaimName (a claim you created) or type=nfs to enable the backup volume. The created claim is kept on uninstall."
+            },
+            "pvcClaimName": {
+              "type": "string"
+            },
+            "size": {
+              "type": "string"
+            },
+            "accessMode": {
+              "type": "string"
+            },
+            "storageClass": {
+              "type": "string"
+            },
+            "nfs": {
+              "type": "object",
+              "properties": {
+                "server": {
+                  "type": "string"
+                },
+                "path": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "monitoring": {
+      "type": "object",
+      "description": "Metrics — Radar's and the API's /metrics on port 9090 (plain HTTP, no authentication), plus a ServiceMonitor and PrometheusRule when the cluster serves monitoring.coreos.com/v1.",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "scrapeNamespaces": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "With networkPolicies.enabled, the namespaces whose Prometheus may scrape port 9090. Empty → per distribution: openshift-user-workload-monitoring (openshift), cattle-monitoring-system (rke2), gmp-system (anthos), monitoring (k3s, vanilla)."
+        }
+      }
+    },
+    "integration": {
+      "type": "object",
+      "description": "INTEGRATION IDENTITY — the ONE ServiceAccount whose token is registered for a cluster (templates/02-integration-rbac.yaml: axera-integration-sa, token Secret axera-sa-token) leastPrivilege: false (default) binds three ClusterRoles: axera-integration-role-<ns>, axera-integration-extended-<ns> (mesh routing writes, cluster-wide pods/log, Namespace changes) and axera-integration-agent-deploy-<ns> (flow-agent install from the UI: enough to run a privileged pod). true binds only the first: Mesh > Traffic deploy, OVN ACL logging annotation and the UI agent install then answer a refusal naming this switch. namespacedRoles: how the namespaced Roles render (packet-capture exec in the agent namespace \"axera\"; with leastPrivilege the pods/log Roles): auto — when Helm lookup finds the namespace (a namespace created later gets its Role on the next helm upgrade); always — without asking (helm template / Argo CD; create the agent namespace first); never — none (packet capture answers 403 until you grant it).",
+      "properties": {
+        "leastPrivilege": {
+          "type": "boolean"
+        },
+        "namespacedRoles": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "always",
+            "never"
+          ]
+        },
+        "ingressLoggingApply": {
+          "type": "object",
+          "description": "OpenShift only: let Axera APPLY the router access-logging patch to the listed IngressControllers (a Role in openshift-ingress-operator, get + patch by name).",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "ingressControllers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "meshMonitoring": {
+      "type": "object",
+      "description": "Mesh verdict ingestion (sidecar and waypoint Envoy access logs) Ambient needs nothing here. Sidecar and waypoint lanes are PUSH: the mesh sends its access logs to Radar with a per-cluster token. Axera mints that token itself when sidecar monitoring is switched on for a cluster (Mesh > Posture > Lanes, Sidecar monitoring); use ingestTokens only to pin tokens on purpose (air-gapped, GitOps). A cluster listed here is managed here.",
+      "properties": {
+        "ingestTokens": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 16
+          },
+          "description": "Registered cluster name → token (16+ characters). Rendered into Secret axera-mesh-ingest-tokens; removing an entry revokes it (restart follows). With secrets.create=false add MeshMonitoring__IngestTokens__<cluster> keys to your app Secret instead."
+        },
+        "ingestPublicUrl": {
+          "type": "string",
+          "description": "Public base URL a REMOTE cluster's collector posts to. Empty = the in-cluster address (correct when the observed mesh and Axera share a cluster). Radar must be exposed first."
+        },
+        "collectorNamespace": {
+          "type": "string",
+          "description": "Namespace for the rendered mesh collector. Empty = Radar's own namespace."
+        }
+      }
+    },
+    "tests": {
+      "type": "object",
+      "description": "helm test",
+      "properties": {
+        "image": {
+          "type": "string",
+          "description": "Any image with sh and curl, pinned by tag and digest; mirror it (and set this) when air-gapped."
+        }
+      }
+    },
+    "processAssociation": {
+      "type": "object",
+      "description": "Radar's process-to-pod association mode. Normally left unset (Radar's default, shadow).",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "off",
+            "shadow",
+            "on"
+          ]
+        },
+        "clusters": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "namespace": {
+      "description": "Layout of an earlier chart: refused at install with the new key named. Use global.createNamespace."
+    },
+    "auditForwarder": {
+      "description": "Layout of an earlier chart: refused at install with the new key named. The audit forwarder moved to the axera-force chart."
+    }
+  },
+  "additionalProperties": false
 }

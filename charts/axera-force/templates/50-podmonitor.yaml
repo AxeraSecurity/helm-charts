@@ -1,0 +1,48 @@
+{{- $metrics := include "axeraforce.metrics" . | fromJson -}}
+{{- if and $metrics.enabled (.Capabilities.APIVersions.Has "monitoring.coreos.com/v1") }}
+# The agent's own metrics. Rendered only when the cluster serves monitoring.coreos.com/v1 (the
+# Prometheus Operator; helm template needs --api-versions monitoring.coreos.com/v1). The pod runs with
+# hostNetwork, so each endpoint is the node's IP and a NODE port (metrics.*); no Service publishes
+# them. Only the series named below are kept: they answer "is the agent losing data" (drops,
+# evictions, ring-buffer losses, retries) without the sensor's per-pod, per-binary event counter,
+# whose cardinality grows with the workloads. The metric names are the components' own.
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: axera-agent-metrics
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "axeraforce.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: axera-agent
+  podMetricsEndpoints:
+    - port: flow-metrics
+      path: /metrics
+      interval: 30s
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: 'ebpf_agent_(dropped_flows_total|evicted_flows_total|evicted_packets_total|evictions_total|filtered_flows_total|errors_total|buffer_size|exported_batch_total|sampling_rate|lookup_and_delete_map_duration_seconds.*)'
+          action: keep
+    - port: flp-metrics
+      path: /metrics
+      interval: 30s
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: 'flp_(ingest_flows_processed|ingest_errors|ingest_batch_size_bytes.*|ingest_latency_ms.*|records_written|stage_in_queue_size|stage_out_queue_size|stage_duration_ms.*)'
+          action: keep
+    - port: sensor-metrics
+      path: /metrics
+      interval: 30s
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: 'tetragon_(observer_ringbuf_events_lost_total|observer_ringbuf_queue_events_lost_total|bpf_missed_events_total|notify_overflowed_events_total|export_ratelimit_events_dropped_total|events_exported_total|events_exported_bytes_total|events_last_exported_timestamp|errors_total|process_cache_size|process_cache_capacity|process_cache_evictions_total|process_cache_misses_total|cri_cgidmap_.*|event_cache_fetch_failures_total|exec_container_id_resolutions_total)'
+          action: keep
+    - port: shipper-metrics
+      path: /api/v2/metrics/prometheus
+      interval: 30s
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: 'fluentbit_(output_(proc_records|proc_bytes|dropped_records|retried_records|retries|retries_failed|errors)_total|input_(records|bytes)_total|filter_(drop|add|emit)_records_total|uptime)'
+          action: keep
+{{- end }}

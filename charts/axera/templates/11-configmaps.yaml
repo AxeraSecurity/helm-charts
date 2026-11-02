@@ -1,3 +1,4 @@
+{{- include "axera.init" . }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -6,28 +7,92 @@ metadata:
   labels: {{- include "axera.labels" . | nindent 4 }}
 data:
   AllowedHosts: "*"
-  Logging__LogLevel__Default: "Information"
-  Logging__LogLevel__Microsoft.AspNetCore: "Warning"
-  # CORS — frontend Route URL prepended automatically when a host is known.
+  # Serilog levels come from .Values.logging, not hardcoded and
+  # NOT via ASP.NET's Logging:LogLevel — the app logs via Serilog which reads Serilog:* and
+  # ignores Logging:LogLevel, so the old Logging__LogLevel__* keys had no effect.
+  {{- $logLevel := .Values.logging.level | default "Warning" }}
+  {{- $logOverrides := .Values.logging.overrides | default dict }}
+  Serilog__MinimumLevel__Default: {{ $logLevel | quote }}
+  {{- range $src, $lvl := $logOverrides }}
+  Serilog__MinimumLevel__Override__{{ $src }}: {{ $lvl | quote }}
+  {{- end }}
+  {{- /* Radar's request diagnostics: "completed in N ms" at Information,
+         ABANDONED/DEADLINE at Warning. Only a default above Warning hides the Warning lines, so only
+         then is Radar.Diagnostics lowered to Warning; at Information/Debug a Warning override would
+         hide the timing lines instead. An explicit overrides entry always wins. */}}
+  {{- if and (has (lower $logLevel) (list "error" "fatal")) (not (hasKey $logOverrides "Radar.Diagnostics")) }}
+  Serilog__MinimumLevel__Override__Radar.Diagnostics: "Warning"
+  {{- end }}
+  {{- /* The ingest summaries: one Information line a minute per lane from
+         Radar and for observation delivery from the API, the log's view of what /metrics counts. They
+         stay visible at the default Warning (and at Error); an explicit overrides entry wins. */}}
+  {{- range $src := list "Radar.Observability.IngestSummary" "Application.Observability.IngestSummary" }}
+  {{- if not (hasKey $logOverrides $src) }}
+  Serilog__MinimumLevel__Override__{{ $src }}: "Information"
+  {{- end }}
+  {{- end }}
+  # CORS — the public UI URL (Route host, or expose.frontend.host) prepended when a host is known.
   {{- $origins := .Values.app.corsOrigins | default list }}
-  {{- $fhost := include "axera.frontendHost" . }}
-  {{- if and .Values.routes.frontend.enabled $fhost }}
-  {{- $origins = prepend $origins (printf "https://%s" $fhost) }}
+  {{- $pubUrl := include "axera.publicUrl" . }}
+  {{- $pubOn := and $pubUrl (or (ne (include "axera.exposeType" .) "Route") .Values.routes.frontend.enabled) }}
+  {{- if $pubOn }}
+  {{- $origins = prepend $origins $pubUrl }}
   {{- end }}
   {{- range $i, $o := $origins }}
   AllowedCorsOrigins__{{ $i }}: {{ $o | quote }}
   {{- end }}
+  {{- if $pubOn }}
+  # OAuth sign-in for MCP clients (for example an AI assistant's custom MCP connector): the console
+  # origin is the authorization server (it proxies /api/* and /.well-known/oauth-authorization-server
+  # to the API) and /api/mcp on it is the protected MCP resource. Only administrator-created OAuth
+  # clients can sign in. Without a known public host nothing is rendered and the API and the MCP
+  # server derive both from the forwarded request headers.
+  OAuth__Issuer: {{ $pubUrl | quote }}
+  Mcp__OAuth__Issuer: {{ $pubUrl | quote }}
+  Mcp__OAuth__Resource: {{ printf "%s/api/mcp" $pubUrl | quote }}
+  {{- end }}
   # Cluster-internal service URLs (no Routes for backend services)
   Services__API__Url: "http://api:8080"
-  Services__Proxy__Url: "http://proxy:8080"
+  {{- if include "axera.admEnabled" . }}
   Services__AllowDropMonitor__Url: "http://allowdropmonitor:8080"
+  {{- end }}
   Services__Radar__Url: "http://radar:8080"
   Services__NetworkPolicyWatcher__Url: "http://networkpolicywatcher:8080"
-  # AI assistant (incident triage). BaseUrl resolves to the in-cluster Ollama
-  # service or a customer endpoint depending on ai.external.
+  {{- if .Values.mcp.enabled }}
+  # The standalone MCP tool server (templates/44a-mcp.yaml). Rendered only with mcp.enabled:
+  # GET /api/logging/status-all lists a service with no Services__<Name>__Url under notConfigured,
+  # so a disabled MCP must not read as unreachable.
+  Services__Mcp__Url: "http://mcp:8080"
+  {{- end }}
+  {{- /*
+    Where a mesh collector on an OBSERVED cluster should POST its Envoy access logs.
+
+    Leave empty for the normal case: Radar derives radar.<namespace>.svc.cluster.local from
+    POD_NAMESPACE, which is correct whenever the observed mesh and Axera share a cluster.
+
+    Set it only when a SEPARATE cluster reports into this Axera. The chart publishes the frontend
+    alone — `radar` is deliberately cluster-internal — so a remote collector cannot
+    resolve any in-cluster address and every POST dies at DNS. Exposing Radar is a deployment
+    decision with its own exposure surface; this value is where the resulting address goes, and
+    the rendered manifest then names it instead of the in-cluster one.
+  */}}
+  {{- /*
+    Namespace the rendered mesh collector is created in, and the namespace the control-plane
+    extensionProviders entry points at. Leave empty: Radar uses its OWN namespace, which is right
+    whenever the observed mesh and Axera share a cluster, and is known rather than guessed.
+    Set it only when the collector lives somewhere else — and note BOTH halves move together, since
+    a provider pointing at a namespace with no collector in it resolves nothing and reports nothing.
+  */}}
+  {{- with (.Values.meshMonitoring).collectorNamespace }}
+  MeshMonitoring__CollectorNamespace: {{ . | quote }}
+  {{- end }}
+  {{- with (.Values.meshMonitoring).ingestPublicUrl }}
+  MeshMonitoring__IngestPublicUrl: {{ . | quote }}
+  {{- end }}
+  # AI assistant (incident triage). BaseUrl resolves to the in-cluster local AI model
+  # service or your own endpoint depending on ai.external. The provider is the backend default.
   {{- if .Values.ai.enabled }}
   Ai__Enabled: "true"
-  Ai__Provider: "Ollama"
   Ai__BaseUrl: {{ include "axera.aiBaseUrl" . | quote }}
   Ai__Model: {{ .Values.ai.model | quote }}
   Ai__TimeoutSeconds: {{ .Values.ai.timeoutSeconds | quote }}
@@ -43,9 +108,15 @@ data:
   Ai__Advisory__MaxWorkloads: {{ .Values.ai.advisory.maxWorkloads | quote }}
   Ai__Advisory__MaxDestinationsPerWorkload: {{ .Values.ai.advisory.maxDestinationsPerWorkload | quote }}
   Ai__Advisory__MinConfidence: {{ .Values.ai.advisory.minConfidence | quote }}
+  # Background policy-recommendation pass. Same shape as the advisory above: these
+  # seed the initial DB-backed settings row; the toggle lives in the AI settings page
+  Ai__PolicyAdvisory__Enabled: {{ .Values.ai.policyAdvisory.enabled | quote }}
+  Ai__PolicyAdvisory__IntervalHours: {{ .Values.ai.policyAdvisory.intervalHours | quote }}
+  Ai__PolicyAdvisory__MaxPolicies: {{ .Values.ai.policyAdvisory.maxPolicies | quote }}
   {{- else }}
   Ai__Enabled: "false"
   {{- end }}
+{{- if include "axera.admEnabled" . }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -57,10 +128,14 @@ data:
   OVN__PodListUrl: {{ .Values.app.ovn.podListUrl | quote }}
   OVN__Namespace: {{ .Values.app.ovn.namespace | quote }}
   OVN__Container: {{ .Values.app.ovn.container | quote }}
-  OVN__LogPodLabelSelector: {{ .Values.app.ovn.logPodLabelSelector | quote }}
+  {{- /* "app=ovn-k8s-node" (the 1.x default) matches no ovnkube-node pod: map it, as the operator does. */}}
+  {{- $ovnSel := .Values.app.ovn.logPodLabelSelector }}
+  {{- if eq (toString $ovnSel) "app=ovn-k8s-node" }}{{ $ovnSel = "app=ovnkube-node" }}{{ end }}
+  OVN__LogPodLabelSelector: {{ $ovnSel | quote }}
   OVN__ReconnectSeconds: {{ .Values.app.ovn.reconnectSeconds | quote }}
   OVN__AggIntervalMin: {{ .Values.app.ovn.aggIntervalMin | quote }}
   OVN__RecordRetentionHours: {{ .Values.app.ovn.recordRetentionHours | quote }}
+{{- end }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -70,19 +145,150 @@ metadata:
   labels: {{- include "axera.labels" . | nindent 4 }}
 data:
   # KafkaServer comes from kafka-external-secret. Topics+GroupIds from values.kafka.topics.
+  # groupId is optional: an omitted one renders Radar's own default for the lane, never an empty
+  # GroupId, which librdkafka refuses to subscribe with.
   {{- range $i, $t := .Values.kafka.topics }}
   KafkaClusters__{{ $i }}__Topic: {{ $t.topic | quote }}
-  KafkaClusters__{{ $i }}__GroupId: {{ $t.groupId | quote }}
+  KafkaClusters__{{ $i }}__GroupId: {{ $t.groupId | default "axera-radar" | quote }}
   {{- end }}
-  # Per-cluster Tetragon process-event topics → Radar Process Activity consumers.
+  # Radar's process-to-pod association, only when processAssociation.mode is set (off | shadow | on):
+  # unset leaves Radar's default (shadow). "on" applies to processAssociation.clusters / .nodes when
+  # set (others stay in shadow). Normally left unset.
+  {{- with .Values.processAssociation }}
+  ProcessAssociation__ShipperResolution: {{ .mode | quote }}
+  {{- range $i, $c := .clusters }}
+  ProcessAssociation__Clusters__{{ $i }}: {{ $c | quote }}
+  {{- end }}
+  {{- range $i, $n := .nodes }}
+  ProcessAssociation__Nodes__{{ $i }}: {{ $n | quote }}
+  {{- end }}
+  {{- end }}
+  # Per-cluster process-sensor event topics → Radar Process Activity consumers.
   # ClusterName is the authoritative identity stamped onto every event from the topic.
   # Empty list = Process Activity simply has no data (page still loads).
   {{- range $i, $t := .Values.kafka.processTopics }}
   ProcessKafkaClusters__{{ $i }}__Topic: {{ $t.topic | quote }}
   ProcessKafkaClusters__{{ $i }}__ClusterName: {{ $t.clusterName | quote }}
-  ProcessKafkaClusters__{{ $i }}__GroupId: {{ $t.groupId | quote }}
+  ProcessKafkaClusters__{{ $i }}__GroupId: {{ $t.groupId | default "axera-process" | quote }}
+  {{- end }}
+  # DNS topics (opt-in per agent). No entries = no DNS consumers started.
+  {{- range $i, $t := .Values.kafka.dnsTopics }}
+  DnsKafkaClusters__{{ $i }}__Topic: {{ $t.topic | quote }}
+  DnsKafkaClusters__{{ $i }}__ClusterName: {{ $t.clusterName | quote }}
+  DnsKafkaClusters__{{ $i }}__GroupId: {{ $t.groupId | default "axera-dns" | quote }}
+  {{- end }}
+  # Cross-cluster (Submariner/Globalnet) ingress topics — a SEPARATE key so the
+  # east-west consumer doesn't claim them and silently drop their Globalnet-address
+  # sources. Empty list = single-cluster / non-Submariner install.
+  {{- range $i, $t := .Values.kafka.interClusterTopics }}
+  InterClusterKafkaClusters__{{ $i }}__Topic: {{ $t.topic | quote }}
+  InterClusterKafkaClusters__{{ $i }}__GroupId: {{ $t.groupId | default "axera-radar" | quote }}
+  {{- if $t.clusterName }}
+  InterClusterKafkaClusters__{{ $i }}__ClusterName: {{ $t.clusterName | quote }}
+  {{- end }}
+  {{- end }}
+  # North-south ingress topics (the agent's ingress lane → the flow pipeline → ingress-flows). Also a SEPARATE key from kafka.topics: these records have no pod source, so the
+  # east-west consumer would drop every one. clusterName only for a topic dedicated to one cluster;
+  # an omitted groupId leaves Radar's default group (axera-radar) instead of rendering an empty one.
+  {{- range $i, $t := (.Values.kafka.ingressTopics | default list) }}
+  IngressKafkaClusters__{{ $i }}__Topic: {{ $t.topic | quote }}
+  {{- if $t.groupId }}
+  IngressKafkaClusters__{{ $i }}__GroupId: {{ $t.groupId | quote }}
+  {{- end }}
+  {{- if $t.clusterName }}
+  IngressKafkaClusters__{{ $i }}__ClusterName: {{ $t.clusterName | quote }}
+  {{- end }}
+  {{- end }}
+  # Radar's switch for the ingress lane; with no ingress topic the lane reports "not configured".
+  # On unless set false (Radar's own default): `default` would turn an explicit false into the
+  # fallback, `dig` keeps it, and a missing kafka.ingress map cannot nil-pointer the render.
+  {{- $ingressLane := .Values.kafka.ingress | default dict }}
+  Ingress__Enabled: {{ dig "enabled" true $ingressLane | toString | quote }}
+  # Globalnet reflector — resolves a Submariner peer's Globalnet egress IP back to
+  # its cluster + workload. Fail-safe on non-Submariner clusters (finds nothing, idles).
+  # On unless set false (the helm chart and Radar's own default): `default` would turn an explicit
+  # false into the fallback, `dig` keeps it.
+  {{- $globalnet := .Values.kafka.globalnet | default dict }}
+  Globalnet__Enabled: {{ dig "enabled" true $globalnet | toString | quote }}
+  Globalnet__RefreshSeconds: {{ dig "refreshSeconds" 300 $globalnet | toString | quote }}
+  # Kafka topic catalogue by convention (kafka.clusters): Radar derives "<c>", "<c>-process" and
+  # "<c>-dns" per cluster plus the enabled shared topics, and merges them with the explicit lists
+  # above. No clusters = the legacy catalogue (exactly the explicit lists), so the shared switches
+  # are rendered only with clusters.
+  {{- range $i, $c := (.Values.kafka.clusters | default list) }}
+  Kafka__Clusters__{{ $i }}: {{ $c | quote }}
+  {{- end }}
+  {{- if .Values.kafka.clusters }}
+  {{- $shared := .Values.kafka.sharedTopics | default dict }}
+  Kafka__SharedTopics__External: {{ dig "external" true $shared | toString | quote }}
+  Kafka__SharedTopics__Ingress: {{ dig "ingress" true $shared | toString | quote }}
+  Kafka__SharedTopics__InterCluster: {{ dig "interCluster" true $shared | toString | quote }}
+  {{- end }}
+  # Topic provisioning: Create (missing topics are created with the lane profile; an existing
+  # topic is never altered), Verify (checked and reported only), Off. Unset: Create with the
+  # internal Kafka, Verify with an external one; Strimzi mode renders KafkaTopics and Radar
+  # verifies. Interval, replication factor and profiles render only when set (Radar's defaults
+  # otherwise); numbers go through int64 so a large retention never renders as 1e+10.
+  {{- $tp := .Values.kafka.topicProvisioning | default dict }}
+  Kafka__TopicProvisioning__Mode: {{ include "axera.kafkaProvisioningMode" . | quote }}
+  {{- if eq ($tp.mode | default "") "Strimzi" }}
+  # Strimzi mode: the topic operator owns the derived topics; Radar verifies and says who creates them.
+  Kafka__TopicProvisioning__ManagedBy: "Strimzi"
+  {{- end }}
+  {{- with $tp.intervalMinutes }}
+  Kafka__TopicProvisioning__IntervalMinutes: {{ . | int64 | toString | quote }}
+  {{- end }}
+  {{- with $tp.replicationFactor }}
+  Kafka__TopicProvisioning__ReplicationFactor: {{ . | int64 | toString | quote }}
+  {{- end }}
+  {{- $profiles := $tp.profiles | default dict }}
+  {{- range $key, $lane := dict "flows" "Flows" "external" "External" "ingress" "Ingress" "interCluster" "InterCluster" "process" "Process" "dns" "Dns" }}
+  {{- $p := get $profiles $key | default dict }}
+  {{- with $p.partitions }}
+  Kafka__TopicProvisioning__Profiles__{{ $lane }}__Partitions: {{ . | int64 | toString | quote }}
+  {{- end }}
+  {{- with $p.retentionHours }}
+  Kafka__TopicProvisioning__Profiles__{{ $lane }}__RetentionHours: {{ . | int64 | toString | quote }}
+  {{- end }}
+  {{- with $p.retentionBytes }}
+  Kafka__TopicProvisioning__Profiles__{{ $lane }}__RetentionBytes: {{ . | int64 | toString | quote }}
+  {{- end }}
   {{- end }}
   Archiver__IntervalMinutes: {{ .Values.app.archiverIntervalMinutes | quote }}
+  # Mesh verdict ledger retention. The live MeshFlowVerdicts table is bounded by the first
+  # key and is pruned only once a row's last observation is in a day bucket; the retained
+  # day buckets (and their per-day telemetry-coverage rows) are bounded by the second, which
+  # is how far back a mesh question can reach.
+  MeshMonitoring__LiveRetentionDays: {{ (default (dict) .Values.app.mesh).liveRetentionDays | default 7 | quote }}
+  MeshMonitoring__DailyRetentionDays: {{ (default (dict) .Values.app.mesh).dailyRetentionDays | default 400 | quote }}
+  # The "mesh-verdict" SIEM stream. Off by default (it needs the API-side receiver); allows
+  # ride it only when explicitly turned on, or they bury the denials in the customer's SIEM.
+  MeshMonitoring__SiemForwardEnabled: {{ (default (dict) .Values.app.mesh).siemForwardEnabled | default false | quote }}
+  MeshMonitoring__SiemForwardAllows: {{ (default (dict) .Values.app.mesh).siemForwardAllows | default false | quote }}
+  # Flow verdict ledger (Analytics allow / probable-drop from the flow agent's telemetry, TCP only).
+  Radar__FlowVerdictLedger__Enabled: {{ .Values.app.flowVerdictLedger.enabled | quote }}
+  Radar__FlowVerdictLedger__PairHourlyRetentionDays: {{ .Values.app.flowVerdictLedger.pairHourlyRetentionDays | quote }}
+  Radar__FlowVerdictLedger__RetentionDays: {{ .Values.app.flowVerdictLedger.retentionDays | quote }}
+  {{- /* app.performance: rendered only when set, so an unset knob
+         keeps Radar's own default. int64 so a large value never renders as 1e+06. */}}
+  {{- $perf := (.Values.app).performance | default dict }}
+  {{- $lanes := $perf.flowLanes | default dict }}
+  {{- range $knob := list
+        (list "Persistence__EdgeTouchSeconds" $perf "edgeTouchSeconds")
+        (list "Radar__VolumeRollup__RetentionDays" $perf "volumeRollupRetentionDays")
+        (list "Radar__FlowLanes__MaxBatchSize" $lanes "maxBatchSize")
+        (list "Radar__FlowLanes__ChannelCapacity" $lanes "channelCapacity")
+        (list "Radar__FlowLanes__EastWestWriters" $lanes "eastWestWriters")
+        (list "Ingress__BatchMaxWaitMs" $perf "ingressBatchMaxWaitMs")
+        (list "Ingress__BatchMaxRecords" $perf "ingressBatchMaxRecords")
+        (list "Dns__FlushSeconds" $perf "dnsFlushSeconds")
+        (list "IncidentReporter__MaxConcurrentFlushes" $perf "incidentReporterMaxConcurrentFlushes")
+        (list "Kafka__Consumer__FetchMinBytes" $perf "kafkaConsumerFetchMinBytes") }}
+  {{- $src := index $knob 1 }}
+  {{- if hasKey $src (index $knob 2) }}
+  {{ index $knob 0 }}: {{ get $src (index $knob 2) | int64 | toString | quote }}
+  {{- end }}
+  {{- end }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -92,8 +298,7 @@ metadata:
   labels: {{- include "axera.labels" . | nindent 4 }}
 data:
   BASEPATH: {{ .Values.frontend.basepath | quote }}
-  {{- $fhost := include "axera.frontendHost" . }}
-  NEXT_PUBLIC_APP_URL: {{ if $fhost }}{{ printf "https://%s" $fhost | quote }}{{ else }}""{{ end }}
+  NEXT_PUBLIC_APP_URL: {{ include "axera.publicUrl" . | quote }}
   # Same-origin proxy: relative paths via Next.js rewrites
   NEXT_PUBLIC_API_URL: "/api"
   NEXT_PUBLIC_BASE_URL: ""

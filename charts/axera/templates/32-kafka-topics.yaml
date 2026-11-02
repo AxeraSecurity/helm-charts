@@ -1,0 +1,58 @@
+{{- include "axera.init" . }}
+{{- /*
+  kafka.topicProvisioning.mode Strimzi: one KafkaTopic (kafka.strimzi.io/v1beta2) per DERIVED topic
+  of the effective catalogue (axera.kafkaTopicCatalog: the kafka.clusters convention topics and the
+  enabled shared topics) for the Strimzi topic operator, in strimzi.namespace (default: the Axera
+  namespace) and labelled for the Strimzi cluster. Radar runs in Verify meanwhile. Rendered in no
+  other mode, so the Strimzi CRD is never needed otherwise.
+  An explicitly listed topic (kafka.topics, processTopics, dnsTopics, ingressTopics,
+  interClusterTopics) never gets a KafkaTopic, also when a cluster's convention name matches it:
+  it exists already, and the topic operator would rewrite its partitions and retention to the lane
+  profile (a 7-day topic cut to 24 hours). Radar still verifies it.
+  They carry helm.sh/resource-policy: keep, so `helm uninstall` and a catalogue change never delete
+  them: deleting a KafkaTopic makes the topic operator delete the topic and its records, and
+  provisioning never deletes.
+  replicas (and min.insync.replicas 2 from 3 replicas on) only with an explicit replicationFactor;
+  the auto value 0 leaves both to the broker defaults, and Radar then does not check either as drift
+  (it cannot know them in advance, and the chart cannot know the broker count) — set replicationFactor
+  to have both rendered and verified.
+*/ -}}
+{{- $tp := .Values.kafka.topicProvisioning | default dict -}}
+{{- if eq ($tp.mode | default "") "Strimzi" }}
+{{- $_ := include "axera.kafkaProvisioningMode" . }}
+{{- $ns := dig "strimzi" "namespace" "" $tp | default .Values.global.namespace }}
+{{- $cluster := dig "strimzi" "clusterName" "" $tp }}
+{{- $rf := $tp.replicationFactor | default 0 | int64 }}
+{{- range (include "axera.kafkaTopicCatalog" . | fromJsonArray) }}
+{{- if .derived }}
+{{- $p := include "axera.kafkaTopicProfile" (list $ .lane) | fromJson }}
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: {{ include "axera.kafkaTopicObjectName" .topic }}
+  namespace: {{ $ns }}
+  labels:
+    strimzi.io/cluster: {{ $cluster | quote }}
+    platform.axerasecurity.com/kafka-lane: {{ .lane }}
+    {{- include "axera.labels" $ | nindent 4 }}
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  topicName: {{ .topic | quote }}
+  partitions: {{ $p.partitions | int64 }}
+  {{- if gt $rf 0 }}
+  replicas: {{ $rf }}
+  {{- end }}
+  config:
+    cleanup.policy: delete
+    compression.type: lz4
+    segment.ms: 3600000
+    retention.ms: {{ mul ($p.retentionHours | int64) 3600000 }}
+    retention.bytes: {{ $p.retentionBytes | int64 }}
+    {{- if ge $rf 3 }}
+    min.insync.replicas: 2
+    {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

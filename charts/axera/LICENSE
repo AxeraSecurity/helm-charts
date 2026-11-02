@@ -6,9 +6,16 @@ on Kubernetes / OpenShift.
 
 Permission is granted to use, copy, and redistribute the Chart for the sole
 purpose of deploying the Software. The Software components referenced by this
-Chart (container images and associated content) are commercial products of
-Axera Security and are licensed separately under the Axera end-user license
-agreement; nothing in this Chart grants any right to the Software itself.
+Chart (the container images microsegmentation-api, microsegmentation-frontend,
+microsegmentation-radar, microsegmentation-allowdropmonitor,
+microsegmentation-networkpolicywatcher and microsegmentation-mcp, and associated
+content) are commercial products of Axera Security and are licensed separately
+under the Axera end-user license agreement; nothing in this Chart grants any
+right to the Software itself. The third-party and open-source images the Chart
+can also run (databases, message broker and its console, base images, and the
+open-source model server published as microsegmentation-ollama), including
+copies mirrored under Axera Security's registry namespace, remain under their
+own licenses.
 
 THE CHART IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,

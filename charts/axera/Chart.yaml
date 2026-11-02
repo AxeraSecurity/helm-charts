@@ -1,22 +1,24 @@
 apiVersion: v2
 name: axera
 description: >-
-  Axera — Kubernetes microsegmentation and network detection & response (NDR)
-  for OpenShift. Maps every east-west and egress flow, turns observed traffic
-  into least-privilege NetworkPolicy, and triages incidents with on-prem AI.
-  Runs entirely in-cluster; CNI-agnostic; strictly additive (observes first,
-  enforces nothing until you choose). Supports all-internal (one-box) or
-  external Postgres + Kafka + AI endpoints.
+  Axera — Kubernetes microsegmentation and network detection & response (NDR).
+  The central platform (console, API, flow analytics, policy engine) for
+  OpenShift, k3s, RKE2 / Rancher, Anthos and vanilla Kubernetes. Maps east-west
+  and egress flows, turns observed traffic into least-privilege NetworkPolicy
+  and raises incidents. Observes first and enforces nothing until you choose.
+  Runs all-internal (PostgreSQL + Kafka in the namespace) or against your own
+  PostgreSQL and Kafka. Pair it with the axera-force chart on every monitored
+  cluster.
 type: application
-# Chart version (SemVer) — bump on every chart change.
-version: 1.4.0
-# Underlying Axera platform version this chart deploys by default.
-appVersion: "8.3.0"
-# Minimum Kubernetes version. OpenShift 4.12+ ships Kubernetes 1.25+.
+# Chart version (SemVer): bump on every chart change.
+version: 3.0.0
+# Axera platform version deployed by default.
+appVersion: "17.2.0"
+# OpenShift 4.12+, k3s, RKE2 and GKE releases with Kubernetes 1.25 or newer.
 kubeVersion: ">=1.25.0-0"
 home: https://axerasecurity.com
 sources:
-  - https://github.com/AxeraSecurity
+  - https://github.com/AxeraSecurity/helm-charts
 icon: https://axerasecurity.github.io/helm-charts/axera-logo.svg
 keywords:
   - microsegmentation
@@ -26,6 +28,10 @@ keywords:
   - zero-trust
   - security
   - openshift
+  - k3s
+  - rke2
+  - rancher
+  - anthos
 maintainers:
   - name: Axera Security
     email: support@axerasecurity.com
@@ -36,3 +42,34 @@ annotations:
   charts.openshift.io/provider: Axera Security
   charts.openshift.io/supportURL: https://axerasecurity.com/support
   charts.openshift.io/archs: amd64
+  # Every image the default values can deploy, pinned by digest (mirror these for air-gapped
+  # installs). The PostgreSQL entries cover both flavours: rhel (OpenShift) and alpine (elsewhere).
+  artifacthub.io/images: |
+    - name: api
+      image: quay.io/axera/microsegmentation-api:v17.2.0@sha256:3548f714775d4f9d00a59cae6c8e347e4c48479d19fb2261d5cd2d1585891121
+    - name: allowdropmonitor
+      image: quay.io/axera/microsegmentation-allowdropmonitor:v17.2.0@sha256:3d9229eb121c4b21b8bae9df225fb93353d934bcc00d76409651c2d553fee644
+    - name: radar
+      image: quay.io/axera/microsegmentation-radar:v17.2.0@sha256:e35c3d99e8d141d68a2ce7f03d257580f5415c3991e5da24d247c99bd7952cb4
+    - name: networkpolicywatcher
+      image: quay.io/axera/microsegmentation-networkpolicywatcher:v17.2.0@sha256:e2ab71d20e4fc0911a9d4c7b4ea1d540496699ab80495dcb8ac5f8a333385846
+    - name: mcp
+      image: quay.io/axera/microsegmentation-mcp:v17.2.0@sha256:3b464834f0b1d05b4c8786f1ec243f5fb33ae6579641e03f2d0176d6f26342b8
+    - name: frontend
+      image: quay.io/axera/microsegmentation-frontend:v17.2.0@sha256:2924a307583838e33622c65aecf65a77913eb716d5de00738dbf111c2e0f5791
+    - name: postgres-rhel
+      image: registry.redhat.io/rhel9/postgresql-16:9.8-1787043427@sha256:8fd1bbd8d006ae5bb892c6d633c9d92fb980caed470199effaf2343099fcdb89
+    - name: postgres-alpine
+      image: quay.io/axera/postgres:16-alpine@sha256:60b180625695e90b6e450405d5f0bcb74bc8c52c65d1cd11aeb3da46cac06dd8
+    - name: postgres-backup-rhel
+      image: registry.redhat.io/rhel9/postgresql-18:9.8-1790730421@sha256:2191ac24e592c0f7ade04f72b62b7c85f75e744c2d5e1595db8712081943f1c7
+    - name: postgres-backup-alpine
+      image: quay.io/axera/postgres:18-alpine@sha256:0752ea635cca3015e574a4a467f1c54409fdfaf7ed5ba1bc0a6d32568714ab2e
+    - name: kafka
+      image: quay.io/axera/kafka:4.0.0@sha256:821720633cf189f4852051569f0794ffbb3aeef3de9e5b47684901af81176852
+    - name: kafka-ui
+      image: quay.io/axera/kafka-ui:v0.7.2@sha256:0d8ba24237b0b6520f8218c7d3c659ee1cc0cedcf2ee7d356ba17590fdb4811f
+    - name: ai-model
+      image: quay.io/axera/microsegmentation-ollama:0.24.0@sha256:a4e95f0a14e6773d2507c593336d94dd5f73fe134fb13438ce069a5a1fefd9fe
+    - name: helm-test
+      image: registry.access.redhat.com/ubi9/ubi-minimal:9.8-1791279563@sha256:5ed244b62bbf4095080144d9d35eb8fcd3d39a9801f94aadd63b9d10978a01ae

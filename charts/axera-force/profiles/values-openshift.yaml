@@ -1,0 +1,12 @@
+# OpenShift 4 profile: only what differs from values.yaml. Use with your own values file:
+#   helm install axera-force <chart> -n axera -f profiles/values-openshift.yaml -f my-values.yaml
+#
+# Defaults that come from global.distribution openshift:
+#   podCIDR and serviceCIDR read from the Network "cluster" object at helm install / upgrade; an offline
+#   render (helm template, GitOps) must set podCIDR (usually 10.128.0.0/14; check:
+#   oc get network.config cluster -o yaml), and serviceCIDR when it is not 172.30.0.0/16
+#   SecurityContextConstraints axera-ebpf-axera and its use-Role (createSCC auto)
+#   pod network namespace access off on OVN-Kubernetes / OpenShiftSDN, on with another network plugin
+#   flow.ingress allowed; the audit forwarder reads /var/log/kube-apiserver on the control-plane nodes
+global:
+  distribution: openshift

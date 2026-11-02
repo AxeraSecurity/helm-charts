@@ -1,0 +1,167 @@
+{{- include "axera.init" . }}
+{{- if include "axera.prometheusOperator" . }}
+{{- $ns := .Values.global.namespace }}
+{{- /*
+  Radar's and the API's own metrics. Rendered only with monitoring.enabled and when the cluster
+  serves monitoring.coreos.com/v1 (the Prometheus Operator: OpenShift user workload monitoring,
+  kube-prometheus-stack, Rancher Monitoring); without it the install renders neither object.
+
+  The endpoint is plain HTTP without authentication on port 9090, which only these Services
+  publish and the NetworkPolicy opens to the scrape namespaces alone (monitoring.scrapeNamespaces).
+  Nothing here reads a file: OpenShift user workload monitoring refuses a ServiceMonitor that does
+  (bearerTokenFile, tlsConfig.caFile).
+
+  The alert names are the backend's metric contract; lanes: eastwest, external, ingress,
+  intercluster, dns, process, mesh.
+*/}}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: axera-platform-metrics
+  namespace: {{ $ns }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchExpressions:
+      - { key: app, operator: In, values: [radar, api] }
+  namespaceSelector:
+    matchNames: [{{ $ns | quote }}]
+  endpoints:
+    - port: metrics
+      path: /metrics
+      scheme: http
+      interval: 30s
+      scrapeTimeout: 10s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: axera-platform-ingest-alerts
+  namespace: {{ $ns }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+spec:
+  groups:
+    - name: axera.ingest
+      rules:
+        # A lane whose backlog keeps growing is behind its Kafka input: persisting slower than the
+        # agents produce. Kafka keeps the input for its retention only (2 h by default), so a backlog
+        # that grows for that long starts losing records.
+        - alert: AxeraLaneBacklogGrowing
+          expr: |
+            max by (namespace, lane) (axera_radar_lane_backlog_items{namespace="{{ $ns }}"}) > 1000
+            and
+            max by (namespace, lane) (deriv(axera_radar_lane_backlog_items{namespace="{{ $ns }}"}[15m])) > 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Axera ingest lane {{`{{ $labels.lane }}`}} is falling behind in {{`{{ $labels.namespace }}`}}"
+            description: "The {{`{{ $labels.lane }}`}} lane has held more than 1 000 unpersisted records and kept growing for 15 minutes. Check Radar's database latency and the lane's batch p99 (axera_radar_lane_batch_seconds)."
+        # A paused lane reads nothing from Kafka. Radar pauses while its channel is full and resumes
+        # when it drains; five minutes paused is a stalled persist (the consume-stall watch restarts
+        # the consumer at that point too).
+        - alert: AxeraLanePaused
+          expr: max by (namespace, lane) (axera_radar_lane_paused{namespace="{{ $ns }}"}) == 1
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Axera ingest lane {{`{{ $labels.lane }}`}} paused for 5 minutes in {{`{{ $labels.namespace }}`}}"
+            description: "Radar stopped reading the {{`{{ $labels.lane }}`}} lane because its records are not being persisted. Records older than the Kafka retention are lost."
+        - alert: AxeraKafkaConsumerLagHigh
+          expr: sum by (namespace, topic, group) (axera_radar_kafka_consumer_lag{namespace="{{ $ns }}"}) > 100000
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Axera is {{`{{ $value | humanize }}`}} messages behind on topic {{`{{ $labels.topic }}`}}"
+            description: "Consumer group {{`{{ $labels.group }}`}} has lagged more than 100 000 messages on {{`{{ $labels.topic }}`}} for 15 minutes."
+        - alert: AxeraRecordsUnparseable
+          expr: sum by (namespace, lane) (increase(axera_radar_records_unparseable_total{namespace="{{ $ns }}"}[15m])) > 0
+          labels:
+            severity: warning
+          annotations:
+            summary: "Axera could not read records on the {{`{{ $labels.lane }}`}} lane"
+            description: "{{`{{ $value | humanize }}`}} records in 15 minutes could not be parsed; an agent writes a shape this release does not read (check the agent and platform versions)."
+        - alert: AxeraRecordsDropped
+          expr: sum by (namespace, lane, reason) (increase(axera_radar_records_dropped_total{namespace="{{ $ns }}"}[15m])) > 0
+          labels:
+            severity: warning
+          annotations:
+            summary: "Axera dropped records on the {{`{{ $labels.lane }}`}} lane ({{`{{ $labels.reason }}`}})"
+            description: "{{`{{ $value | humanize }}`}} records were dropped in 15 minutes."
+        - alert: AxeraIncidentObservationsDropped
+          expr: sum by (namespace, lane) (increase(axera_radar_incident_observations_dropped_total{namespace="{{ $ns }}"}[15m])) > 0
+          labels:
+            severity: warning
+          annotations:
+            summary: "Axera dropped detection observations on the {{`{{ $labels.lane }}`}} lane"
+            description: "Radar's queue to the incident pipeline overflowed: {{`{{ $value | humanize }}`}} observations in 15 minutes never reached detection."
+        # Radar labels this series service=<hosted service>; the scrape keeps the target's own
+        # service label (the Kubernetes Service, "radar") and stores Radar's as exported_service (no
+        # honorLabels), so grouping by service would fold every failing hosted service into one
+        # series named "radar". The alert groups by exported_service, as AxeraApiJobFailing does
+        # with exported_job.
+        - alert: AxeraHostedServiceFailing
+          expr: sum by (namespace, exported_service) (increase(axera_radar_hosted_service_failures_total{namespace="{{ $ns }}"}[15m])) > 0
+          labels:
+            severity: warning
+          annotations:
+            summary: "Axera background service {{`{{ $labels.exported_service }}`}} is failing"
+            description: "{{`{{ $value | humanize }}`}} failed runs in 15 minutes; Radar's log names the error."
+        # A DNS server registered for a cluster (Settings > Integrations > DNS Servers) that
+        # does not answer the reverse lookups Radar sends it: a resolver that times out on every PTR
+        # costs the external lane 2 s per cache miss, and nothing else says so. The gauge is the
+        # state that screen shows (not_answering: 2 or more unanswered queries in a row, reset by any
+        # answer, registered servers only), never the timeouts counter: a resolver that loses one packet now and then
+        # between answers is Answering there and must not page. The probe heals the gauge without
+        # traffic. A Radar older than the gauge has no series, and absence does not alert.
+        - alert: AxeraDnsServerNotAnswering
+          expr: max by (namespace) (axera_radar_reverse_dns_servers_not_answering{namespace="{{ $ns }}"}) > 0
+          for: 30m
+          labels:
+            severity: info
+          annotations:
+            summary: "A registered DNS server does not answer reverse lookups from Axera in {{`{{ $labels.namespace }}`}}"
+            description: "{{`{{ $value }}`}} registered DNS server(s) have answered no reverse lookup for 30 minutes (Settings > Integrations > DNS Servers shows them as not answering). Fix the server or remove it there. Until then external destinations show IP addresses instead of names, and each unanswered lookup slows the external lane."
+        # A node whose processes are no longer attributed to their pods (the process-to-pod association): Radar
+        # judges each node from its agent's heartbeat and holds the state itself — degraded only after the
+        # node's pod-scoped share stayed below 90% for 15 minutes or sat far below the cluster's median, with a
+        # restarted agent not judged and recovery 2 points above the threshold — so 5 minutes here only keep a
+        # single evaluation from paging. A Radar older than the gauge has no series, and absence does not alert.
+        - alert: AxeraProcessAssociationDegraded
+          expr: max by (namespace, cluster, node) (axera_radar_process_association_degraded{namespace="{{ $ns }}"}) == 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Processes on node {{`{{ $labels.node }}`}} of cluster {{`{{ $labels.cluster }}`}} are not attributed to their pods"
+            description: "The share of the node's pod processes that Axera can attribute to their pod has stayed low (Process Activity > coverage shows the node's sources, layout and agent version). Namespace scope and runtime detections miss what is not attributed. Check the node's process agent and recent changes to the node's container runtime."
+        # The API labels this series job=<scheduled job>; the scrape keeps the target's own job label
+        # ("api") and stores the API's as exported_job (no honorLabels), so the alert groups by that.
+        - alert: AxeraApiJobFailing
+          expr: sum by (namespace, exported_job) (increase(axera_api_job_failures_total{namespace="{{ $ns }}"}[30m])) > 0
+          labels:
+            severity: warning
+          annotations:
+            summary: "Axera scheduled job {{`{{ $labels.exported_job }}`}} is failing"
+            description: "{{`{{ $value | humanize }}`}} failed runs in 30 minutes; the API's log names the error."
+        # The scrape itself: a target that answers nothing, or no target at all (the endpoint off, a
+        # NetworkPolicy refusing the scraper, a ServiceMonitor the monitoring stack does not pick up).
+        - alert: AxeraMetricsTargetDown
+          expr: up{namespace="{{ $ns }}", job=~"radar|api"} == 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Axera {{`{{ $labels.job }}`}} metrics endpoint is down in {{`{{ $labels.namespace }}`}}"
+            description: "Prometheus cannot scrape {{`{{ $labels.job }}`}} on port 9090; every Axera ingest alert is blind while it is down."
+        - alert: AxeraMetricsTargetMissing
+          expr: absent(up{namespace="{{ $ns }}", job="radar"})
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "No Axera Radar metrics target in {{ $ns }}"
+            description: "The monitoring stack scrapes no Radar target in {{ $ns }}: check that the monitoring stack watches this namespace (OpenShift: user workload monitoring is enabled) and that the ServiceMonitor is selected."
+{{- end }}

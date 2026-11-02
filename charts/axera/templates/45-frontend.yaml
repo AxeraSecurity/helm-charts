@@ -1,3 +1,5 @@
+{{- include "axera.init" . }}
+{{- $svcType := include "axera.frontendServiceType" . }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -15,14 +17,30 @@ spec:
       labels: { app: frontend }
     spec:
       serviceAccountName: axera-sa
+      {{- with (include "axera.scheduling" (dict "component" "frontend" "ctx" .) | trim) }}{{ . | nindent 6 }}{{- end }}
       containers:
         - name: frontend
           image: {{ include "axera.image" (dict "img" .Values.images.frontend "ctx" .) }}
           imagePullPolicy: Always
+          {{- with include "axera.appContainerSecurityContext" . }}
+          {{- . | nindent 10 }}
+          {{- end }}
           ports:
             - { containerPort: 3000 }
           envFrom:
             - configMapRef: { name: frontend-env }
+          {{- if and (.Values.kerberos).enabled (.Values.kerberos).keytabSecret }}
+          env:
+            # Kerberos sign-in: a ticket for a user in many AD groups makes an Authorization header
+            # well past Node's 16 KB default, which the server would refuse with a bare 431.
+            - { name: NODE_OPTIONS, value: "--max-http-header-size=65536" }
+          {{- end }}
+          # operands.v1330 picks the frontend's own <basepath>/healthz route (no auth, no
+          # backend call: the probes see a hung Next.js server, never a backend outage) or, for the
+          # v13.0.0 image, which has no such route, tcpSocket on 3000.
+          # Startup allows 5 min of seeding/startup work; liveness restarts after ~2 min unanswered.
+          {{- include "axera.healthProbes" (dict "port" 3000 "path" (printf "%s/healthz" .Values.frontend.basepath) "ctx" .) | nindent 10 }}
+          resources: {{- toYaml .Values.resources.frontend | nindent 12 }}
 ---
 apiVersion: v1
 kind: Service
@@ -30,7 +48,30 @@ metadata:
   name: frontend
   namespace: {{ .Values.global.namespace }}
   labels: {{- include "axera.labels" . | nindent 4 }}
+  {{- if and (eq $svcType "LoadBalancer") .Values.expose.frontend.serviceAnnotations }}
+  annotations: {{- toYaml .Values.expose.frontend.serviceAnnotations | nindent 4 }}
+  {{- end }}
 spec:
+  {{- if eq $svcType "LoadBalancer" }}
+  # expose.type=LoadBalancer: the UI is served straight from this Service (plain HTTP from the pod;
+  # https only when a load balancer in front terminates TLS).
+  type: LoadBalancer
+  {{- with .Values.expose.frontend.loadBalancerIP }}
+  loadBalancerIP: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.expose.frontend.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges: {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.expose.frontend.externalTrafficPolicy }}
+  # Local keeps the client address (no SNAT to a node), so NetworkPolicy ipBlock peers match it on
+  # dataplanes that give node-SNATed traffic a node identity (GKE Dataplane V2).
+  externalTrafficPolicy: {{ . }}
+  {{- end }}
+  {{- end }}
   selector: { app: frontend }
   ports:
+    {{- if eq $svcType "LoadBalancer" }}
+    - { name: http, port: {{ .Values.expose.frontend.servicePort | default 3000 }}, targetPort: 3000 }
+    {{- else }}
     - { name: http, port: 3000, targetPort: 3000 }
+    {{- end }}

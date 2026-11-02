@@ -1,9 +1,15 @@
+{{- include "axera.init" . }}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: axera-sa
   namespace: {{ .Values.global.namespace }}
   labels: {{- include "axera.labels" . | nindent 4 }}
+# No token by default: only the pods that call the Kubernetes API (api, radar,
+# networkpolicywatcher, allowdropmonitor) opt in with automountServiceAccountToken: true. The
+# front-door frontend, PostgreSQL, Kafka, kafka-ui, the AI model server, the Jobs and the backup
+# Jobs the API creates run under this ServiceAccount (for the OpenShift SCC grant) without one.
+automountServiceAccountToken: false
 {{- if .Values.imagePullSecret.enabled }}
 imagePullSecrets:
   - name: {{ .Values.imagePullSecret.name }}
@@ -21,11 +27,14 @@ data:
   .dockerconfigjson: {{ .Values.imagePullSecret.dockerconfigjson }}
 ---
 {{- end }}
-{{- if .Values.global.createSCC }}
+{{- if include "axera.createSCC" . }}
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
 metadata:
-  name: axera-scc
+  # Namespace-suffixed so multiple Axera CRs (AllNamespaces install) don't share
+  # one cluster-scoped SCC — otherwise deleting one CR's cleanup removes the SCC
+  # the other CR still depends on.
+  name: axera-scc-{{ .Values.global.namespace }}
   labels: {{- include "axera.labels" . | nindent 4 }}
   annotations:
     kubernetes.io/description: "Microseg workloads - allows fixed/anyuid for postgres, kafka, .NET"
@@ -57,6 +66,7 @@ volumes:
   - downwardAPI
   - emptyDir
   - persistentVolumeClaim
+  - nfs
   - projected
   - secret
 users: []
@@ -65,59 +75,174 @@ groups: []
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: axera-scc-use
+  name: axera-scc-use-{{ .Values.global.namespace }}
   labels: {{- include "axera.labels" . | nindent 4 }}
 rules:
   - apiGroups: ["security.openshift.io"]
     resources: ["securitycontextconstraints"]
-    resourceNames: ["axera-scc"]
+    resourceNames: ["axera-scc-{{ .Values.global.namespace }}"]
     verbs: ["use"]
 ---
+# The binding names differ from the 1.x / 2.x charts on purpose: those bound the same names to
+# the unsuffixed ClusterRoles, and Kubernetes never lets a binding change its roleRef. New names make
+# an in-place upgrade create these and remove the old ones. Never change a roleRef under a name.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: axera-scc-use
+  name: axera-scc-use-binding
   namespace: {{ .Values.global.namespace }}
   labels: {{- include "axera.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: axera-scc-use
+  name: axera-scc-use-{{ .Values.global.namespace }}
 subjects:
   - kind: ServiceAccount
     name: axera-sa
     namespace: {{ .Values.global.namespace }}
 ---
+{{- end }}
 # ----------------------------------------------------------------------------
-# License module RBAC.
+# License module RBAC (every distribution).
 # API pod needs to:
 #   1. List worker nodes (count vs license maxWorkerNodes)
-#   2. Read ClusterVersion (config.openshift.io) for cluster UID binding
+#   2. On OpenShift, read ClusterVersion (config.openshift.io) for cluster UID binding
 # ----------------------------------------------------------------------------
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: axera-license-reader
+  name: axera-license-reader-{{ .Values.global.namespace }}
   labels: {{- include "axera.labels" . | nindent 4 }}
 rules:
   - apiGroups: [""]
     resources: ["nodes"]
     verbs: ["get", "list", "watch"]
+  {{- if include "axera.isOpenShift" . }}
   - apiGroups: ["config.openshift.io"]
     resources: ["clusterversions"]
     verbs: ["get", "list"]
+  {{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: axera-license-reader-{{ .Values.global.namespace }}
+  # Not axera-license-reader-<ns>: the 2.x chart bound that name to ClusterRole axera-license-reader
+  # (roleRef is immutable; see the SCC binding above).
+  name: axera-license-reader-binding-{{ .Values.global.namespace }}
   labels: {{- include "axera.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: axera-license-reader
+  name: axera-license-reader-{{ .Values.global.namespace }}
 subjects:
   - kind: ServiceAccount
     name: axera-sa
     namespace: {{ .Values.global.namespace }}
+
+{{- if include "axera.backupVolumeEnabled" . }}
+---
+# Backup/restore: the API pod (axera-sa) spawns pg_dump / pg_restore Jobs plus a creds Secret
+# in its OWN namespace, and reads the Job pods' logs to surface failures. Rendered only while a
+# backup volume is configured (backup.storage): without one the API runs no backup, and these
+# rights (Secrets in this namespace, the integration token included) would serve nothing.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: axera-backup-runner
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+rules:
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["get", "list", "watch", "create", "delete"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    # delete: each run drops its DB-credentials Secret once the Job ends (the API's backup service);
+    # without it that delete answers 403 and the Secret holding the password stays behind.
+    verbs: ["get", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: axera-backup-runner
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: axera-backup-runner
+subjects:
+  - kind: ServiceAccount
+    name: axera-sa
+    namespace: {{ .Values.global.namespace }}
+{{- end }}
+
+{{- /* =========================================================================
+     Operator releases before 1.0.0 rendered a SECOND integration identity here, ServiceAccount
+     axera-integration (bound to axera-radar-cluster-read-<ns> and to the mesh roles of an earlier
+     chart template: cluster-wide mesh reads, AuthorizationPolicy writes, pods/log in istio-system
+     and ztunnel), and told the admin to register ITS token. 1.0.0 has ONE identity,
+     axera-integration-sa (02-integration-rbac.yaml).
+
+     An OLM upgrade must not cut off a cluster that is still registered with the old token, nor
+     hand that token more than it had. So while that ServiceAccount exists it is bound to the base
+     ClusterRole only (every read and policy write Axera needs, which covers what it held) plus
+     pods/log in istio-system and ztunnel where those exist - never to axera-integration-extended
+     or axera-integration-agent-deploy, whatever integration.leastPrivilege says. It is no longer
+     rendered and never recreated: re-register the cluster with the token in Secret
+     axera-sa-token, delete ServiceAccount axera-integration, and the next reconcile drops these
+     bindings. A new install never has it, so this renders nothing there.
+========================================================================= */}}
+{{- if lookup "v1" "ServiceAccount" .Values.global.namespace "axera-integration" }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: axera-integration-role-legacy-sa-{{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: axera-integration-role-{{ .Values.global.namespace }}
+subjects:
+  - kind: ServiceAccount
+    name: axera-integration
+    namespace: {{ .Values.global.namespace }}
+{{- range $ns := list "istio-system" "ztunnel" }}
+{{- if lookup "v1" "Namespace" "" $ns }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: axera-integration-legacy-pod-logs-{{ $.Values.global.namespace }}
+  namespace: {{ $ns }}
+  labels: {{- include "axera.labels" $ | nindent 4 }}
+rules:
+  # ztunnel pod logs, the ambient L4 verdict stream (pods themselves: the base ClusterRole).
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: axera-integration-legacy-pod-logs-{{ $.Values.global.namespace }}
+  namespace: {{ $ns }}
+  labels: {{- include "axera.labels" $ | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: axera-integration-legacy-pod-logs-{{ $.Values.global.namespace }}
+subjects:
+  - kind: ServiceAccount
+    name: axera-integration
+    namespace: {{ $.Values.global.namespace }}
+{{- end }}
+{{- end }}
 {{- end }}

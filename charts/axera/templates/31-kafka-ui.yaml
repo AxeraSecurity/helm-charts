@@ -1,4 +1,15 @@
+{{- include "axera.init" . }}
 {{- if include "axera.kafkaUiEnabled" . }}
+# =============================================================================
+# kafka-ui — a DEBUGGING aid, not a product surface.
+#
+# This image has NO authentication of its own: whoever can reach it reads every
+# record on every topic — flow tuples, DNS query names, full process command
+# lines. It is OFF by default (kafka.enableUI=false); when on, it is a ClusterIP
+# Service only unless you publish it on purpose (routes.kafkaUi.enabled on
+# OpenShift, kafka.uiIstioHost with expose.type Istio). Reach it with
+# `kubectl -n <ns> port-forward svc/kafka-ui 8080:8080` instead of exposing it.
+# =============================================================================
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -16,15 +27,21 @@ spec:
       labels: { app: kafka-ui }
     spec:
       serviceAccountName: axera-sa
+      {{- with (include "axera.scheduling" (dict "component" "kafka" "ctx" .) | trim) }}{{ . | nindent 6 }}{{- end }}
       containers:
         - name: kafka-ui
           image: {{ include "axera.image" (dict "img" .Values.images.kafkaUi "ctx" .) }}
+          {{- with (.Values.resources).kafkaUi }}
+          resources: {{- toYaml . | nindent 12 }}
+          {{- end }}
           ports:
             - { containerPort: 8080 }
           env:
             - { name: KAFKA_CLUSTERS_0_NAME, value: "axera-kafka" }
             - { name: KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS, value: "kafka:9092" }
-            - { name: FILTERING_GROOVY_ENABLED, value: "true" }
+            # Groovy smart-filters are server-side script execution inside a component that
+            # does not authenticate its callers. Off: the UI keeps its plain field filters.
+            - { name: FILTERING_GROOVY_ENABLED, value: "false" }
 ---
 apiVersion: v1
 kind: Service

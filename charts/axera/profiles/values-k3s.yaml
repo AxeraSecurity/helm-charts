@@ -1,0 +1,45 @@
+# k3s profile: only what differs from values.yaml. Use with your own values file:
+#   helm upgrade --install axera axera/axera -n axera-central \
+#     -f profiles/values-k3s.yaml --set expose.frontend.host=axera.example.com
+# (create namespace axera-central first with the Pod Security labels: README, "Prepare the namespace")
+#
+# What distribution k3s turns on by default: an Ingress with class traefik (the k3s built-in
+# controller), the community PostgreSQL image (alpine), hardened product containers, the amd64
+# nodeSelector and no OpenShift objects. Storage comes from the built-in local-path StorageClass.
+#
+# Follow-up after the install: raise the Traefik read timeout to 180s (README, "Traefik read timeout").
+global:
+  distribution: k3s
+  # Empty → the default StorageClass (k3s ships local-path: node-local, ReadWriteOnce).
+  storageClass: ""
+
+expose:
+  type: Ingress
+  frontend:
+    # The DNS name users browse to: point it at a node IP (or the load balancer in front of the nodes).
+    host: "<<< FILL: UI host name, e.g. axera.example.com >>>"
+    # Without ingress.tlsSecretName Traefik serves its built-in self-signed certificate.
+    tls: true
+  ingress:
+    className: traefik
+    tlsSecretName: ""
+
+backup:
+  storage:
+    # local-path provides ReadWriteOnce only; with backup.storage.createPvc=true a ReadWriteMany
+    # claim would stay Pending (and the api pod with it). Single node: the Jobs share it.
+    accessMode: ReadWriteOnce
+
+networkPolicies:
+  # Only the Traefik pods reach the UI. Traefik runs in kube-system with this label on k3s; the
+  # built-in service load balancer (svclb) forwards to it, so the Axera pods see Traefik's pod IP.
+  ingressFrom:
+    - namespaceSelector:
+        matchLabels: {kubernetes.io/metadata.name: kube-system}
+      podSelector:
+        matchLabels: {app.kubernetes.io/name: traefik}
+  kafkaClients:
+    # The axera-force agent on these nodes produces to the in-cluster Kafka from the host network.
+    # Narrow the policy to the node subnet(s) plus the k3s cluster CIDR, e.g.:
+    # cidrs: ["192.168.10.0/24", "10.42.0.0/16"]
+    cidrs: []

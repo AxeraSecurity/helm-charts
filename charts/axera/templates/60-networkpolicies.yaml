@@ -1,4 +1,41 @@
+{{- include "axera.init" . }}
 {{- if .Values.networkPolicies.enabled }}
+{{- $isOpenShift := include "axera.isOpenShift" . }}
+{{- $exposeType := include "axera.exposeType" . }}
+{{- $kc := .Values.networkPolicies.kafkaClients | default dict }}
+{{- $kafkaUnrestricted := and (not .Values.kafka.external) $kc.unrestricted }}
+{{- /*
+  Ingress segmentation for the Axera namespace. Without it any pod on the cluster reaches every
+  control-plane service over plain HTTP, the /api/Internal/* lanes (guarded only by the shared
+  X-Internal-Token), the local AI model server, which has no authentication of its own, and the
+  in-cluster Kafka (PLAINTEXT). Only effective where the CNI enforces NetworkPolicy.
+
+  Every pod in this namespace is selected by at least one policy below, so none is left open
+  (except Kafka with networkPolicies.kafkaClients.unrestricted, on purpose):
+    allow-same-namespace          every pod except the AI model server accepts traffic from this
+                                  namespace;
+    allow-ollama-from-api         the AI model server accepts only the API and its model-pull Job
+                                  (names kept for compatibility);
+    allow-from-openshift-ingress  OpenShift (Route / Ingress): the router reaches only the pods
+                                  published (frontend, mcp and kafka-ui while published, api with
+                                  routes.api, radar with a public ingest URL);
+    allow-from-ingress            every other front door (ingress controller, Istio gateway, load
+                                  balancer): the same pods, from networkPolicies.ingressFrom;
+    allow-agents-to-kafka         hostNetwork flow/process agents may produce to the in-namespace
+                                  Kafka (only when kafka.external=false);
+    allow-mesh-collector-to-radar a mesh collector in another namespace may post to Radar (only
+                                  when meshMonitoring.collectorNamespace names another namespace);
+    allow-mesh-to-axera-otel-collector  Envoy sidecars and waypoints in every namespace may send
+                                  their access logs (OTLP gRPC 4317) to the mesh collector when it
+                                  runs in this namespace (the default);
+    allow-monitoring-to-metrics   the Prometheus of the scrape namespaces (monitoring.scrapeNamespaces;
+                                  default per distribution) may scrape Radar's and the API's
+                                  /metrics on 9090, and nothing else (only with monitoring.enabled);
+    allow-api-clients             pods in the namespaces of networkPolicies.apiClients.namespaces may
+                                  reach the API on 8080 (e.g. the agent's audit forwarder in "axera"
+                                  posting to /api/Internal/Audit on the same cluster).
+  All are Ingress-only: egress is not restricted.
+*/}}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -6,12 +43,113 @@ metadata:
   namespace: {{ .Values.global.namespace }}
   labels: {{- include "axera.labels" . | nindent 4 }}
 spec:
-  podSelector: {}
+  # NotIn also matches pods with no app label (Jobs), so they stay reachable in-namespace. The AI
+  # model server is left out on purpose: a compromised in-namespace pod (kafka-ui, say) must not be
+  # able to pull or delete models; allow-ollama-from-api names the only callers. With
+  # kafkaClients.unrestricted Kafka is left out too (selected by no policy).
+  podSelector:
+    matchExpressions:
+      - { key: app, operator: NotIn, values: {{ if $kafkaUnrestricted }}[ollama, kafka]{{ else }}[ollama]{{ end }} }
   ingress:
     - from:
         - podSelector: {}
   policyTypes: [Ingress]
+{{- if include "axera.metricsEnabled" . }}
+{{- $scrapers := include "axera.scrapeNamespaces" . | fromJsonArray }}
 ---
+# The monitoring stack scrapes Radar's and the API's /metrics (plain HTTP, port 9090) from its
+# own namespace; allow-same-namespace does not cover it, so without this every target reads down.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-monitoring-to-metrics
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchExpressions:
+      - { key: app, operator: In, values: [radar, api] }
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchExpressions:
+              - { key: kubernetes.io/metadata.name, operator: In, values: {{ toJson $scrapers }} }
+      ports:
+        - { protocol: TCP, port: 9090 }
+  policyTypes: [Ingress]
+{{- end }}
+---
+# Only the API calls the model (Radar, NetworkPolicyWatcher and AllowDropMonitor register no AI
+# client); the pull Job talks to the Service to fetch the model onto the model server's volume.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ollama-from-api
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels: { app: ollama }
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - { key: app, operator: In, values: [api, ollama-pull-model] }
+      ports:
+        - { protocol: TCP, port: 11434 }
+  policyTypes: [Ingress]
+{{- with ((.Values.networkPolicies.apiClients | default dict).namespaces) }}
+---
+# In-cluster callers of the API from other namespaces, by namespace name: the agent chart's audit
+# forwarder (namespace "axera", not on the host network) posts to
+# http://api.<this namespace>.svc:8080/api/Internal/Audit with the Internal__Token. Every API route
+# still needs its own credential; this only opens the port.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api-clients
+  namespace: {{ $.Values.global.namespace }}
+  labels: {{- include "axera.labels" $ | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels: { app: api }
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchExpressions:
+              - { key: kubernetes.io/metadata.name, operator: In, values: {{ toJson . }} }
+      ports:
+        - { protocol: TCP, port: 8080 }
+  policyTypes: [Ingress]
+{{- end }}
+{{- $routerApps := list "frontend" "mcp" "kafka-ui" }}
+{{- if hasKey .Values.networkPolicies "routerIngressApps" }}
+{{- $routerApps = .Values.networkPolicies.routerIngressApps | default list }}
+{{- end }}
+{{- /* A chart component this release does not publish is left out, so the policy names exactly the
+     pods the front door publishes: kafka-ui, which has no authentication of its own, only while
+     published (axera.kafkaUiExposed); mcp only while it runs behind a path-aware front door
+     (axera.mcpExposed). Any other label in the list is kept as given. */}}
+{{- if not (include "axera.kafkaUiExposed" .) }}
+{{- $routerApps = without $routerApps "kafka-ui" }}
+{{- end }}
+{{- if not (include "axera.mcpExposed" .) }}
+{{- $routerApps = without $routerApps "mcp" }}
+{{- end }}
+{{- if and (or (and (eq $exposeType "Route") (.Values.routes.api).enabled) (include "axera.auditIngestExposed" .)) (not (has "api" $routerApps)) }}
+{{- /* The path-scoped api Route, or the audit ingest path on the Ingress / Istio front door
+     (expose.auditIngest), publishes the api pod for remote audit forwarders. */}}
+{{- $routerApps = append $routerApps "api" }}
+{{- end }}
+{{- if and (.Values.meshMonitoring).ingestPublicUrl (not (has "radar" $routerApps)) }}
+{{- /* A remote cluster's collector reaches Radar through a front door you add. */}}
+{{- $routerApps = append $routerApps "radar" }}
+{{- end }}
+{{- if $routerApps }}
+{{- if and $isOpenShift (has $exposeType (list "Route" "Ingress")) }}
+---
+# The OpenShift router reaches only the pods a Route publishes (networkPolicies.routerIngressApps),
+# never api, radar, the watcher, AllowDropMonitor, Postgres or the AI model server directly.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -19,11 +157,158 @@ metadata:
   namespace: {{ .Values.global.namespace }}
   labels: {{- include "axera.labels" . | nindent 4 }}
 spec:
-  podSelector: {}
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values: {{ toJson $routerApps }}
   ingress:
     - from:
         - namespaceSelector:
             matchLabels:
               network.openshift.io/policy-group: ingress
   policyTypes: [Ingress]
+{{- else }}
+---
+# The front door (ingress controller, Istio ingress gateway or load balancer) reaches only the
+# published pods (networkPolicies.routerIngressApps, filtered as above) on 3000/8080; never api,
+# the watcher, Postgres, Kafka or the AI model server directly.
+#
+# Peers: networkPolicies.ingressFrom (raw NetworkPolicyPeer objects). Empty (default) renders
+# [namespaceSelector {}, ipBlock 0.0.0.0/0], which works on every CNI and exposure:
+#   namespaceSelector {} - an in-cluster controller or gateway pod (some eBPF dataplanes apply
+#                          ipBlock to traffic from outside the cluster only);
+#   ipBlock 0.0.0.0/0    - host-network controllers and LoadBalancer / NodePort traffic that
+#                          arrives SNATed to a node address.
+# Narrow it once the front door is known (the k3s profile does, for Traefik); see README,
+# "NetworkPolicies".
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-from-ingress
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values: {{ toJson $routerApps }}
+  ingress:
+    - from:
+        {{- with .Values.networkPolicies.ingressFrom }}
+        {{- toYaml . | nindent 8 }}
+        {{- else }}
+        - namespaceSelector: {}
+        - ipBlock: { cidr: 0.0.0.0/0 }
+        {{- end }}
+      ports:
+        - { protocol: TCP, port: 3000 }
+        - { protocol: TCP, port: 8080 }
+  policyTypes: [Ingress]
+{{- end }}
+{{- end }}
+{{- if and (not .Values.kafka.external) (not $kafkaUnrestricted) }}
+{{- $hostNet := true }}
+{{- if hasKey $kc "hostNetwork" }}
+{{- $hostNet = $kc.hostNetwork }}
+{{- end }}
+{{- if or $hostNet $kc.namespaces $kc.cidrs }}
+---
+# The in-namespace Kafka also takes writes from the flow and process agents, which run with
+# hostNetwork (the axera-force agent) on this cluster's nodes. On OpenShift, OVN-Kubernetes
+# presents host-network traffic as the host-network policy group; other producers are named by
+# namespace or CIDR (networkPolicies.kafkaClients). Without this, turning the policies on would
+# silently cut every agent's Kafka writes.
+#
+# Off OpenShift there is no host-network group. Agents on other nodes arrive as their node IP or
+# as the node's tunnel address inside the cluster CIDR (flannel / Canal: 10.42.0.0/16 by default
+# on k3s and RKE2). List the node subnet(s) plus the cluster CIDR in kafkaClients.cidrs for a
+# tight policy. With hostNetwork on and no cidrs, the policy falls back to
+# [namespaceSelector {}, ipBlock 0.0.0.0/0] on 9092 (NOTES warns). Where cross-node host traffic
+# matches no ipBlock at all (some eBPF dataplanes, e.g. GKE Dataplane V2) set
+# kafkaClients.unrestricted=true: Kafka is then selected by no policy.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-agents-to-kafka
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels: { app: kafka }
+  ingress:
+    - from:
+        {{- if $hostNet }}
+        {{- if $isOpenShift }}
+        - namespaceSelector:
+            matchLabels:
+              policy-group.network.openshift.io/host-network: ""
+        {{- else if not $kc.cidrs }}
+        - namespaceSelector: {}
+        - ipBlock: { cidr: 0.0.0.0/0 }
+        {{- end }}
+        {{- end }}
+        {{- with $kc.namespaces }}
+        - namespaceSelector:
+            matchExpressions:
+              - key: kubernetes.io/metadata.name
+                operator: In
+                values: {{ toJson . }}
+        {{- end }}
+        {{- range $kc.cidrs }}
+        - ipBlock: { cidr: {{ . | quote }} }
+        {{- end }}
+      ports:
+        - { protocol: TCP, port: 9092 }
+  policyTypes: [Ingress]
+{{- end }}
+{{- end }}
+{{- $collectorNs := (.Values.meshMonitoring).collectorNamespace }}
+{{- if or (not $collectorNs) (eq $collectorNs .Values.global.namespace) }}
+---
+# The mesh collector (axera-otel-collector) runs in this namespace by default; the Envoys that feed
+# it run in every meshed namespace, so it takes ingress from all of them, on its OTLP port alone.
+# Without it allow-same-namespace (the collector pods carry no `app` label) isolates the collector
+# and every Envoy outside this namespace is dropped with no error anywhere. An empty
+# namespaceSelector is every namespace on purpose: a list would silently drop the namespace meshed
+# next. Selects nothing until the collector is applied.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-mesh-to-axera-otel-collector
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: axera-otel-collector
+  ingress:
+    - from:
+        - namespaceSelector: {}
+      ports:
+        - { protocol: TCP, port: 4317 }
+  policyTypes: [Ingress]
+{{- end }}
+{{- if and $collectorNs (ne $collectorNs .Values.global.namespace) }}
+---
+# A mesh collector placed in another namespace posts its Envoy access logs to Radar.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-mesh-collector-to-radar
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels: { app: radar }
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ $collectorNs | quote }}
+      ports:
+        - { protocol: TCP, port: 8080 }
+  policyTypes: [Ingress]
+{{- end }}
 {{- end }}

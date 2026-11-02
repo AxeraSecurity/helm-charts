@@ -1,0 +1,39 @@
+# Anthos (GKE Enterprise) with Cloud Service Mesh / Istio: only what differs from values.yaml.
+#   helm upgrade --install axera axera/axera -n axera-central -f profiles/values-anthos-istio.yaml -f my-values.yaml
+#
+# What distribution anthos turns on by default: an Istio VirtualService on your ingress Gateway,
+# sidecar opt-out on the chart's Jobs and test pod, the community PostgreSQL image (alpine),
+# hardened product containers, the amd64 nodeSelector, the gmp-system scrape namespace and no
+# OpenShift objects. The namespace must NOT be enrolled in the mesh (README, "Prepare the namespace").
+global:
+  distribution: anthos
+  # Empty → the default StorageClass (standard-rwo on GKE).
+  storageClass: ""
+
+expose:
+  type: Istio
+  frontend:
+    host: "<<< FILL: UI host name, e.g. axera.example.com >>>"
+    tls: true
+
+istio:
+  virtualService:
+    # Your existing ingress Gateway as "<namespace>/<name>" (it must list the host above), or set
+    # createGateway: true below.
+    gateway: "<<< FILL: <namespace>/<gateway name>, e.g. istio-system/axera-gateway >>>"
+    createGateway: false
+    gatewaySelector: {istio: ingressgateway}
+    # createGateway with tls: the kubernetes.io/tls Secret in the ingress gateway's namespace.
+    tlsCredentialName: ""
+
+networkPolicies:
+  # Default: any source on the UI ports. Narrow it to the ingress gateway pods, e.g.:
+  # ingressFrom:
+  #   - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: istio-system}}
+  #     podSelector: {matchLabels: {istio: ingressgateway}}
+  ingressFrom: []
+  kafkaClients:
+    # Dataplane V2 (the only CNI of new Anthos clusters from 1.30) applies ipBlock to traffic from
+    # outside the cluster only, so the hostNetwork agents on other nodes would match no peer and be
+    # dropped. Kafka is selected by no policy instead; namespaceSelector {} admitted every pod anyway.
+    unrestricted: true

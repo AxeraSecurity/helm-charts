@@ -1,3 +1,4 @@
+{{- include "axera.init" . }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -8,13 +9,25 @@ metadata:
     {{- include "axera.labels" . | nindent 4 }}
 spec:
   replicas: 1
+  # Singleton background work (consumers, watchers, schedulers) and no leader election: Recreate
+  # stops the old pod before the new one starts, so two never run side by side during a rollout.
+  # rollingUpdate: null states that no rolling-update block applies.
+  strategy:
+    type: Recreate
+    rollingUpdate: null
   selector:
     matchLabels: { app: networkpolicywatcher }
   template:
     metadata:
+      annotations:
+        # Rolls the pod when a secret value set through values changes (axera.secretValuesChecksum).
+        checksum/secret: {{ include "axera.secretValuesChecksum" . }}
       labels: { app: networkpolicywatcher }
     spec:
       serviceAccountName: axera-sa
+      # Uses its ServiceAccount token and namespace file (axera-sa itself mounts no token).
+      automountServiceAccountToken: true
+      {{- with (include "axera.scheduling" (dict "component" "networkPolicyWatcher" "ctx" .) | trim) }}{{ . | nindent 6 }}{{- end }}
       {{- $waited := include "axera.waitForDb" . }}
       {{- if $waited }}
       initContainers:
@@ -24,16 +37,35 @@ spec:
         - name: networkpolicywatcher
           image: {{ include "axera.image" (dict "img" .Values.images.networkpolicywatcher "ctx" .) }}
           imagePullPolicy: Always
+          {{- with include "axera.appContainerSecurityContext" . }}
+          {{- . | nindent 10 }}
+          {{- end }}
           ports:
             - { containerPort: 8080 }
           envFrom:
             - configMapRef: { name: axera-app-config }
-            - secretRef: { name: axera-app-secret }
+            - secretRef: { name: {{ include "axera.appSecretName" . }} }
           env:
             - { name: ASPNETCORE_ENVIRONMENT, value: Production }
             - { name: ASPNETCORE_URLS, value: "http://+:8080" }
             - name: ConnectionStrings__DefaultConnection
-              valueFrom: { secretKeyRef: { name: axera-db-secrets, key: APP_DB_CONNSTR } }
+              valueFrom: { secretKeyRef: { name: {{ include "axera.dbSecretName" . }}, key: APP_DB_CONNSTR } }
+            {{- include "axera.pgCaAppEnv" . | nindent 12 }}
+          # Startup, readiness and liveness probes with 5 s timeouts. operands.v1330 picks
+          # httpGet /healthz (the first middleware: ahead of CORS, auth, the licence check and the
+          # database, so a probe sees a hung or starved process and never a dependency outage) or,
+          # for the v13.0.0 images, which serve no /healthz, tcpSocket on the same port.
+          # Startup allows 5 min of seeding/startup work; liveness restarts after ~2 min unanswered.
+          {{- include "axera.healthProbes" (dict "port" 8080 "path" "/healthz" "ctx" .) | nindent 10 }}
+          resources: {{- toYaml .Values.resources.networkPolicyWatcher | nindent 12 }}
+          {{- with include "axera.pgCaAppMount" . }}
+          volumeMounts:
+            {{- . | nindent 12 }}
+          {{- end }}
+      {{- with include "axera.pgCaAppVolume" . }}
+      volumes:
+        {{- . | nindent 8 }}
+      {{- end }}
 ---
 apiVersion: v1
 kind: Service

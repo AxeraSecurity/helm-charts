@@ -1,0 +1,7 @@
+{{- /*
+Install guards (no output): namespace "axera", required values present and well-formed, LocalNetwork
+ranges outside the in-cluster ranges, Kafka settings coherent, features the distribution cannot run
+refused, and (helm install / upgrade only) Pod Security "privileged" on the namespace. See
+axeraforce.validate in _helpers.tpl.
+*/ -}}
+{{- include "axeraforce.validate" . -}}

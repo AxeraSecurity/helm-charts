@@ -1,14 +1,31 @@
+{{- include "axera.init" . }}
+{{- /* OpenShift Routes: rendered only when expose.type resolves to Route (the default on OpenShift).
+       Every other front door: 50-ingress.yaml, 51-istio-virtualservice.yaml, or the frontend
+       Service itself (LoadBalancer). */}}
+{{- if eq (include "axera.exposeType" .) "Route" }}
 {{- if .Values.routes.frontend.enabled }}
+---
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: frontend
   namespace: {{ .Values.global.namespace }}
   labels: {{- include "axera.labels" . | nindent 4 }}
-  {{- if .Values.routes.frontend.timeout }}
-  annotations:
-    # CPU LLM inference (AI triage/correlation) can run well past the 30s default.
-    haproxy.router.openshift.io/timeout: {{ .Values.routes.frontend.timeout | quote }}
+  {{- /*
+    timeout: HAProxy's 30 s default cut slower reads into a bare HTML 504 before the product could
+    answer; the route must outlast every deadline inside it (routes.frontend.timeout).
+    hsts_header: TLS terminates at the router, so only the router can send HSTS
+    (routes.frontend.hstsHeader; empty disables it).
+  */}}
+  {{- $ann := dict }}
+  {{- with .Values.routes.frontend.timeout }}
+  {{- $_ := set $ann "haproxy.router.openshift.io/timeout" (toString .) }}
+  {{- end }}
+  {{- with .Values.routes.frontend.hstsHeader }}
+  {{- $_ := set $ann "haproxy.router.openshift.io/hsts_header" (toString .) }}
+  {{- end }}
+  {{- with $ann }}
+  annotations: {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
   {{- $fhost := include "axera.frontendHost" . }}
@@ -29,6 +46,10 @@ metadata:
   name: kafka-ui
   namespace: {{ .Values.global.namespace }}
   labels: {{- include "axera.labels" . | nindent 4 }}
+  {{- with .Values.routes.frontend.hstsHeader }}
+  annotations:
+    haproxy.router.openshift.io/hsts_header: {{ . | quote }}
+  {{- end }}
 spec:
   {{- $khost := include "axera.kafkaUiHost" . }}
   {{- if $khost }}
@@ -39,4 +60,33 @@ spec:
   tls:
     termination: {{ .Values.routes.kafkaUi.tls.termination }}
     insecureEdgeTerminationPolicy: {{ .Values.routes.kafkaUi.tls.insecureEdgeTerminationPolicy }}
+{{- end }}
+{{- if (.Values.routes.api).enabled }}
+---
+# PATH-SCOPED API Route — exposes ONLY the audit ingest path so REMOTE agent audit
+# forwarders (the axera-force agent on monitored clusters) can POST /api/Internal/Audit to this
+# central. Token-guarded (X-Internal-Token). Off by default; NOT the whole API. The
+# browser-facing API stays behind the frontend Route (which blocks /api/Internal).
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: api
+  namespace: {{ .Values.global.namespace }}
+  labels: {{- include "axera.labels" . | nindent 4 }}
+  {{- with .Values.routes.frontend.hstsHeader }}
+  annotations:
+    haproxy.router.openshift.io/hsts_header: {{ . | quote }}
+  {{- end }}
+spec:
+  {{- $ahost := include "axera.apiHost" . }}
+  {{- if $ahost }}
+  host: {{ $ahost }}
+  {{- end }}
+  path: {{ (.Values.routes.api).path | default "/api/Internal/Audit" | quote }}
+  to: { kind: Service, name: api }
+  port: { targetPort: http }
+  tls:
+    termination: {{ ((.Values.routes.api).tls).termination | default "edge" }}
+    insecureEdgeTerminationPolicy: {{ ((.Values.routes.api).tls).insecureEdgeTerminationPolicy | default "Redirect" }}
+{{- end }}
 {{- end }}

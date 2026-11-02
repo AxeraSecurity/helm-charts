@@ -1,0 +1,17 @@
+# k3s profile: only what differs from values.yaml. Use with your own values file:
+#   helm install axera-force <chart> -n axera -f profiles/values-k3s.yaml -f my-values.yaml
+#
+# Defaults that come from global.distribution k3s (set them here only if your cluster differs):
+#   podCIDR 10.42.0.0/16 and serviceCIDR 10.43.0.0/16 (k3s --cluster-cidr / --service-cidr); with podCIDR
+#   empty the install refuses a node whose pod range lies outside 10.42.0.0/16, and an offline render
+#   (helm template, GitOps) must set podCIDR
+#   process.criSocket /run/k3s/containerd/containerd.sock (a hint; checked on each node)
+#   pod network namespace access on (flow.podNetnsAttach, capture.podNetns)
+#   no OpenShift SCC; flow.ingress refused
+global:
+  distribution: k3s
+
+# Only used with auditForwarder.enabled: true. k3s writes the API audit log on SERVER nodes only, and
+# only when auditing is turned on (see the README: --kube-apiserver-arg audit-log-path / audit-policy-file).
+auditForwarder:
+  logDir: /var/lib/rancher/k3s/server/logs

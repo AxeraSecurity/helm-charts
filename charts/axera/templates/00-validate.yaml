@@ -1,0 +1,138 @@
+{{- include "axera.init" . }}
+{{- /*
+  Install-time checks that render nothing.
+
+  1. Unfilled placeholders. The shipped profiles mark every site-specific value with
+     "<<< FILL ... >>>". Refuse to render while any is left, and list them.
+*/}}
+{{- $unfilled := list }}
+{{- range $line := splitList "\n" (toYaml .Values) }}
+{{- if contains "<<< FILL" $line }}
+{{- $unfilled = append $unfilled (trim $line) }}
+{{- end }}
+{{- end }}
+{{- if $unfilled }}
+{{- fail (printf "\n\nReplace every <<< FILL >>> placeholder in your values files before installing (%d left):\n  %s\n" (len $unfilled) (join "\n  " $unfilled)) }}
+{{- end }}
+{{- /*
+  2. expose.frontend.tls must be a real boolean: a quoted "false" is a non-empty string, which
+     templates read as true (https URLs for a plain-HTTP UI).
+*/}}
+{{- $feTls := ((.Values.expose).frontend).tls }}
+{{- if not (kindIs "bool" $feTls) }}
+{{- fail (printf "\n\nexpose.frontend.tls must be true or false, written without quotes (got %q).\n" (toString $feTls)) }}
+{{- end }}
+{{- /* 3. Resolve the switches once so a typo fails here with a clear message. */}}
+{{- $_ := include "axera.exposeType" . }}
+{{- $_ := include "axera.createSCC" . }}
+{{- $_ := include "axera.admEnabled" . }}
+{{- $_ := include "axera.pgFlavor" . }}
+{{- $_ := include "axera.hardenAppContainers" . }}
+{{- $_ := include "axera.jobSidecarOptOut" . }}
+{{- $_ := include "axera.archNodeSelector" . }}
+{{- $_ := include "axera.auditIngestExposed" . }}
+{{- $_ := include "axera.frontDoorTimeout" . }}
+{{- /*
+  3a. Values in the layout of earlier charts (the 1.x and 2.x charts and the operator's). Helm
+      ignores a key the templates do not read without a word, so a reused values file would lose a
+      mirror registry, a sizing or an image choice silently. Refuse it and name the new place.
+*/}}
+{{- $legacy := list }}
+{{- $img := .Values.images | default dict }}
+{{- range $k := list "registry" "repo" "tag" "digest" }}
+{{- if hasKey ($img.postgres | default dict) $k }}
+{{- $legacy = append $legacy (printf "images.postgres.%s → images.postgres.flavor (rhel | alpine) and images.postgres.<rhel|alpine>.%s" $k $k) }}
+{{- end }}
+{{- if hasKey ($img.postgresBackup | default dict) $k }}
+{{- $legacy = append $legacy (printf "images.postgresBackup.%s → images.postgresBackup.<rhel|alpine>.%s (or backup.pgImage)" $k $k) }}
+{{- end }}
+{{- end }}
+{{- if hasKey $img "ollama" }}{{ $legacy = append $legacy "images.ollama → images.aiModel" }}{{ end }}
+{{- if hasKey $img "ollamaModels" }}{{ $legacy = append $legacy "images.ollamaModels → images.aiModelWeights" }}{{ end }}
+{{- $res := .Values.resources | default dict }}
+{{- range $old, $new := dict "ollama" "aiModel" "ollamaPull" "aiModelPull" "ollamaModelCopy" "aiModelCopy" }}
+{{- if hasKey $res $old }}{{ $legacy = append $legacy (printf "resources.%s → resources.%s" $old $new) }}{{ end }}
+{{- end }}
+{{- if hasKey (.Values.scheduling | default dict) "ollama" }}{{ $legacy = append $legacy "scheduling.ollama → scheduling.aiModel" }}{{ end }}
+{{- if (.Values.namespace | default dict).create }}
+{{- $legacy = append $legacy "namespace.create → global.createNamespace (README, \"Prepare the namespace\")" }}
+{{- end }}
+{{- if (.Values.auditForwarder | default dict).enabled }}
+{{- $legacy = append $legacy "auditForwarder.* → the axera-force chart (auditForwarder.*) on each monitored cluster; this chart no longer runs it" }}
+{{- end }}
+{{- if $legacy }}
+{{- fail (printf "\n\nThese values use the layout of an earlier chart and would be ignored:\n  - %s\nMove them to the new keys (values.yaml documents each one) and run the command again.\n" (join "\n  - " $legacy)) }}
+{{- end }}
+{{- /* 3b. ai.modelSource=image needs the weights image (an image whose /models-src holds the model tree). */}}
+{{- if and .Values.ai.enabled (not .Values.ai.external) (eq (toString .Values.ai.modelSource) "image") }}
+{{- $w := $img.aiModelWeights | default dict }}
+{{- if not (and $w.repo (or $w.tag $w.digest)) }}
+{{- fail "\n\nai.modelSource=image needs images.aiModelWeights.repo and .tag (or .digest): an image whose /models-src holds the model tree (the air-gapped model delivery path).\n" }}
+{{- end }}
+{{- end }}
+{{- /*
+  3c. Namespace ownership. Earlier charts could create and OWN the namespace (1.x
+      global.createNamespace=true by default, 2.x namespace.create). If this release owns it and
+      these values no longer render it, Helm deletes the namespace, with every volume in it, at the
+      end of this upgrade. Needs lookup: inert under helm template.
+*/}}
+{{- if not .Values.global.createNamespace }}
+{{- $nsObj := lookup "v1" "Namespace" "" .Values.global.namespace | default dict }}
+{{- $nsAnn := ($nsObj.metadata | default dict).annotations | default dict }}
+{{- if and (eq (index $nsAnn "meta.helm.sh/release-name" | default "") .Release.Name) (eq (index $nsAnn "meta.helm.sh/release-namespace" | default "") .Release.Namespace) (ne (index $nsAnn "helm.sh/resource-policy" | default "") "keep") }}
+{{- fail (printf "\n\nThis release owns namespace %s (created by an earlier chart). Add --set global.createNamespace=true, or run\n  kubectl annotate namespace %s helm.sh/resource-policy=keep\nfirst; otherwise this upgrade deletes the namespace and its volumes.\n" .Values.global.namespace .Values.global.namespace) }}
+{{- end }}
+{{- end }}
+{{- /*
+  4. Data tier guard. postgres.external and kafka.external default to false, so a `helm upgrade`
+     that leaves out the external-data values file would silently ask for new, EMPTY in-cluster
+     databases and broker. The tier recorded on install (platform.axerasecurity.com/postgres-tier
+     on the db Secret, platform.axerasecurity.com/kafka-tier on the Kafka Secret; the 2.0.0
+     package recorded them as axera.io/postgres-tier and axera.io/kafka-tier, which are still
+     read; a Secret without either is classified by its content) must match the tier these values
+     ask for. The PostgreSQL image flavour (platform.axerasecurity.com/postgres-flavor) must match
+     too: the rhel and alpine images keep their data in different layouts under different users.
+     dataTier.allowChange=true lets ONE deliberate change through. Needs lookup: inert on a first
+     install and under helm template, --dry-run and GitOps renders.
+*/}}
+{{- if not ((.Values.dataTier | default dict).allowChange) }}
+{{- $ns := .Values.global.namespace }}
+{{- $dbSecret := include "axera.dbSecretName" . }}
+{{- $kafkaSecret := include "axera.kafkaSecretName" . }}
+{{- $tierProblems := list }}
+{{- $fileLeftOut := false }}
+{{- $pgWant := include "axera.pgTier" . }}
+{{- $pgHave := include "axera.pgTierRecorded" . }}
+{{- if and $pgHave (ne $pgHave $pgWant) }}
+{{- $pgEffect := "the platform would start on NEW, EMPTY in-cluster databases (postgres-app, postgres-radar) and leave your PostgreSQL data behind" }}
+{{- if eq $pgWant "external" }}
+{{- $pgEffect = "the platform would switch to the database in postgres.appDbConnString and leave its in-cluster databases (PVCs data-postgres-app-0, data-postgres-radar-0) behind" }}
+{{- end }}
+{{- if eq $pgWant "internal" }}{{ $fileLeftOut = true }}{{ end }}
+{{- $tierProblems = append $tierProblems (printf "PostgreSQL: this installation uses the %s one (Secret %s/%s), these values say postgres.external=%t:\n    %s." (upper $pgHave) $ns $dbSecret (eq $pgWant "external") $pgEffect) }}
+{{- end }}
+{{- if not .Values.postgres.external }}
+{{- $flavorWant := include "axera.pgFlavor" . }}
+{{- $flavorHave := include "axera.pgFlavorRecorded" . }}
+{{- if and $flavorHave (ne $flavorHave $flavorWant) }}
+{{- $tierProblems = append $tierProblems (printf "PostgreSQL image: this installation runs the %s image (annotation platform.axerasecurity.com/postgres-flavor on Secret %s/%s), these values resolve images.postgres.flavor to %s:\n    the in-cluster databases would not start on their existing volumes. Set images.postgres.flavor=%s." $flavorHave $ns $dbSecret $flavorWant $flavorHave) }}
+{{- end }}
+{{- end }}
+{{- $kafkaWant := include "axera.kafkaTier" . }}
+{{- $kafkaHave := include "axera.kafkaTierRecorded" . }}
+{{- if and $kafkaHave (ne $kafkaHave $kafkaWant) }}
+{{- $kafkaEffect := "Radar would read a NEW, EMPTY in-cluster broker while the agents keep writing to your Kafka" }}
+{{- if eq $kafkaWant "external" }}
+{{- $kafkaEffect = "Radar would switch to kafka.bootstrapServers while the agents keep writing to the in-cluster broker" }}
+{{- end }}
+{{- if eq $kafkaWant "internal" }}{{ $fileLeftOut = true }}{{ end }}
+{{- $tierProblems = append $tierProblems (printf "Kafka: this installation uses the %s one (Secret %s/%s), these values say kafka.external=%t:\n    %s." (upper $kafkaHave) $ns $kafkaSecret (eq $kafkaWant "external") $kafkaEffect) }}
+{{- end }}
+{{- if $tierProblems }}
+{{- $hint := "This installation was not made with these values files. Run helm upgrade with the SAME -f files\nas the installation." }}
+{{- if $fileLeftOut }}
+{{- $hint = "Most likely a values file is missing from this command (for example the external-data profile).\nRun helm upgrade with the SAME -f files as the installation." }}
+{{- end }}
+{{- fail (printf "\n\nDATA TIER GUARD: these values change where Axera keeps its data.\n  - %s\n%s\nTo change it on purpose (data already moved), add --set dataTier.allowChange=true\nto this one command only.\n" (join "\n  - " $tierProblems) $hint) }}
+{{- end }}
+{{- end }}

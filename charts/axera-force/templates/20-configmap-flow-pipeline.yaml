@@ -1,0 +1,952 @@
+{{- $tls := include "axeraforce.tls" . -}}
+{{- $platform := include "axeraforce.platform" . | fromJson -}}
+{{- $compression := include "axeraforce.flpCompression" . -}}
+{{- $sasl := include "axeraforce.sasl" . -}}
+{{- $hasMC := or .Values.multiCluster .Values.clusterPublicIP (.Values.submariner).clusterGlobalCidr -}}
+{{- /* UDP lanes (flow.udp, default on): east-west UDP except DNS 53/5353, and all UDP on
+the external and intercluster lanes. Off keeps those lanes TCP-only (less Kafka/Radar volume, but
+UDP services never appear in Radar, so generated policies cannot open their ports). */ -}}
+{{- $udp := ne (toString (.Values.flow).udp) "false" -}}
+{{- /* North-south ingress lane (flow.ingress, default off, OpenShift only: the guards refuse it
+elsewhere): cluster_in_ingress → out5. Its query needs with()/without() (flow pipeline v1.9.0+), so an
+images.flowPipeline that cannot run it fails the render. Its topic must be its own (Radar reads each
+topic with one consumer): the guards check every lane's topic, see axeraforce.validate. */ -}}
+{{- $ingress := include "axeraforce.ingress" . -}}
+{{- if $ingress -}}
+{{- $flpProblem := include "axeraforce.flpIngressProblem" (.Values.images).flowPipeline -}}
+{{- if $flpProblem -}}
+{{- fail (printf "flow.ingress.enabled needs a flow pipeline image that supports with()/without() in its keep-entry queries (v1.9.0 or later), and images.flowPipeline %q %s (it would refuse the query at start, on every node). Use the chart's default images.flowPipeline, or set flow.ingress.enabled: false." (.Values.images).flowPipeline $flpProblem) -}}
+{{- end -}}
+{{- end -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: axera-flp
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "axeraforce.labels" . | nindent 4 }}
+data:
+  flp.yaml: |
+    log-level: info
+    {{- if (include "axeraforce.metrics" . | fromJson).enabled }}
+    # metricsSettings comes from the DaemonSet's --metricsSettings flag: the node's IP, port
+    # metrics.flowPipelinePort, its metric prefix and noPanic. A flag set on the command line takes the
+    # place of this file's key, and the address differs per node.
+    {{- else }}
+    # hostNetwork: the pipeline's Prometheus endpoint (default :9090) would be the NODE's port 9090, and
+    # on a node where something else owns it the pipeline dies at start ("bind: address already in
+    # use"). metrics.enabled is false, so the endpoint is off.
+    metricsSettings:
+      disableGlobalServer: true
+    {{- end }}
+
+    pipeline:
+      - name: ingest
+      - name: enrich_k8s
+        follows: ingest
+      - name: compact
+        follows: enrich_k8s
+      {{- if $hasMC }}
+      - name: multi_cluster_division
+        follows: enrich_k8s
+      - name: cluster_out_egress
+        follows: multi_cluster_division
+      {{- else }}
+      - name: cluster_out_egress
+        follows: enrich_k8s
+      {{- end }}
+      - name: pre_filter  # keepEntryQuery rules are evaluated first, so we needed a pre_filter to cull null values.
+        follows: compact
+      - name: filter
+        follows: pre_filter
+      - name: cluster_out_egress_compact
+        follows: cluster_out_egress
+      - name: filter_cluster_out_egress
+        follows: cluster_out_egress_compact
+      - name: out
+        follows: filter
+      - name: out3
+        follows: filter_cluster_out_egress
+      {{- if $ingress }}
+      # --- north-south ingress branch (opt-in, flow.ingress). It
+      # follows enrich_k8s even when multi_cluster_division exists: it reads none of the labels
+      # that stage adds. ---
+      - name: cluster_in_ingress
+        follows: enrich_k8s
+      - name: cluster_in_ingress_compact
+        follows: cluster_in_ingress
+      - name: cluster_in_ingress_null_cull
+        follows: cluster_in_ingress_compact
+      - name: filter_cluster_in_ingress
+        follows: cluster_in_ingress_null_cull
+      - name: out5
+        follows: filter_cluster_in_ingress
+      {{- end }}
+      {{- if (.Values.flow).dnsVisibility }}
+      # --- DNS visibility branch (opt-in). It hangs off enrich_k8s and NEVER off
+      # compact/pre_filter/filter: the east-west filter excludes UDP 53/5353, and the
+      # flow compacts drop every DNS field. It is its own compact (its own key
+      # allow-list) and its own topic so DNS volume can never disturb the flow lanes. ---
+      - name: dns_compact
+        follows: enrich_k8s
+      - name: dns_filter
+        follows: dns_compact
+      - name: dns_out
+        follows: dns_filter
+      {{- end }}
+      {{- if .Values.submariner }}
+      # --- intercluster (Submariner globalnet) branch. It must dangle off
+      # multi_cluster_division when that stage exists: LabeledSrcAddr — the
+      # per-cluster Globalnet-slice label that names the SOURCE cluster — is
+      # stamped there, and a branch off enrich_k8s never sees it (the source
+      # cluster then can't be resolved downstream). Falls back to enrich_k8s
+      # only when there is no division stage to follow. ---
+      - name: intercluster_compact
+        {{- if or .Values.multiCluster .Values.clusterPublicIP (.Values.submariner).clusterGlobalCidr }}
+        follows: multi_cluster_division
+        {{- else }}
+        follows: enrich_k8s
+        {{- end }}
+      - name: intercluster_pre_filter
+        follows: intercluster_compact
+      - name: intercluster_filter
+        follows: intercluster_pre_filter
+      - name: intercluster_out
+        follows: intercluster_filter
+      {{- end }}
+
+    parameters:
+      - name: ingest
+        ingest:
+          type: grpc
+          grpc:
+            port: 2055
+
+      - name: enrich_k8s
+        transform:
+          type: network
+          network:
+            rules:
+              - type: add_kubernetes
+                kubernetes:
+                  ipField: SrcAddr
+                  output: SrcK8S
+              - type: add_kubernetes
+                kubernetes:
+                  ipField: DstAddr
+                  output: DstK8S
+              # The pod behind a DNATed destination (Service VIP, NodePort, externalIP), named by the
+              # agent's packet-translation fields on the pre-NAT record. Only an agent run with
+              # ENABLE_PKT_TRANSLATION emits XlatDstAddr; on every other record this rule does nothing.
+              - type: add_kubernetes
+                kubernetes:
+                  ipField: XlatDstAddr
+                  output: XlatDstK8S
+              - type: add_subnet_label
+                add_subnet_label:
+                  input: SrcAddr
+                  output: SrcSubnet
+              - type: add_subnet_label
+                add_subnet_label:
+                  input: DstAddr
+                  output: DstSubnet
+              - type: decode_tcp_flags
+                decode_tcp_flags:
+                  input: Flags
+                  output: DecodedFlags
+            {{- if $platform.openshift }}
+            {{- if $ingress }}
+            # Index each node's ovn-k8s-mp0 address (the .2 of its pod subnet, read from the
+            # k8s.ovn.org/node-subnets annotation) as that node: a hostNetwork router's or the
+            # kubelet's connection to a pod leaves through mp0, and cluster_in_ingress keeps it as
+            # node-sourced only when it resolves to the node. The pipeline assumes [ovn] while the
+            # key is unset, so on OpenShift it is spelled out only while the lane is on.
+            kubeConfig:
+              managedCNI:
+                - ovn
+            {{- end }}
+            {{- else }}
+            # Not OpenShift: no OVN-Kubernetes node annotations to index (the ingress lane is
+            # OpenShift-only and refused here).
+            kubeConfig:
+              managedCNI: []
+            {{- end }}
+            subnetLabels:
+              {{- if and $ingress (.Values.flow).ingressVipCIDRs }}
+              # Addresses the pipeline cannot attribute (it indexes only pods, node addresses and Service
+              # ClusterIPs), so a client -> address record carries no identity and cluster_in_ingress
+              # keeps it only through this label (flow.ingressVipCIDRs). The pipeline labels an address with
+              # the FIRST entry whose CIDR contains it, so this entry stays at the top of the list:
+              # below LocalNetwork (an IPI VIP always lies in the machine network) it is shadowed and
+              # every client -> VIP record is dropped.
+              - name: IngressVip
+                cidrs:
+                  {{- range .Values.flow.ingressVipCIDRs }}
+                  - "{{ . }}"
+                  {{- end }}
+              {{- end }}
+              - name: ClusterSubnet
+                cidrs:
+                  {{- /* podCIDR (or the distribution's default), extraPodCIDRs (pod ranges added
+                         after install), then serviceCIDR (or the distribution's default), so a
+                         ClusterIP counts as in-cluster: a flow whose endpoint is in no ClusterSubnet
+                         range looks like it left the cluster. */}}
+                  {{- range (include "axeraforce.clusterCIDRs" . | fromJsonArray) }}
+                  - "{{ . }}"
+                  {{- end }}
+              - name: LocalNetwork
+                cidrs:
+                  - "{{ .Values.localNetworkCIDR }}"
+                  {{- /* extraLocalNetworkCIDRs: additional corporate/on-prem ranges
+                         (e.g. a second RFC1918 block like 172.16.0.0/12) that must
+                         also count as internal, not egress — same LocalNetwork label
+                         as localNetworkCIDR. */ -}}
+                  {{- range .Values.extraLocalNetworkCIDRs }}
+                  - "{{ . }}"
+                  {{- end }}
+              - name: CarrierGradeNat
+                cidrs:
+                  - "100.64.0.0/10"
+              - name: LinkLocal
+                cidrs:
+                  - "169.254.0.0/16"
+              - name: LocalHost
+                cidrs:
+                  - "127.0.0.0/8"
+              {{- if .Values.multiCluster }}
+              - name: MultiCluster
+                cidrs:
+                  - "{{ .Values.multiCluster.cidr }}"
+              {{- end }}
+              - name: Reserved
+                cidrs:
+                  - "{{ (.Values.submariner).globalCidr | default "242.0.0.0/8" }}"
+      {{- if $hasMC }}
+
+      - name: multi_cluster_division
+        transform:
+          type: network
+          network:
+            rules:
+              - type: add_subnet_label
+                add_subnet_label:
+                  input: DstAddr
+                  output: LabeledDstAddr
+              - type: add_subnet_label
+                add_subnet_label:
+                  input: SrcAddr
+                  output: LabeledSrcAddr
+            # Maps a Globalnet address (and public IP) to the CLUSTER that owns it, so
+            # cross-cluster ingress SNATed behind a peer's Globalnet SLICE is attributed
+            # to the RIGHT source cluster (labeled_src_addr) instead of just the blanket
+            # "Reserved". Per-cluster slices: submariner.clusterGlobalCidr (this cluster)
+            # + multiCluster.peers[].globalCidr (peers) — declared here at setup because
+            # this is the only place the cluster→range mapping is unambiguous, and it
+            # needs no Submariner-CR read. Slices must not overlap (Submariner guarantees).
+            subnetLabels:
+              {{- if or .Values.clusterPublicIP (.Values.submariner).clusterGlobalCidr }}
+              - name: {{ .Values.clusterName }}
+                cidrs:
+                  {{- if .Values.clusterPublicIP }}
+                  - "{{ .Values.clusterPublicIP }}"
+                  {{- end }}
+                  {{- if (.Values.submariner).clusterGlobalCidr }}
+                  - "{{ (.Values.submariner).clusterGlobalCidr }}"
+                  {{- end }}
+              {{- end }}
+              {{- if .Values.multiCluster }}
+              {{- range .Values.multiCluster.peers }}
+              - name: {{ .name }}
+                cidrs:
+                  - "{{ .publicIP }}"
+                  {{- if .globalCidr }}
+                  - "{{ .globalCidr }}"
+                  {{- end }}
+              {{- end }}
+              {{- end }}
+      {{- end }}
+
+      - name: compact
+        transform:
+          type: generic
+          generic:
+            policy: replace_keys
+            rules:
+              # No decoded_flags, src_subnet, dst_subnet, src_pod, dst_pod: Radar's FlowRecord
+              # never reads them (25.6 % of an east-west record's bytes). The filters after this stage
+              # read none of them, and cluster_out_egress reads the raw keys before its own compact.
+              - input: Bytes
+                output: bytes
+              - input: Packets
+                output: packets
+              - input: Proto
+                output: proto
+              - input: DstAddr
+                output: dst_addr
+              - input: TimeReceived
+                output: time
+              - input: SrcPort
+                output: src_port
+              - input: DstPort
+                output: dst_port
+              - input: Flags
+                output: tcp_flags
+              # Observer identity and flow window: which node's agent saw the
+              # record and where each end runs, so Radar folds one observation per connection.
+              - input: TimeFlowStartMs
+                output: flow_start_ms
+              - input: TimeFlowEndMs
+                output: flow_end_ms
+              - input: AgentIP
+                output: agent_ip
+              - input: SrcK8S_HostIP
+                output: src_host_ip
+              - input: DstK8S_HostIP
+                output: dst_host_ip
+              - input: SrcAddr
+                output: src_addr
+              - input: SrcK8S_Namespace
+                output: src_ns
+              - input: SrcK8S_OwnerType
+                output: src_ownerType
+              - input: SrcK8S_OwnerName
+                output: src_owner
+              - input: DstK8S_Namespace
+                output: dst_ns
+              - input: DstK8S_OwnerType
+                output: dst_ownerType
+              - input: DstK8S_OwnerName
+                output: dst_owner
+
+      - name: pre_filter
+        transform:
+          type: filter
+          filter:
+            rules:
+              # No tcp_flags rule: a UDP record carries no Flags at all, and the filter stage's
+              # keepEntryQuery already demands tcp_flags>0 of a TCP record.
+              - type: remove_entry_if_doesnt_exist
+                removeEntry:
+                  input: dst_port
+              - type: remove_entry_if_equal
+                removeEntry:
+                  input: dst_port
+                  value: null
+              - type: remove_entry_if_doesnt_exist
+                removeEntry:
+                  input: dst_ns
+              - type: remove_entry_if_equal
+                removeEntry:
+                  input: dst_ns
+                  value: null
+              - type: remove_entry_if_doesnt_exist
+                removeEntry:
+                  input: src_ns
+              - type: remove_entry_if_equal
+                removeEntry:
+                  input: src_ns
+                  value: null
+              - type: remove_entry_if_doesnt_exist
+                removeEntry:
+                  input: dst_owner
+              - type: remove_entry_if_equal
+                removeEntry:
+                  input: dst_owner
+                  value: null
+              - type: remove_entry_if_doesnt_exist
+                removeEntry:
+                  input: src_owner
+              - type: remove_entry_if_equal
+                removeEntry:
+                  input: src_owner
+                  value: null
+
+      - name: filter
+        transform:
+          type: filter
+          filter:
+            rules:
+              - type: remove_entry_if_equal
+                removeEntry:
+                  input: dst_ns
+                  value: kube-system
+
+              # tcp_flags is a bitmask the agent ORs per record (SYN_ACK 256, FIN_ACK 512, RST_ACK
+              # 1024), so it is tested by protocol, never by a numeric range: a range dropped every
+              # client abort (2|16|1024 = 1042), and excluding pure ACKs dropped a
+              # long-lived connection's data records. UDP is kept to a server port except DNS, which
+              # has its own lane.
+              - type: keep_entry_query
+                keepEntryQuery: '(src_ownerType="Deployment" or src_ownerType="StatefulSet" or src_ownerType="DaemonSet")
+                                and
+                                (dst_ownerType="Deployment" or dst_ownerType="StatefulSet" or dst_ownerType="DaemonSet" or dst_ownerType="Service")
+                                and
+                                (dst_port<32768 and dst_port>0) and {{ if $udp }}((proto=6 and tcp_flags>0) or (proto=17 and dst_port!=53 and dst_port!=5353)){{ else }}(proto=6 and tcp_flags>0){{ end }}'
+
+      - name: cluster_out_egress
+        transform:
+          type: filter
+          filter:
+            rules:
+              - type: add_field
+                addField:
+                  input: ClusterName
+                  value: "{{ .Values.clusterName }}"
+              # No Flags rule: UDP records carry none; the stage after the compact keeps TCP
+              # only with tcp_flags>0.
+              - type: remove_entry_if_exists
+                removeEntry:
+                  input: DstK8S_OwnerType
+              # Bare ACKs are kept; with them, the pod side of an INBOUND connection
+              # (pod:443 -> client:51234) would read as egress, hence the reply-direction guard.
+              - type: keep_entry_query
+                keepEntryQuery: 'DecodedFlags!~"SYN_ACK" and DstSubnet!="ClusterSubnet" and SrcSubnet="ClusterSubnet" and (DstPort<32768 or SrcPort>=32768)'
+
+      - name: cluster_out_egress_compact
+        transform:
+          type: generic
+          generic:
+            policy: replace_keys
+            rules:
+              # No clusterName, decoded_flags, src_subnet, src_pod: Radar's ExternalFlowRecord
+              # never reads them (22.7 % of an external record's bytes); the source cluster is
+              # labeled_src_addr, stamped by the next stage.
+              - input: Bytes
+                output: bytes
+              - input: Packets
+                output: packets
+              - input: Proto
+                output: proto
+              - input: LabeledDstAddr
+                output: labeled_dst_addr
+              - input: LabeledSrcAddr
+                output: labeled_src_addr
+              - input: DstSubnet
+                output: dst_subnet
+              - input: DstAddr
+                output: dst_addr
+              - input: TimeReceived
+                output: time
+              - input: SrcPort
+                output: src_port
+              - input: DstPort
+                output: dst_port
+              - input: Flags
+                output: tcp_flags
+              # Observer identity and flow window: which node's agent saw the
+              # record and where each end runs, so Radar folds one observation per connection.
+              - input: TimeFlowStartMs
+                output: flow_start_ms
+              - input: TimeFlowEndMs
+                output: flow_end_ms
+              - input: AgentIP
+                output: agent_ip
+              - input: SrcK8S_HostIP
+                output: src_host_ip
+              - input: DstK8S_HostIP
+                output: dst_host_ip
+              - input: SrcAddr
+                output: src_addr
+              - input: DstK8S_Name
+                output: dst_pod
+              - input: SrcK8S_Namespace
+                output: src_ns
+              - input: SrcK8S_OwnerType
+                output: src_ownerType
+              - input: SrcK8S_OwnerName
+                output: src_owner
+              - input: DstK8S_Namespace
+                output: dst_ns
+              - input: DstK8S_OwnerType
+                output: dst_ownerType
+              - input: DstK8S_OwnerName
+                output: dst_owner
+
+      - name: filter_cluster_out_egress
+        transform:
+          type: filter
+          filter:
+            rules:
+              - type: add_field
+                addField:
+                  input: labeled_src_addr
+                  value: "{{ .Values.clusterName }}"
+              - type: keep_entry_query
+                keepEntryQuery: '(proto=6 and tcp_flags>0){{ if $udp }} or proto=17{{ end }}'
+      {{- if $ingress }}
+
+      # ── North-south ingress (traffic entering the cluster) ─────────────────────
+      # Records whose DESTINATION is in the cluster (a pod, a node, a DNATed Service VIP, a
+      # labelled ingress VIP) and whose SOURCE is not a pod: clients behind load balancers,
+      # external IPs, NodePorts, hostPorts and the router, plus the node itself (a hostNetwork
+      # router or the kubelet; on OVN-Kubernetes their pod-bound traffic leaves through
+      # ovn-k8s-mp0, which kubeConfig above indexes as the node). Pod-sourced records stay on the
+      # east-west and egress lanes, Submariner (Reserved) and peer-cluster (MultiCluster) sources
+      # on theirs, and node-to-node traffic (Geneve, kubelet, etcd, API) is not ingress — so no
+      # record reaches two topics.
+      #
+      # The query reads RAW keys, before any compact: a numeric comparison must see a truly
+      # absent key (false), never a nil one (a panic). In the pipeline's query language `or` binds tighter
+      # than `and`, so every `or` group is parenthesised. Node-destined records are kept on every
+      # port below 32768 so Radar can tell entry hops (80/443, router and NodePort ports,
+      # hostPorts) from node access (22, 6443, 10250 ...). Replies stay out: SYN_ACK drops a
+      # connection's handshake reply, the port guard a reply to an ephemeral port (32768 and up), and the
+      # well-known-port guard a reply from a server port below 1024 to a port above it (no client sends
+      # from one), which catches a TCP connection's later replies and a UDP reply (DNS, QUIC) after an
+      # egress SNAT picked a low port. ICMP is kept as echo requests only: echo replies and errors
+      # (unreachable, time exceeded) answer the cluster's own egress, and the agent sets IcmpType on
+      # every ICMP record. Known limits: a reply from a server on 1024-32767 (5432, 9092, 8443 ...) still
+      # passes when the egress SNAT picks a port below 32768 (OVN-Kubernetes before its SNAT took the
+      # node's ephemeral range, local gateway mode, a masquerade without a port range or with
+      # --random-fully), and a client sending from a privileged port to 1024 or above (NFS) is dropped.
+      # DNS keeps its own lane.
+      - name: cluster_in_ingress
+        transform:
+          type: filter
+          filter:
+            rules:
+              - type: add_field
+                addField:
+                  input: ClusterName
+                  value: "{{ .Values.clusterName }}"
+              - type: keep_entry_query
+                keepEntryQuery: '(with(DstK8S_OwnerType) or with(XlatDstK8S_OwnerType) or DstK8S_Type="Node" or DstSubnet="IngressVip")
+                                and (without(SrcK8S_OwnerType) or SrcK8S_Type="Node")
+                                and SrcSubnet!="Reserved" and SrcSubnet!="MultiCluster"
+                                and (DstK8S_Type!="Node" or SrcK8S_Type!="Node")
+                                and DecodedFlags!~"SYN_ACK"
+                                and ((Proto=1 and IcmpType=8) or (DstPort>0 and DstPort<32768) or SrcPort>=32768)
+                                and (Proto=1 or SrcPort>=1024 or DstPort<1024)
+                                and (Proto!=17 or (DstPort!=53 and DstPort!=5353))'
+
+      - name: cluster_in_ingress_compact
+        transform:
+          type: generic
+          generic:
+            policy: replace_keys
+            rules:
+              - input: Bytes
+                output: bytes
+              - input: Packets
+                output: packets
+              - input: Proto
+                output: proto
+              - input: Flags
+                output: tcp_flags
+              - input: TimeReceived
+                output: time
+              # Observer identity and flow window: which node's agent saw the
+              # record and where each end runs, so Radar folds one observation per connection.
+              - input: TimeFlowStartMs
+                output: flow_start_ms
+              - input: TimeFlowEndMs
+                output: flow_end_ms
+              - input: AgentIP
+                output: agent_ip
+              - input: SrcK8S_HostIP
+                output: src_host_ip
+              - input: DstK8S_HostIP
+                output: dst_host_ip
+              # The source: an address with no identity (a client, a load balancer's or the OVN
+              # join switch's SNAT), or a node (src_type Node, src_owner the node's name).
+              - input: SrcAddr
+                output: src_addr
+              - input: SrcPort
+                output: src_port
+              - input: SrcK8S_Type
+                output: src_type
+              - input: SrcK8S_Namespace
+                output: src_ns
+              - input: SrcK8S_Name
+                output: src_pod
+              - input: SrcK8S_OwnerType
+                output: src_ownerType
+              - input: SrcK8S_OwnerName
+                output: src_owner
+              - input: SrcSubnet
+                output: src_subnet
+              # The destination as seen on the wire: a pod (delivery), or a node / VIP (entry).
+              - input: DstAddr
+                output: dst_addr
+              - input: DstPort
+                output: dst_port
+              - input: DstK8S_Type
+                output: dst_type
+              - input: DstK8S_Namespace
+                output: dst_ns
+              - input: DstK8S_Name
+                output: dst_pod
+              - input: DstK8S_OwnerType
+                output: dst_ownerType
+              - input: DstK8S_OwnerName
+                output: dst_owner
+              - input: DstSubnet
+                output: dst_subnet
+              # Agents with ENABLE_PKT_TRANSLATION only: on the pre-NAT record of a DNATed
+              # connection, the pod behind the VIP / NodePort and the SNAT source.
+              - input: XlatSrcAddr
+                output: xlat_src_addr
+              - input: XlatSrcPort
+                output: xlat_src_port
+              - input: XlatDstAddr
+                output: xlat_dst_addr
+              - input: XlatDstPort
+                output: xlat_dst_port
+              - input: XlatDstK8S_Namespace
+                output: xlat_dst_ns
+              - input: XlatDstK8S_Name
+                output: xlat_dst_pod
+              - input: XlatDstK8S_OwnerType
+                output: xlat_dst_ownerType
+              - input: XlatDstK8S_OwnerName
+                output: xlat_dst_owner
+              - input: XlatDstK8S_HostIP
+                output: xlat_dst_host_ip
+              # Where the agent saw it: the NIC / br-ex before NAT, a pod's veth after it.
+              - input: Interfaces
+                output: interfaces
+              - input: IfDirections
+                output: if_directions
+              # Agents with ENABLE_PKT_DROPS only: what the kernel dropped of this flow, and why.
+              - input: PktDropPackets
+                output: pkt_drop_packets
+              - input: PktDropBytes
+                output: pkt_drop_bytes
+              - input: PktDropLatestDropCause
+                output: pkt_drop_cause
+              - input: ClusterName
+                output: cluster_name
+
+      - name: cluster_in_ingress_null_cull
+        transform:
+          type: filter
+          filter:
+            rules:
+              # The final filter compares proto as a number, and a nil one panics the whole
+              # pipeline: a pipeline before v1.11.4 copies an absent input into a compact as a nil key.
+              # A record without both addresses names no edge.
+              - type: remove_entry_if_doesnt_exist
+                removeEntry:
+                  input: proto
+              - type: remove_entry_if_equal
+                removeEntry:
+                  input: proto
+                  value: null
+              - type: remove_entry_if_doesnt_exist
+                removeEntry:
+                  input: src_addr
+              - type: remove_entry_if_doesnt_exist
+                removeEntry:
+                  input: dst_addr
+
+      - name: filter_cluster_in_ingress
+        transform:
+          type: filter
+          filter:
+            rules:
+              # Re-stamped under the final key, as on the other branches. axera_lane tells Radar
+              # which branch wrote the record, so an outdated bundle shows as one.
+              - type: add_field
+                addField:
+                  input: cluster_name
+                  value: "{{ .Values.clusterName }}"
+              - type: add_field
+                addField:
+                  input: axera_lane
+                  value: ingress-v1
+              # A TCP record needs a flag to be an observation; UDP and ICMP carry none.
+              - type: keep_entry_query
+                keepEntryQuery: '((proto=6 and tcp_flags>0) or proto=17 or proto=1)'
+      {{- end }}
+      - name: out
+        encode:
+          type: kafka
+          kafka:
+            address: {{ include "axeraforce.flpKafkaAddress" . }}
+            topic: "{{ include "axeraforce.flowTopic" . }}"
+            {{- with $compression }}
+            compression: {{ . }}
+            {{- end }}
+            {{- if $tls }}
+            tls:
+              insecureSkipVerify: {{ .Values.kafka.insecureSkipVerify }}
+              {{- if include "axeraforce.useCA" . }}
+              caCertPath: /etc/kafka-certs/ca.crt
+              {{- end }}
+            {{- end }}
+            {{- if $sasl }}
+            sasl:
+              type: {{ include "axeraforce.flpSaslType" . }}
+              clientIDPath: /etc/kafka-sasl/username
+              clientSecretPath: /etc/kafka-sasl/password
+            {{- end }}
+      - name: out3
+        encode:
+          type: kafka
+          kafka:
+            address: {{ include "axeraforce.flpKafkaAddress" . }}
+            topic: "{{ .Values.flow.externalTopic }}"
+            {{- with $compression }}
+            compression: {{ . }}
+            {{- end }}
+            {{- if $tls }}
+            tls:
+              insecureSkipVerify: {{ .Values.kafka.insecureSkipVerify }}
+              {{- if include "axeraforce.useCA" . }}
+              caCertPath: /etc/kafka-certs/ca.crt
+              {{- end }}
+            {{- end }}
+            {{- if $sasl }}
+            sasl:
+              type: {{ include "axeraforce.flpSaslType" . }}
+              clientIDPath: /etc/kafka-sasl/username
+              clientSecretPath: /etc/kafka-sasl/password
+            {{- end }}
+      {{- if $ingress }}
+      # The ingress lane's encoder: out3's broker, TLS and SASL, its own topic (created beforehand;
+      # the pipeline never creates one).
+      - name: out5
+        encode:
+          type: kafka
+          kafka:
+            address: {{ include "axeraforce.flpKafkaAddress" . }}
+            topic: "{{ include "axeraforce.ingressTopic" . }}"
+            {{- with $compression }}
+            compression: {{ . }}
+            {{- end }}
+            {{- if $tls }}
+            tls:
+              insecureSkipVerify: {{ .Values.kafka.insecureSkipVerify }}
+              {{- if include "axeraforce.useCA" . }}
+              caCertPath: /etc/kafka-certs/ca.crt
+              {{- end }}
+            {{- end }}
+            {{- if $sasl }}
+            sasl:
+              type: {{ include "axeraforce.flpSaslType" . }}
+              clientIDPath: /etc/kafka-sasl/username
+              clientSecretPath: /etc/kafka-sasl/password
+            {{- end }}
+      {{- end }}
+      {{- if (.Values.flow).dnsVisibility }}
+      # --- DNS visibility branch (opt-in) --------------------------------------
+      # Its own key allow-list: the flow lanes' compact drops every DNS field, so
+      # this stage re-projects from the enriched record. DnsName carries the queried
+      # name when the agent/pipeline version emits it; the consumer treats it as
+      # OPTIONAL and still records the rcode/latency keyed by destination when it is
+      # absent, so a version without the name degrades instead of losing the record.
+      - name: dns_compact
+        transform:
+          type: generic
+          generic:
+            policy: replace_keys
+            rules:
+              - input: TimeReceived
+                output: time
+              - input: SrcAddr
+                output: src_addr
+              - input: DstAddr
+                output: dst_addr
+              - input: DstPort
+                output: dst_port
+              - input: Proto
+                output: proto
+              - input: SrcK8S_Namespace
+                output: src_namespace
+              - input: SrcK8S_OwnerName
+                output: src_owner
+              - input: SrcK8S_OwnerType
+                output: src_owner_type
+              # The record's direction: the flow agent fills the DNS fields
+              # on the RESPONSE packet only (a query
+              # only stores its timestamp; the response sets dns_id, flags, latency and the name), so
+              # dns_id>0 below keeps the resolver -> client record and the src_* keys above name the
+              # resolver. Keeping the query direction instead is impossible: it carries no DNS field.
+              # These keys let Radar turn the record around: src_port (53/5353 on a response) and the
+              # destination's identity, which on a response is the client's. agent_ip tells the two
+              # nodes' copies of one cross-node response apart.
+              - input: SrcPort
+                output: src_port
+              - input: DstK8S_Namespace
+                output: dst_namespace
+              - input: DstK8S_OwnerName
+                output: dst_owner
+              - input: DstK8S_OwnerType
+                output: dst_owner_type
+              - input: AgentIP
+                output: agent_ip
+              - input: DnsName
+                output: dns_query
+              - input: DnsId
+                output: dns_id
+              - input: DnsFlagsResponseCode
+                output: dns_rcode_name
+              - input: DnsFlags
+                output: dns_flags
+              - input: DnsLatencyMs
+                output: dns_latency_ms
+              - input: DnsErrno
+                output: dns_errno
+      - name: dns_filter
+        transform:
+          type: filter
+          filter:
+            rules:
+              # Keep only records the DNS parser actually populated — every other
+              # flow passes through enrich_k8s too, and without this the DNS topic
+              # would receive the whole cluster's traffic.
+              - type: keep_entry_query
+                keepEntryQuery: 'dns_id>0'
+      - name: dns_out
+        encode:
+          type: kafka
+          kafka:
+            address: {{ include "axeraforce.flpKafkaAddress" . }}
+            topic: "{{ include "axeraforce.dnsTopic" . }}"
+            {{- with $compression }}
+            compression: {{ . }}
+            {{- end }}
+            {{- if $tls }}
+            tls:
+              insecureSkipVerify: {{ .Values.kafka.insecureSkipVerify }}
+              {{- if include "axeraforce.useCA" . }}
+              caCertPath: /etc/kafka-certs/ca.crt
+              {{- end }}
+            {{- end }}
+            {{- if $sasl }}
+            sasl:
+              type: {{ include "axeraforce.flpSaslType" . }}
+              clientIDPath: /etc/kafka-sasl/username
+              clientSecretPath: /etc/kafka-sasl/password
+            {{- end }}
+      {{- end }}
+      {{- if .Values.submariner }}
+      # --- intercluster (Submariner globalnet) branch --------------------------
+      # Branches off multi_cluster_division when that stage exists (else enrich_k8s)
+      # so LabeledSrcAddr reaches it: keep only flows touching the Submariner global
+      # CIDR (labeled "Reserved"), re-stamp clusterName, ship to the intercluster topic.
+      - name: intercluster_compact
+        transform:
+          type: generic
+          generic:
+            policy: replace_keys
+            rules:
+              - input: Bytes
+                output: bytes
+              - input: Packets
+                output: packets
+              - input: Proto
+                output: proto
+              - input: DecodedFlags
+                output: decoded_flags
+              # SOURCE-cluster attribution: multi_cluster_division labels the
+              # Globalnet slice's owner into LabeledSrcAddr; replace_keys drops
+              # unlisted fields, so without this line Radar can't resolve which
+              # cluster a 242.x source belongs to.
+              - input: LabeledSrcAddr
+                output: labeled_src_addr
+              - input: SrcSubnet
+                output: src_subnet
+              - input: DstSubnet
+                output: dst_subnet
+              - input: DstAddr
+                output: dst_addr
+              - input: TimeReceived
+                output: time
+              - input: SrcPort
+                output: src_port
+              - input: DstPort
+                output: dst_port
+              - input: Flags
+                output: tcp_flags
+              # Observer identity and flow window: which node's agent saw the
+              # record and where each end runs, so Radar folds one observation per connection.
+              - input: TimeFlowStartMs
+                output: flow_start_ms
+              - input: TimeFlowEndMs
+                output: flow_end_ms
+              - input: AgentIP
+                output: agent_ip
+              - input: SrcK8S_HostIP
+                output: src_host_ip
+              - input: DstK8S_HostIP
+                output: dst_host_ip
+              - input: SrcAddr
+                output: src_addr
+              - input: SrcK8S_Name
+                output: src_pod
+              - input: DstK8S_Name
+                output: dst_pod
+              - input: SrcK8S_Namespace
+                output: src_ns
+              - input: SrcK8S_OwnerType
+                output: src_ownerType
+              - input: SrcK8S_OwnerName
+                output: src_owner
+              - input: DstK8S_Namespace
+                output: dst_ns
+              - input: DstK8S_OwnerType
+                output: dst_ownerType
+              - input: DstK8S_OwnerName
+                output: dst_owner
+      - name: intercluster_pre_filter
+        transform:
+          type: filter
+          filter:
+            rules:
+              # No tcp_flags rule: a UDP record carries no Flags at all, and the filter stage's
+              # keepEntryQuery already demands tcp_flags>0 of a TCP record.
+              - type: remove_entry_if_doesnt_exist
+                removeEntry:
+                  input: dst_port
+              - type: remove_entry_if_equal
+                removeEntry:
+                  input: dst_port
+                  value: null
+              - type: remove_entry_if_doesnt_exist
+                removeEntry:
+                  input: dst_ns
+              - type: remove_entry_if_equal
+                removeEntry:
+                  input: dst_ns
+                  value: null
+              - type: remove_entry_if_doesnt_exist
+                removeEntry:
+                  input: dst_owner
+              - type: remove_entry_if_equal
+                removeEntry:
+                  input: dst_owner
+                  value: null
+      - name: intercluster_filter
+        transform:
+          type: filter
+          filter:
+            rules:
+              - type: add_field
+                addField:
+                  input: clusterName
+                  value: "{{ .Values.clusterName }}"
+              - type: keep_entry_query
+                keepEntryQuery: 'src_subnet="Reserved" and dst_ownerType!="Service" and (dst_port<32768 and dst_port>0) and ((proto=6 and tcp_flags>0){{ if $udp }} or proto=17{{ end }})'
+      - name: intercluster_out
+        encode:
+          type: kafka
+          kafka:
+            address: {{ include "axeraforce.flpKafkaAddress" . }}
+            topic: "{{ (.Values.submariner).topic | default "intercluster-flows" }}"
+            {{- with $compression }}
+            compression: {{ . }}
+            {{- end }}
+            {{- if $tls }}
+            tls:
+              insecureSkipVerify: {{ .Values.kafka.insecureSkipVerify }}
+              {{- if include "axeraforce.useCA" . }}
+              caCertPath: /etc/kafka-certs/ca.crt
+              {{- end }}
+            {{- end }}
+            {{- if $sasl }}
+            sasl:
+              type: {{ include "axeraforce.flpSaslType" . }}
+              clientIDPath: /etc/kafka-sasl/username
+              clientSecretPath: /etc/kafka-sasl/password
+            {{- end }}
+      {{- end }}
