@@ -147,7 +147,7 @@ spec:
           env:
             - { name: EXPORT, value: "grpc" }
             - { name: TARGET_HOST, value: "127.0.0.1" }
-            - { name: TARGET_PORT, value: "2055" }
+            - { name: TARGET_PORT, value: {{ include "axeraforce.collectorPort" . | quote }} }
             - { name: LOG_LEVEL, value: "info" }
             - { name: DIRECTION, value: {{ .Values.flow.direction | quote }} }
             - { name: EXCLUDE_INTERFACES, value: {{ .Values.flow.excludeInterfaces | quote }} }
@@ -232,7 +232,7 @@ spec:
                   fieldPath: status.hostIP
           {{- end }}
           ports:
-            - { name: grpc, containerPort: 2055, protocol: TCP }
+            - { name: grpc, containerPort: {{ include "axeraforce.collectorPort" . }}, protocol: TCP }
             - { name: health, containerPort: 28080, protocol: TCP }
             {{- if $metrics.enabled }}
             - { name: flp-metrics, containerPort: {{ $metrics.flowPipelinePort }}, protocol: TCP }

@@ -1262,6 +1262,62 @@
             }
           }
         },
+        "collectionExclude": {
+          "description": "Collection exclusion, Radar side: per registered cluster, the namespaces and CIDRs Radar drops before storage on its flow, DNS, process and router-log lanes (not mesh access logs, not OVN ACL logs). Radar does the strict CIDR check and applies nothing of an entry with an invalid value. Null anywhere = unset.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "cluster": {
+                "description": "The registered cluster name this entry applies to; empty or unset = every cluster.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "namespaces": {
+                "description": "An exact namespace name, or a prefix ending in '*' (a bare '*' is refused).",
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "maxItems": 64,
+                "items": {
+                  "type": "string",
+                  "pattern": "^([a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?|[a-z0-9][-a-z0-9]{0,61}\\*)$"
+                }
+              },
+              "cidrs": {
+                "description": "Strict IPv4 / IPv6 CIDRs (no host bits, no leading zeros), never /0. The pattern refuses only what is plainly not one; Radar does the strict check, and one invalid CIDR voids its whole entry, namespaces included.",
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "maxItems": 64,
+                "items": {
+                  "type": "string",
+                  "pattern": "^[0-9a-fA-F:.]+/([1-9][0-9]?|1[01][0-9]|12[0-8])$"
+                }
+              },
+              "crossTraffic": {
+                "description": "Keep (default, also when unset or null): an excluded namespace's traffic with collected namespaces stays. Drop: it goes too. An empty string is refused.",
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "Keep",
+                  "Drop",
+                  null
+                ]
+              }
+            }
+          }
+        },
         "archiverIntervalMinutes": {
           "type": "integer",
           "description": "Radar archiver"

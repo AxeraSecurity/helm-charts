@@ -119,7 +119,7 @@ data:
         ingest:
           type: grpc
           grpc:
-            port: 2055
+            port: {{ include "axeraforce.collectorPort" . }}
 
       - name: enrich_k8s
         transform:

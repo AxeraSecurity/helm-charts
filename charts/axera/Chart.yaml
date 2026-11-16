@@ -11,9 +11,9 @@ description: >-
   cluster.
 type: application
 # Chart version (SemVer): bump on every chart change.
-version: 3.0.0
+version: 3.1.0
 # Axera platform version deployed by default.
-appVersion: "17.2.0"
+appVersion: "19.0.0"
 # OpenShift 4.12+, k3s, RKE2 and GKE releases with Kubernetes 1.25 or newer.
 kubeVersion: ">=1.25.0-0"
 home: https://axerasecurity.com
@@ -46,17 +46,17 @@ annotations:
   # installs). The PostgreSQL entries cover both flavours: rhel (OpenShift) and alpine (elsewhere).
   artifacthub.io/images: |
     - name: api
-      image: quay.io/axera/microsegmentation-api:v17.2.0@sha256:3548f714775d4f9d00a59cae6c8e347e4c48479d19fb2261d5cd2d1585891121
+      image: quay.io/axera/microsegmentation-api:v19.0.0@sha256:0856206a27a9e6362632bc9dd0e08cd64a8e28ab195cd96d0e46cd900b5ced41
     - name: allowdropmonitor
-      image: quay.io/axera/microsegmentation-allowdropmonitor:v17.2.0@sha256:3d9229eb121c4b21b8bae9df225fb93353d934bcc00d76409651c2d553fee644
+      image: quay.io/axera/microsegmentation-allowdropmonitor:v19.0.0@sha256:0294b5608a30332bff6fb7f6cdd930f47f8bd8fd453dc8978981de68c6eef1aa
     - name: radar
-      image: quay.io/axera/microsegmentation-radar:v17.2.0@sha256:e35c3d99e8d141d68a2ce7f03d257580f5415c3991e5da24d247c99bd7952cb4
+      image: quay.io/axera/microsegmentation-radar:v19.0.0@sha256:bc01167fe7b7e22b4d26c3cd09d9118af109a987dd9149fa76ccb7d7ba302d93
     - name: networkpolicywatcher
-      image: quay.io/axera/microsegmentation-networkpolicywatcher:v17.2.0@sha256:e2ab71d20e4fc0911a9d4c7b4ea1d540496699ab80495dcb8ac5f8a333385846
+      image: quay.io/axera/microsegmentation-networkpolicywatcher:v19.0.0@sha256:5e2d54f0a6afc230cd935266164904837bf42ff52b5de62324c97014519f9ae3
     - name: mcp
-      image: quay.io/axera/microsegmentation-mcp:v17.2.0@sha256:3b464834f0b1d05b4c8786f1ec243f5fb33ae6579641e03f2d0176d6f26342b8
+      image: quay.io/axera/microsegmentation-mcp:v19.0.0@sha256:880fc03060e6a42e51e5a0b5968cce0ac071e29694a3eeaf3082a538dc45d461
     - name: frontend
-      image: quay.io/axera/microsegmentation-frontend:v17.2.0@sha256:2924a307583838e33622c65aecf65a77913eb716d5de00738dbf111c2e0f5791
+      image: quay.io/axera/microsegmentation-frontend:v19.0.0@sha256:c04504d9187cd539218f751352eefa5f4da5919d4226a8e176464abe815ae2f6
     - name: postgres-rhel
       image: registry.redhat.io/rhel9/postgresql-16:9.8-1787043427@sha256:8fd1bbd8d006ae5bb892c6d633c9d92fb980caed470199effaf2343099fcdb89
     - name: postgres-alpine

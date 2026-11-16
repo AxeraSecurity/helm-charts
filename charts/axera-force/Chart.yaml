@@ -7,8 +7,8 @@ description: >-
   Axera platform through Kafka, with an optional packet-capture sidecar, an optional API audit
   forwarder, and the integration ServiceAccount used to register the cluster in Axera.
 type: application
-version: 2.0.0
-appVersion: "17.2.0"
+version: 2.1.0
+appVersion: "19.0.0"
 # Pod Security Admission (namespace "axera" must be privileged) is GA from 1.25.
 kubeVersion: ">=1.25.0-0"
 home: https://axerasecurity.com

@@ -3831,3 +3831,29 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+SET LOCAL lock_timeout = '5s';
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261111063250_KnownDestinationCursorIndexes') THEN
+    CREATE INDEX "IX_ProcessFlowEntries_FirstSeenUtc" ON "ProcessFlowEntries" ("FirstSeenUtc");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261111063250_KnownDestinationCursorIndexes') THEN
+    CREATE INDEX "IX_ProcessExecEntries_FirstSeenUtc" ON "ProcessExecEntries" ("FirstSeenUtc");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261111063250_KnownDestinationCursorIndexes') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261111063250_KnownDestinationCursorIndexes', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
