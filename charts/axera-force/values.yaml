@@ -14,8 +14,8 @@
 #     pod-security.kubernetes.io/audit=privileged \
 #     pod-security.kubernetes.io/warn=privileged
 #
-# Host ports the agent opens on every node (it runs on the host network): 2055/TCP and 28080/TCP
-# (flow pipeline ingest and health), and with metrics.enabled 28081-28084/TCP on the node IP.
+# Host ports the agent opens on every node (it runs on the host network): 2055/TCP (flow.collectorPort) and
+# 28080/TCP (flow pipeline ingest and health), and with metrics.enabled 28081-28084/TCP on the node IP.
 # 2055/TCP is the flow pipeline's plaintext, unauthenticated ingest and listens on EVERY node address,
 # although only the agent on the same node (127.0.0.1) uses it: block it from other hosts in the node or
 # network firewall, or anyone who reaches a node can inject flow records. 28080 needs no remote access
@@ -139,6 +139,10 @@ kafka:
   compression: ""                     # none | gzip | snappy | lz4 | zstd; empty = lz4
 
 flow:
+  # The node port (host network) the flow pipeline receives the flow agent's records on, over 127.0.0.1. Move it
+  # where something on the nodes already listens on 2055, such as another flow collector; it may not be 28080
+  # or a port under metrics. Unset: 2055. Changing it restarts the agent pods one by one.
+  # collectorPort: 2055
   topic: ""                          # empty or equal to clusterName (anything else is refused)
   externalTopic: external-flows      # shared by every cluster of the platform
   direction: both                    # ingress | egress | both

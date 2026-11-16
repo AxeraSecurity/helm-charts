@@ -9160,3 +9160,400 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261102140505_LdapConnectionCaCertificate') THEN
+    ALTER TABLE "LDAPConnections" ADD "CaCertificatePem" character varying(65536);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261102140505_LdapConnectionCaCertificate') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261102140505_LdapConnectionCaCertificate', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261104131828_EgressFirewallApply') THEN
+    ALTER TABLE "McpWriteGateSettings" ADD "AllowEgressRuleApply" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261104131828_EgressFirewallApply') THEN
+    ALTER TABLE "EgressRuleIntents" ADD "AppliedAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261104131828_EgressFirewallApply') THEN
+    ALTER TABLE "EgressRuleIntents" ADD "AppliedHash" text NOT NULL DEFAULT '';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261104131828_EgressFirewallApply') THEN
+    ALTER TABLE "EgressRuleIntents" ADD "AppliedVersionNumber" integer;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261104131828_EgressFirewallApply') THEN
+    CREATE TABLE "EgressFirewallVersions" (
+        "Id" uuid NOT NULL,
+        "ClusterName" text NOT NULL,
+        "Namespace" text NOT NULL,
+        "VersionNumber" integer NOT NULL,
+        "Action" text NOT NULL,
+        "Origin" text NOT NULL,
+        "ObjectUid" text NOT NULL,
+        "ResourceVersion" text NOT NULL,
+        "AxeraRulesJson" text NOT NULL,
+        "SpecSentJson" text NOT NULL,
+        "PriorSpecJson" text,
+        "PriorAnnotationsJson" text,
+        "IntentIds" text NOT NULL,
+        "IntentsSnapshotJson" text NOT NULL,
+        "RulesHash" text NOT NULL,
+        "Enforcement" text NOT NULL,
+        "AppliedBy" text NOT NULL,
+        "AppliedAt" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_EgressFirewallVersions" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261104131828_EgressFirewallApply') THEN
+    CREATE INDEX "IX_EgressRuleIntents_ClusterName_Namespace" ON "EgressRuleIntents" ("ClusterName", "Namespace");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261104131828_EgressFirewallApply') THEN
+    CREATE UNIQUE INDEX "IX_EgressFirewallVersions_ClusterName_Namespace_VersionNumber" ON "EgressFirewallVersions" ("ClusterName", "Namespace", "VersionNumber");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261104131828_EgressFirewallApply') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261104131828_EgressFirewallApply', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261105115830_CollectionDataScope') THEN
+    ALTER TABLE "CustomRoles" ADD "DataScopeMode" integer NOT NULL DEFAULT 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261105115830_CollectionDataScope') THEN
+    ALTER TABLE "AspNetUsers" ADD "DataScopeMode" integer;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261105115830_CollectionDataScope') THEN
+    CREATE TABLE "CustomRoleDataScopes" (
+        "CustomRoleId" uuid NOT NULL,
+        "CollectionId" uuid NOT NULL,
+        "AddedAt" timestamp with time zone NOT NULL,
+        "AddedBy" character varying(256),
+        CONSTRAINT "PK_CustomRoleDataScopes" PRIMARY KEY ("CustomRoleId", "CollectionId"),
+        CONSTRAINT "FK_CustomRoleDataScopes_CustomRoles_CustomRoleId" FOREIGN KEY ("CustomRoleId") REFERENCES "CustomRoles" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261105115830_CollectionDataScope') THEN
+    CREATE TABLE "UserDataScopes" (
+        "UserId" text NOT NULL,
+        "CollectionId" uuid NOT NULL,
+        "AddedAt" timestamp with time zone NOT NULL,
+        "AddedBy" character varying(256),
+        CONSTRAINT "PK_UserDataScopes" PRIMARY KEY ("UserId", "CollectionId"),
+        CONSTRAINT "FK_UserDataScopes_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261105115830_CollectionDataScope') THEN
+    CREATE INDEX "IX_CustomRoleDataScopes_CollectionId" ON "CustomRoleDataScopes" ("CollectionId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261105115830_CollectionDataScope') THEN
+    CREATE INDEX "IX_UserDataScopes_CollectionId" ON "UserDataScopes" ("CollectionId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261105115830_CollectionDataScope') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261105115830_CollectionDataScope', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261113134809_EgressRuleTimeLimits') THEN
+    ALTER TABLE "EgressRuleIntents" ADD "ActiveFrom" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261113134809_EgressRuleTimeLimits') THEN
+    ALTER TABLE "EgressRuleIntents" ADD "TimeLimitFrom" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261113134809_EgressRuleTimeLimits') THEN
+    ALTER TABLE "EgressRuleIntents" ADD "TimeLimitKind" text NOT NULL DEFAULT '';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261113134809_EgressRuleTimeLimits') THEN
+    ALTER TABLE "EgressRuleIntents" ADD "TimeLimitMinutes" integer;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261113134809_EgressRuleTimeLimits') THEN
+    ALTER TABLE "EgressRuleIntents" ADD "TimeLimitTo" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261113134809_EgressRuleTimeLimits') THEN
+    ALTER TABLE "EgressRuleIntents" ADD "TimeLimitZone" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261113134809_EgressRuleTimeLimits') THEN
+    ALTER TABLE "EgressFirewallVersions" ADD "NextSwitchAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261113134809_EgressRuleTimeLimits') THEN
+    ALTER TABLE "EgressFirewallVersions" ADD "SwitchProblem" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261113134809_EgressRuleTimeLimits') THEN
+    ALTER TABLE "EgressFirewallVersions" ADD "SwitchTriedAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261113134809_EgressRuleTimeLimits') THEN
+    ALTER TABLE "EgressFirewallVersions" ADD "Trigger" text NOT NULL DEFAULT '';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261113134809_EgressRuleTimeLimits') THEN
+    CREATE INDEX "IX_EgressFirewallVersions_NextSwitchAt" ON "EgressFirewallVersions" ("NextSwitchAt") WHERE "NextSwitchAt" IS NOT NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261113134809_EgressRuleTimeLimits') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261113134809_EgressRuleTimeLimits', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261114092202_NetworkPolicyTimeLimits') THEN
+    ALTER TABLE "OldNetworkPolicyRecords" ADD "ActiveFrom" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261114092202_NetworkPolicyTimeLimits') THEN
+    ALTER TABLE "OldNetworkPolicyRecords" ADD "TimeLimitFrom" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261114092202_NetworkPolicyTimeLimits') THEN
+    ALTER TABLE "OldNetworkPolicyRecords" ADD "TimeLimitKind" text NOT NULL DEFAULT '';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261114092202_NetworkPolicyTimeLimits') THEN
+    ALTER TABLE "OldNetworkPolicyRecords" ADD "TimeLimitMinutes" integer;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261114092202_NetworkPolicyTimeLimits') THEN
+    ALTER TABLE "OldNetworkPolicyRecords" ADD "TimeLimitTo" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261114092202_NetworkPolicyTimeLimits') THEN
+    ALTER TABLE "OldNetworkPolicyRecords" ADD "TimeLimitZone" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261114092202_NetworkPolicyTimeLimits') THEN
+    ALTER TABLE "NetworkPolicyRecords" ADD "ActiveFrom" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261114092202_NetworkPolicyTimeLimits') THEN
+    ALTER TABLE "NetworkPolicyRecords" ADD "NextSwitchAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261114092202_NetworkPolicyTimeLimits') THEN
+    ALTER TABLE "NetworkPolicyRecords" ADD "SwitchProblem" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261114092202_NetworkPolicyTimeLimits') THEN
+    ALTER TABLE "NetworkPolicyRecords" ADD "SwitchTriedAt" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261114092202_NetworkPolicyTimeLimits') THEN
+    ALTER TABLE "NetworkPolicyRecords" ADD "TimeLimitFrom" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261114092202_NetworkPolicyTimeLimits') THEN
+    ALTER TABLE "NetworkPolicyRecords" ADD "TimeLimitKind" text NOT NULL DEFAULT '';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261114092202_NetworkPolicyTimeLimits') THEN
+    ALTER TABLE "NetworkPolicyRecords" ADD "TimeLimitMinutes" integer;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261114092202_NetworkPolicyTimeLimits') THEN
+    ALTER TABLE "NetworkPolicyRecords" ADD "TimeLimitOffSince" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261114092202_NetworkPolicyTimeLimits') THEN
+    ALTER TABLE "NetworkPolicyRecords" ADD "TimeLimitSetBy" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261114092202_NetworkPolicyTimeLimits') THEN
+    ALTER TABLE "NetworkPolicyRecords" ADD "TimeLimitState" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261114092202_NetworkPolicyTimeLimits') THEN
+    ALTER TABLE "NetworkPolicyRecords" ADD "TimeLimitTo" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261114092202_NetworkPolicyTimeLimits') THEN
+    ALTER TABLE "NetworkPolicyRecords" ADD "TimeLimitZone" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261114092202_NetworkPolicyTimeLimits') THEN
+    CREATE INDEX "IX_NetworkPolicyRecords_NextSwitchAt" ON "NetworkPolicyRecords" ("NextSwitchAt") WHERE "NextSwitchAt" IS NOT NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261114092202_NetworkPolicyTimeLimits') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261114092202_NetworkPolicyTimeLimits', '10.0.12');
+    END IF;
+END $EF$;
+COMMIT;
+

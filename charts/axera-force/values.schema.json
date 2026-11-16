@@ -208,6 +208,12 @@
     "flow": {
       "type": "object",
       "properties": {
+        "collectorPort": {
+          "type": "integer",
+          "minimum": 1024,
+          "maximum": 65535,
+          "description": "Node port (host network) the flow pipeline receives the flow agent's records on, over 127.0.0.1. Unset: 2055. Move it where something on the nodes already listens on 2055; it may not be 28080 or a port under metrics."
+        },
         "topic": {
           "type": "string",
           "pattern": "^$|^[a-zA-Z0-9._-]{1,249}$",

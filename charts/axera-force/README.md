@@ -50,7 +50,9 @@ silently fall back to `vanilla`: they show no release notes, so nothing warns.
   so the brokers see node IPs).
 - The central platform must reach this cluster's API server (port 6443 on k3s / RKE2 / kubeadm).
 - Free host ports on every node: 2055/TCP and 28080/TCP, and 28081-28084/TCP on the node IP with
-  `metrics.enabled` (the default). **2055/TCP is the flow pipeline's plaintext, unauthenticated
+  `metrics.enabled` (the default). Where something on the nodes already holds 2055 (another flow
+  collector), set `flow.collectorPort` to a free port; the rest of this item then applies to that
+  port. **2055/TCP is the flow pipeline's plaintext, unauthenticated
   ingest**: only the agent on the same node uses it (127.0.0.1), but it listens on every node address,
   and NetworkPolicy does not cover host-network pods. Block it from other hosts in the node or network
   firewall (for example an nftables / iptables INPUT rule that accepts 2055/TCP only from 127.0.0.1),
@@ -305,6 +307,7 @@ patch to copy and apply yourself.
 | `kafka.securityProtocol` / `saslMechanism` | `SaslSsl` / `ScramSha512` | `Plaintext`, `Ssl`, `SaslPlaintext`, `SaslSsl` / `ScramSha512`, `Plain`. |
 | `kafka.createSecret` | `false` | `false`: you create `kafka-ca` and `kafka-sasl`. |
 | `kafka.systemTrustStore` | `false` | Trust the broker through the images' public CA bundle (no `kafka-ca`). |
+| `flow.collectorPort` | `2055` | Node port the flow pipeline receives the flow agent's records on (127.0.0.1). Move it where 2055 is taken on the nodes; not 28080 or a `metrics` port. |
 | `flow.tcAttachMode` | `""` (`tcx` on Anthos, `any` elsewhere) | `any`, `tcx`, `tc`. Use `tcx` with an eBPF CNI (see below). |
 | `flow.dnsVisibility`, `flow.udp`, `flow.enablePktDrops` | `false`, `true`, `false` | Flow lanes. |
 | `process.observe.*`, `process.execExport` | application namespaces, `false` | What the process sensor ships. |
@@ -354,8 +357,8 @@ platform's database) can do with the defaults:
 
 `integration.leastPrivilege: true` leaves out the last two (pod logs are then read only through Roles in
 `integration.podLogsNamespaces`); together with `capture.enabled: false` it is the minimum. The agent's
-own ServiceAccount (`axera-agent`) is read-only and has no exec grant. Keep 2055/TCP firewalled (see
-Prerequisites). In the full shape the platform chart grants the same exec on its own (Role
+own ServiceAccount (`axera-agent`) is read-only and has no exec grant. Keep the collector port
+(`flow.collectorPort`, 2055/TCP by default) firewalled (see Prerequisites). In the full shape the platform chart grants the same exec on its own (Role
 `axera-capture-exec-<platform namespace>` in `axera`, see below), so `capture.enabled: false` here
 does not remove it: also set `integration.namespacedRoles: never` on the platform.
 
@@ -513,6 +516,14 @@ kubectl apply --server-side --force-conflicts -f axera-force/crds/
 
 Renders without cluster access (GitOps) must carry `global.distribution` and `podCIDR`, and
 `--include-crds` for the CRDs.
+
+### 2.0.0 to 2.1.0
+
+- New optional `flow.collectorPort` (default 2055, as before).
+- The integration ClusterRole may create, update and delete OVN `egressfirewalls`, for the console's
+  Egress Rules > Apply (it still keeps rules it did not write). `integration.create: false` installs are
+  not affected.
+- The images and the configuration of the agent are unchanged, so the upgrade restarts no agent pod.
 
 ### Upgrading from the 1.1.1 package
 

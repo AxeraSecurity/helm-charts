@@ -204,6 +204,21 @@ data:
   # fallback, `dig` keeps it, and a missing kafka.ingress map cannot nil-pointer the render.
   {{- $ingressLane := .Values.kafka.ingress | default dict }}
   Ingress__Enabled: {{ dig "enabled" true $ingressLane | toString | quote }}
+  {{- /*
+    Collection exclusion, Radar side (values.app.collectionExclude): per entry the cluster it applies to ("" = every
+    cluster), crossTraffic, and the namespaces / CIDRs Radar drops before storage. An empty or absent list renders
+    nothing, so an install without it keeps its config checksum.
+  */}}
+  {{- range $i, $e := (((.Values.app).collectionExclude) | default list) }}
+  CollectionExclude__{{ $i }}__Cluster: {{ $e.cluster | default "" | quote }}
+  CollectionExclude__{{ $i }}__CrossTraffic: {{ $e.crossTraffic | default "Keep" | quote }}
+  {{- range $j, $n := ($e.namespaces | default list) }}
+  CollectionExclude__{{ $i }}__Namespaces__{{ $j }}: {{ $n | quote }}
+  {{- end }}
+  {{- range $j, $c := ($e.cidrs | default list) }}
+  CollectionExclude__{{ $i }}__Cidrs__{{ $j }}: {{ $c | quote }}
+  {{- end }}
+  {{- end }}
   # Globalnet reflector — resolves a Submariner peer's Globalnet egress IP back to
   # its cluster + workload. Fail-safe on non-Submariner clusters (finds nothing, idles).
   # On unless set false (the helm chart and Radar's own default): `default` would turn an explicit

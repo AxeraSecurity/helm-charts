@@ -143,12 +143,12 @@ logging:
 # Chart.yaml (artifacthub.io/images) and set global.imageRegistry or images.<name>.registry.
 # -----------------------------------------------------------------------------
 images:
-  api:                  { repo: microsegmentation-api,                  tag: v17.2.0, digest: "sha256:3548f714775d4f9d00a59cae6c8e347e4c48479d19fb2261d5cd2d1585891121" }
-  allowdropmonitor:     { repo: microsegmentation-allowdropmonitor,     tag: v17.2.0, digest: "sha256:3d9229eb121c4b21b8bae9df225fb93353d934bcc00d76409651c2d553fee644" }
-  radar:                { repo: microsegmentation-radar,                tag: v17.2.0, digest: "sha256:e35c3d99e8d141d68a2ce7f03d257580f5415c3991e5da24d247c99bd7952cb4" }
-  networkpolicywatcher: { repo: microsegmentation-networkpolicywatcher, tag: v17.2.0, digest: "sha256:e2ab71d20e4fc0911a9d4c7b4ea1d540496699ab80495dcb8ac5f8a333385846" }
-  mcp:                  { repo: microsegmentation-mcp,                  tag: v17.2.0, digest: "sha256:3b464834f0b1d05b4c8786f1ec243f5fb33ae6579641e03f2d0176d6f26342b8" }
-  frontend:             { repo: microsegmentation-frontend,             tag: v17.2.0, digest: "sha256:2924a307583838e33622c65aecf65a77913eb716d5de00738dbf111c2e0f5791" }
+  api:                  { repo: microsegmentation-api,                  tag: v19.0.0, digest: "sha256:0856206a27a9e6362632bc9dd0e08cd64a8e28ab195cd96d0e46cd900b5ced41" }
+  allowdropmonitor:     { repo: microsegmentation-allowdropmonitor,     tag: v19.0.0, digest: "sha256:0294b5608a30332bff6fb7f6cdd930f47f8bd8fd453dc8978981de68c6eef1aa" }
+  radar:                { repo: microsegmentation-radar,                tag: v19.0.0, digest: "sha256:bc01167fe7b7e22b4d26c3cd09d9118af109a987dd9149fa76ccb7d7ba302d93" }
+  networkpolicywatcher: { repo: microsegmentation-networkpolicywatcher, tag: v19.0.0, digest: "sha256:5e2d54f0a6afc230cd935266164904837bf42ff52b5de62324c97014519f9ae3" }
+  mcp:                  { repo: microsegmentation-mcp,                  tag: v19.0.0, digest: "sha256:880fc03060e6a42e51e5a0b5968cce0ac071e29694a3eeaf3082a538dc45d461" }
+  frontend:             { repo: microsegmentation-frontend,             tag: v19.0.0, digest: "sha256:c04504d9187cd539218f751352eefa5f4da5919d4226a8e176464abe815ae2f6" }
   # The in-cluster PostgreSQL. flavor: auto (rhel on OpenShift, alpine elsewhere) | rhel | alpine.
   #   rhel   — Red Hat-certified PostgreSQL 16 (registry.redhat.io; covered by the OpenShift pull
   #            secret). Data in /var/lib/pgsql/data, uid 26.
@@ -471,6 +471,22 @@ app:
   #   incidentReporterMaxConcurrentFlushes: 3
   #   hangfireWorkerCount: 8
   #   kafkaConsumerFetchMinBytes: 65536
+  # Collection exclusion, Radar side. Namespaces and CIDRs whose records Radar drops before storage, per registered
+  # cluster (cluster "" or unset = every cluster), on its flow lanes (east-west, external, ingress, inter-cluster)
+  # and its DNS, process and router-log lanes; not mesh access logs, not OVN ACL logs. The agents still send these
+  # records: Radar drops them before storage.
+  #   namespaces   : an exact name, or a prefix ending in "*" (a bare "*" is refused); at most 64.
+  #   cidrs        : strict IPv4 / IPv6 CIDRs (no host bits, no leading zeros), never /0; at most 64.
+  #   crossTraffic : Keep (default) keeps an excluded namespace's traffic with collected namespaces (the policies
+  #                  Axera generates for them need it); Drop drops that too, so those policies cannot see the edges.
+  # Radar applies nothing of an entry with an invalid value, its namespaces included: keep CIDRs in their own entry.
+  # GET /api/radar/collection-scope?clusterName=<cluster> lists refused entries with their problems. Example:
+  #   collectionExclude:
+  #     - cluster: my-cluster
+  #       namespaces: ["openshift-monitoring", "batch-*"]
+  #       crossTraffic: Drop
+  #     - cidrs: ["203.0.113.0/24"]
+  collectionExclude: []
 
 # Radar's process-to-pod association mode (off | shadow | on) with optional clusters / nodes
 # lists. Normally left unset (Radar's default, shadow).

@@ -349,6 +349,28 @@ is version {{ $ver }}, older than v1.11.4
   "shipperPort" (dig "shipperPort" 28084 $m | int)) -}}
 {{- end }}
 
+{{/* The node port the flow pipeline receives the flow agent's records on (gRPC; the agent sends to 127.0.0.1 on
+     the same node). flow.collectorPort, unset 2055. The pod runs with the host network, so it is a NODE port: a
+     cluster where something else on the nodes holds 2055 (another flow collector) moves it. The render fails
+     rather than give the pod one port twice: the flow pipeline's health port, or a metrics port the pod serves. */}}
+{{- define "axeraforce.collectorPort" -}}
+{{- $port := (.Values.flow).collectorPort | default 2055 | int -}}
+{{- $metrics := include "axeraforce.metrics" . | fromJson -}}
+{{- $taken := dict "28080" "the flow pipeline's health port" -}}
+{{- if $metrics.enabled -}}
+{{- $_ := set $taken (toString (int $metrics.flowAgentPort)) "metrics.flowAgentPort" -}}
+{{- $_ := set $taken (toString (int $metrics.flowPipelinePort)) "metrics.flowPipelinePort" -}}
+{{- $_ := set $taken (toString (int $metrics.sensorPort)) "metrics.sensorPort (or process.metricsPort)" -}}
+{{- $_ := set $taken (toString (int $metrics.shipperPort)) "metrics.shipperPort" -}}
+{{- else if (.Values.process).metricsPort -}}
+{{- $_ := set $taken (toString (.Values.process.metricsPort | int)) "process.metricsPort" -}}
+{{- end -}}
+{{- with get $taken (toString $port) -}}
+{{- fail (printf "flow.collectorPort %d is also %s: the agent pod uses the node's network and cannot bind one port twice. Pick another port for one of them." $port .) -}}
+{{- end -}}
+{{- $port -}}
+{{- end }}
+
 {{/* =========================================================================================
      Distribution and platform
      ========================================================================================= */}}

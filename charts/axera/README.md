@@ -440,12 +440,27 @@ because an offline render would otherwise resolve to vanilla.
 | `networkPolicies.*`, `monitoring.*` | | see above |
 | `scheduling.<component>` | `{}` | nodeSelector, affinity, tolerations, priorityClassName |
 | `resources.<component>` | | requests and limits of every container |
+| `app.collectionExclude` | `[]` | per registered cluster (`cluster` `""` = every cluster): `namespaces` (exact or `prefix*`) and `cidrs` whose records Radar drops before storage; `crossTraffic` `Keep` (default) or `Drop`. Keep CIDRs in an entry of their own: one invalid value voids its whole entry |
 
 `values.yaml` documents every key; `values.schema.json` validates them.
 
 ## Upgrading
 
 Within 3.x: `helm upgrade` with the same `-f` files as the install.
+
+### 3.0.0 to 3.1.0
+
+- Axera 19.0.0. The schema moves to 141 application and 65 analytics migrations; the migration Jobs
+  have new names and run once on the upgrade. Every block is guarded, so a rerun changes nothing.
+  With an external PostgreSQL the application pods do not wait for the Jobs: check that both Jobs
+  completed (`kubectl -n <ns> get jobs`), and restart the `api` pod if it logged a missing column
+  (42703) before they did.
+- The analytics migration builds two indexes on the process tables. While an index builds, writes
+  to that table wait; the block gives up after 5 s without the lock and the Job retries.
+- New optional `app.collectionExclude` (see Main values).
+- The integration ClusterRole may create, update and delete OVN `egressfirewalls`, for the console's
+  Egress Rules > Apply. Axera keeps the rules it did not write and does not write a rule set it
+  could not read.
 
 ### In place: the 2.0.0 package, or 1.x outside namespace `axera`
 
@@ -487,7 +502,7 @@ Within 3.x: `helm upgrade` with the same `-f` files as the install.
    name) and add any key of the [Secrets](#secrets) table it lacks, at least
    `Secrets__EncryptionKey` (`openssl rand -base64 32`). The encryption keys must stay the same to
    read the restored data.
-3. Install 3.0.0 so that nothing writes into the empty databases:
+3. Install this chart so that nothing writes into the empty databases:
    `--set secrets.existingSecrets.app=<copy> --set postgres.runMigrations=false
    --set licensing.trial.enabled=false` (no `--wait`: the application pods wait for the
    migrations). Wait until `postgres-app-0` and `postgres-radar-0` are Ready.
@@ -500,12 +515,12 @@ Within 3.x: `helm upgrade` with the same `-f` files as the install.
    ```
 
 5. `helm upgrade` with the same files plus `--set secrets.existingSecrets.app=<copy>` and without
-   the two other overrides: the migration Jobs take the schema to 3.0.0 and the pods start.
+   the two other overrides: the migration Jobs take the schema to this chart's version and the pods start.
 6. Register the clusters again with the new integration token. Uninstall the 1.x release before
    installing axera-force into `axera`: a 1.x release that created namespace `axera` (its default)
    deletes it on uninstall, with anything installed there in the meantime.
 
-With an external PostgreSQL, restore into new, empty databases before the first 3.0.0 install.
+With an external PostgreSQL, restore into new, empty databases before the first 3.x install.
 Never restore over a database that 3.x has already migrated: the migrations then fail on tables
 that exist.
 

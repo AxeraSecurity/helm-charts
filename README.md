@@ -14,12 +14,12 @@ helm search repo axera
 
 | Chart | Version | Axera | What it installs | Namespace |
 |---|---|---|---|---|
-| [`axera`](charts/axera) | 3.0.0 | 17.2.0 | The **platform**: web console, API, analysis engine, policy watcher and, optionally, its own PostgreSQL and Kafka | any except `axera` (the examples use `axera-central`) |
-| [`axera-force`](charts/axera-force) | 2.0.0 | 17.2.0 | The **cluster agent**, one DaemonSet: network flows, process activity and packet capture for one cluster, sent to the platform through Kafka | must be `axera` |
+| [`axera`](charts/axera) | 3.1.0 | 19.0.0 | The **platform**: web console, API, analysis engine, policy watcher and, optionally, its own PostgreSQL and Kafka | any except `axera` (the examples use `axera-central`) |
+| [`axera-force`](charts/axera-force) | 2.1.0 | 19.0.0 | The **cluster agent**, one DaemonSet: network flows, process activity and packet capture for one cluster, sent to the platform through Kafka | must be `axera` |
 | `axera` (legacy, OpenShift only) | 1.4.0 | 8.3.0 | The earlier platform chart for OpenShift, kept in this repository | `axera` |
 
-`helm install` or `helm upgrade` of `axera/axera` without `--version` now takes 3.0.0. To stay on
-the legacy line, pass `--version 1.4.0`. Chart 3.0.0 does not install into namespace `axera`, the
+`helm install` or `helm upgrade` of `axera/axera` without `--version` takes the newest 3.x. To stay on
+the legacy line, pass `--version 1.4.0`. Chart 3.x does not install into namespace `axera`, the
 1.x default; to move a 1.x install, see
 [From 1.x in namespace `axera`](charts/axera/README.md#from-1x-in-namespace-axera).
 
@@ -209,8 +209,8 @@ per distribution.
 ## Offline / air-gapped
 
 ```bash
-helm pull axera/axera --version 3.0.0
-helm pull axera/axera-force --version 2.0.0
+helm pull axera/axera --version 3.1.0
+helm pull axera/axera-force --version 2.1.0
 helm show chart axera/axera         # the artifacthub.io/images annotation lists every image
 helm show chart axera/axera-force
 ```
