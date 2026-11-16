@@ -128,10 +128,16 @@ rules:
   - apiGroups: ["policy.networking.k8s.io"]
     resources: ["baselineadminnetworkpolicies"]
     verbs: ["get", "list", "watch"]
-  # OVN EgressIP (the Policy Monitoring via-address) and EgressFirewall (the egress rules view).
+  # OVN EgressIP: the Policy Monitoring via-address.
   - apiGroups: ["k8s.ovn.org"]
-    resources: ["egressips", "egressfirewalls"]
+    resources: ["egressips"]
     verbs: ["get", "list", "watch"]
+  # OVN EgressFirewall: the egress rules view, and Egress Rules apply and remove. The object is a
+  # per-namespace singleton named "default"; Axera keeps the rules it did not write above its own and
+  # refuses to write one it could not read.
+  - apiGroups: ["k8s.ovn.org"]
+    resources: ["egressfirewalls"]
+    verbs: ["get", "list", "watch", "create", "update", "delete"]
   # The egress-baseline probe's CNI tier: where the CNI's own policy API owns the baseline, Axera
   # refuses the L3/L4 plane instead of deploying a block that does nothing. Names only.
   - apiGroups: ["cilium.io"]
